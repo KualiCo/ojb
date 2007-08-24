@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: code-standards.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Coding Standards</title>
+        <authors>
+            <person name="Jon S. Stevens" email="jon@latchkey.com"/>
+            <person name="Jason van Zyl" email="jvanzyl@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <p>
+        This document describes a list of coding conventions that are required
+        for code submissions to the project. By default, the coding conventions
+        for most Open Source Projects should follow the existing coding conventions
+        in the code that you are working on. For example, if the bracket is on
+        the same line as the if statement, then you should write all your code
+        to have that convention.
+        </p>
+
+        <p>
+        <strong>If you commit code that does not follow these conventions, you
+        are responsible for also fixing your own code.</strong>
+        </p>
+
+        <p>
+        Below is a list of coding conventions that are specific to OJB,
+        everything else not specificially mentioned here should follow the official
+        <a href="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Sun
+        Java Coding Conventions</a>.
+        </p>
+
+        <p>
+        1. Brackets should begin and end on a new line and should exist even
+        for one line statements. Examples:
+        </p>
+
+        <source><![CDATA[
+        if (foo)
+        {
+            // code here
+        }
+
+        try
+        {
+            // code here
+        }
+        catch (Exception bar)
+        {
+            // code here
+        }
+        finally
+        {
+            // code here
+        }
+
+        while (true)
+        {
+            // code here
+        }
+        ]]></source>
+
+        <p>
+        2. Though it's considered okay to include spaces inside parens, the
+        preference is to not include them. Both of the following are okay:
+        </p>
+
+        <source><![CDATA[
+        if (foo)
+
+        or
+
+        if ( foo )
+        ]]></source>
+
+        <p>
+        3. Use 4 space indent. <strong>NO tabs</strong>. Period. We understand
+        that many developers like to use tabs, but the fact of the matter is
+        that in a distributed development environment where diffs are sent to
+        the mailing lists by both developers and the version control system
+        (which sends commit log messages), the use tabs makes it impossible to
+        preserve legibility.
+        </p>
+
+        <p>
+        In Emacs-speak, this translates to the following command:
+        </p>
+
+        <source><![CDATA[
+        (setq-default tab-width 4 indent-tabs-mode nil)
+        ]]></source>
+
+        <p>
+        4. Unix linefeeds for all .java source code files. Other platform specific
+        files should have the platform specific linefeeds.
+        </p>
+
+        <p>
+        5. JavaDoc <strong>MUST</strong> exist on all methods.  If your code
+        modifications use an existing class/method/variable which lacks
+        JavaDoc, it is required that you add it.  This will improve the
+        project as a whole.
+        </p>
+
+        <p>
+        6. The ASF license <strong>MUST</strong> be placed at the top
+        of each and every file.
+        </p>
+
+        <p>
+        7. All .java files should have a @version tag with CVS Id keyword expansion,
+        like the one below.
+        </p>
+
+        <source><![CDATA[
+        @version $Id: code-standards.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $
+        ]]></source>
+
+        <note>
+            To add the keyword to a new file, either use <code>$Id: code-standards.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $</code> or copy
+            an existing expanded id-string from another file (all the parameters will be
+            replaced by CVS). Just watch out not to type <code>$Id $</code>, since that
+            extra space will signal to CVS that keyword expansion already took place.
+        </note>
+
+        <p>
+        8. Import statements must be fully qualified for clarity.
+        </p>
+
+        <source><![CDATA[
+        import java.util.ArrayList;
+        import java.util.Hashtable;
+
+        import org.apache.foo.Bar;
+        import org.apache.bar.Foo;
+        ]]></source>
+
+        <p>
+        And not
+        </p>
+
+        <source><![CDATA[
+        import java.util.*;
+        import org.apache.foo.*;
+        import org.apache.bar.*;
+        ]]></source>
+
+        <p>
+        Emacs/XEmacs users might appreciate the following in their .emacs file.
+        </p>
+
+        <source><![CDATA[
+        (defun apache-db-mode ()
+          "The Java mode specialization for Apache DB projects."
+          (if (not (assoc "apache-db" c-style-alist))
+              ;; Define the Apache DB cc-mode style.
+              (c-add-style "apache-db" '("java" (indent-tabs-mode . nil))))
+
+          (c-set-style "apache-db")
+          (c-set-offset 'substatement-open 0 nil)
+          (setq mode-name "Apache DB")
+
+          ;; Turn on syntax highlighting when X is running.
+          (if (boundp 'window-system)
+              (progn (setq font-lock-support-mode 'lazy-lock-mode)
+                     (font-lock-mode t))))
+
+        ;; Activate Apache DB-mode for JDE.
+        (if (fboundp 'jde-mode)
+            (add-hook 'jde-mode-hook 'apache-db-mode)
+          (add-hook 'java-mode-hook 'apache-db-mode))
+        ]]></source>
+
+        <p>
+        Thanks for your cooperation.
+        </p>
+
+    </body>
+</document>

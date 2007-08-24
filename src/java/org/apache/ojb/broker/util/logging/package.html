@@ -1,0 +1,34 @@
+<html>
+<head>
+<title>Logging package</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF">
+This package contains classes that provide the OJB logging API. 
+<P>
+The <code>Logger</code> interface defines the behaviour of the
+OJB logging mechanism. This API corresponds closely to the LOG4J Category Api.
+By using this interface for logging operations OJB remains free from 
+Logger-Implementation specific code.
+<P>
+The class <code>PoorMansLoggerImpl</code> implements <code>Logger</code> and 
+provides the OJB default implementations. All logging output is directed to
+<code>System.out</code>.
+<P>
+The class <code>Log4jLoggerImpl</code> implements <code>Logger</code> and 
+provides LOG4J based logger implementations.
+<P>
+The factory class <code>LoggerFactory</code> can be used to create 
+<code>Logger</code> instances. 
+The <code>Logger</code>-implementation class served by the factory is 
+configured by settings in the OJB.properties file. 
+<P>
+Patterns applied:
+Configurable Factory, Adapter
+
+<P>
+Todo:
+Provide a JDK1.4 based logger
+</body>
+</html>

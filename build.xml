@@ -1,0 +1,1707 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+/* Copyright 2002-2005 Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!-- @version $Id: build.xml,v 1.1 2007-08-24 22:17:36 ewestfal Exp $ -->
+<!--
+     ObJectRelationalBridge ANT build configuration.
+     initial author: Thomas Mahler
+-->
+
+<project name="ObJectRelationalBridge" default="jar" basedir=".">
+
+    <description>
+        ObJectRelationalBridge ANT build configuration
+    </description>
+
+    <!-- Allow any user specific values to override the defaults -->
+	<property environment="env"/>
+	<property file="${user.home}/build.properties" />
+    <property file="build.properties"/>
+
+    <!-- Load the profile set in build.properties -->
+    <property file="profile/${profile}.profile"/>
+
+    <!-- Set default  values for properties not initialized by profile -->
+    <property name="torque.delimiter" value=";"/>
+    <property name="validationQuery" value=""/>
+    <property name="testOnBorrow" value="true"/>
+    <property name="testOnReturn" value="false"/>
+
+    <!-- Clover initialization-->
+    <property name="clover.initstring" location="${build.dir}/coverage.db"/>
+
+    <path id="compilation-classpath">
+        <pathelement path="${build.dest}"/>
+        <pathelement path="${build.desttest}"/>
+        <pathelement path="${build.desttools}"/>
+        <fileset dir="${lib}">
+            <include name="**/*.jar"/>
+            <include name="**/*.zip"/>
+        </fileset>
+        <pathelement path="${j2ee.jars}"/>
+    </path>
+
+    <path id="runtime-classpath">
+        <!-- set at top position, because OJB properties-files should be found first -->
+        <pathelement path="${build.dir}/test/ojb"/>
+        <path refid="compilation-classpath"/>
+    </path>
+
+    <property name="runtime.classpath" refid="runtime-classpath"/>
+
+
+    <!-- ================================================================== -->
+    <!-- I N I T                                                            -->
+    <!-- ================================================================== -->
+    <target name="init"
+    	    depends="environment-check,
+    	             set-archive-name,
+    	             set-archive-name-date,
+    	             use-jdk12, use-jdk13, use-jdk14, use-jdk15"/>
+
+    <target name="detect-jdk">
+    	<condition property="jdk-12">
+        	<equals arg1="${ant.java.version}" arg2="1.2" />
+  		</condition>
+    	<condition property="jdk-13">
+        	<equals arg1="${ant.java.version}" arg2="1.3" />
+  		</condition>
+    	<condition property="jdk-14">
+        	<equals arg1="${ant.java.version}" arg2="1.4" />
+  		</condition>
+    	<condition property="jdk-15">
+        	<equals arg1="${ant.java.version}" arg2="1.5" />
+  		</condition>
+    </target>
+
+    <target name="environment-check" depends="detect-jdk">
+		<fail message="Please make JUnit available in the classpath, e.g. by copying the junit.jar from OJB's lib subdirectory into the lib subdirectory of your Ant installation (${env.ANT_HOME}/lib).">
+			<condition>
+				<not>
+	    		    <available classname="junit.framework.TestCase"/>
+				</not>
+			</condition>
+		</fail>
+		<fail message="In order to compile OJB with JDK 1.2 you need to download cglib from http://cglib.sourceforge.net and put the jar into OJB's lib folder.">
+	        <condition>
+	          	<and>
+	        	    <isset property="jdk-12"/>
+	          		<not>
+	            		<available classname="net.sf.cglib.proxy.Proxy"
+	            			       classpathref="compilation-classpath"/>
+	          		</not>
+	          	</and>
+	        </condition>
+	    </fail>
+		<fail message="Please make the JNDI classes (javax.naming.*) available in your classpath. Download them from http://java.sun.com/products/jndi/downloads/index.html and copy the jndi.jar into OJB's lib directory.">
+	        <condition>
+          		<not>
+            		<available classname="javax.naming.InitialContext"
+            			       classpathref="compilation-classpath"/>
+          		</not>
+	        </condition>
+	    </fail>
+	</target>
+
+    <target name="use-jdk12" if="jdk-12">
+    	<property name="JDK" value="-JDK13"/>
+    	<property name="JDBC" value="-JDBC30"/>
+    	<property name="excludes" value="org/apache/ojb/tools/mapping/**"/>
+    	<echo message="detected JDK 1.2"/>
+    </target>
+
+    <target name="use-jdk13" if="jdk-13">
+    	<property name="JDK" value="+JDK13"/>
+    	<property name="JDBC" value="-JDBC30"/>
+    	<property name="excludes" value=""/>
+    	<echo message="detected JDK 1.3"/>
+    </target>
+
+    <target name="use-jdk14" if="jdk-14">
+    	<property name="JDK" value="+JDK13"/>
+    	<property name="JDBC" value="+JDBC30"/>
+    	<property name="excludes" value=""/>
+    	<echo message="detected JDK 1.4"/>
+    </target>
+
+    <target name="use-jdk15" if="jdk-15">
+    	<property name="JDK" value="+JDK13"/>
+    	<property name="JDBC" value="+JDBC30"/>
+    	<property name="excludes" value=""/>
+    	<echo message="detected JDK 1.5"/>
+    </target>
+
+    <target name="set-archive-name-date" if="useDate">
+    	<property name="archive" value="${ojb-filename-prefix}-${DSTAMP}"/>
+	</target>
+
+
+    <target name="set-archive-name" unless="useDate">
+    	<property name="archive" value="${ojb-filename-prefix}"/>
+	</target>
+
+    <!-- ================================================================== -->
+    <!-- Prepare target directories                                         -->
+    <!-- ================================================================== -->
+    <target name="prepare" depends="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.dest}"/>
+        <mkdir dir="${build.desttest}"/>
+        <mkdir dir="${build.desttools}"/>
+		<mkdir dir="${build.destjca}"/>
+        <mkdir dir="${dist}"/>
+        <copy todir="${build.src}">
+            <fileset dir="${src.java}"/>
+        </copy>
+        <copy todir="${build.srctest}">
+            <fileset dir="${src.test}"/>
+        </copy>
+        <copy todir="${build.srctools}">
+            <fileset dir="${src.tools}"/>
+        </copy>
+		<copy todir="${build.srcjca}">
+			<fileset dir="${src.jca}"/>
+		</copy>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Preprocess Java Source Code                                        -->
+    <!-- ================================================================== -->
+    <target name="preprocess" depends="prepare">
+        <echo message="using switches: ${JDK}, ${JDBC}"/>
+        <java fork="no"
+              classname="org.hsqldb.util.CodeSwitcher"
+              failonerror="true"
+              classpathref="compilation-classpath">
+            <arg value="${build.src}" />
+            <arg value="${JDK}"/>
+            <arg value="${JDBC}"/>
+        </java>
+        <java fork="no"
+              classname="org.hsqldb.util.CodeSwitcher"
+              failonerror="true"
+              classpathref="compilation-classpath">
+            <arg value="${build.srctest}" />
+            <arg value="${JDK}"/>
+            <arg value="${JDBC}"/>
+        </java>
+        <java fork="no"
+              classname="org.hsqldb.util.CodeSwitcher"
+              failonerror="true"
+              classpathref="compilation-classpath">
+            <arg value="${build.srctools}" />
+            <arg value="${JDK}"/>
+            <arg value="${JDBC}"/>
+        </java>
+        <replace dir="${build.src}" token="$$VERSION$$" value="${version}"/>
+        <replace dir="${build.src}" token="$$VERSION$$" value="${version}"/>
+        <replace dir="${build.src}" token="$$MAJOR$$" value="${major}"/>
+        <replace dir="${build.src}" token="$$MINOR$$" value="${minor}"/>
+        <replace dir="${build.src}" token="$$BUILD$$" value="${build}"/>
+        <replace dir="${build.src}" token="$$DATE$$" value="${versiondate}"/>
+    </target>
+
+
+
+    <!-- ================================================================== -->
+    <!-- Delete all the directories created in prepare                      -->
+    <!-- ================================================================== -->
+    <target name="clean" depends="init"
+            description="Cleans the build and distribution directories.">
+        <delete dir="${build.dir}" verbose="false"/>
+        <delete dir="${dist}" verbose="false"/>
+    </target>
+
+
+    <!-- ================================================================== -->
+    <!-- Build all the sources with debug and deprecation                   -->
+    <!-- ================================================================== -->
+    <target name="main" depends="prepare, preprocess"
+            description="Compile all Java sources with debugging on.">
+        <javac srcdir="${build.src}" destdir="${build.dest}" excludes="${excludes}"
+               debug="on" debuglevel="source,lines,vars" deprecation="${deprecation}">
+            <classpath refid="compilation-classpath" />
+        </javac>
+        <javac srcdir="${build.srctest}" destdir="${build.desttest}" excludes="${excludes}"
+               debug="on" debuglevel="source,lines,vars" deprecation="${deprecation}">
+            <classpath refid="compilation-classpath" />
+        </javac>
+        <javac srcdir="${build.srctools}" destdir="${build.desttools}" excludes="${excludes}"
+               debug="on" debuglevel="source,lines,vars" deprecation="${deprecation}">
+            <classpath refid="compilation-classpath" />
+        </javac>
+    </target>
+
+    <!-- include OJB JDORI implementation -->
+    <target name="with-jdori" depends="prepare"
+            description="Compile OJB JDORI">
+		<copy todir="${build.src}">
+            <fileset dir="${src.dir}/jdori"/>
+       	</copy>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- cleanup, preprocessing, compile and building                       -->
+    <!-- of oql parser and documentation                                    -->
+    <!-- ================================================================== -->
+    <target name="all" depends="clean,preprocess,oql,main,ojb-blank,sample-jars,webapp-sample,doc"
+            description="rebuild all sources (incl. preprocessing)"/>
+
+    <!-- ================================================================== -->
+    <!-- Same as main, but optimization, no debug and no deprecation        -->
+    <!-- ================================================================== -->
+    <target name="main-opt" depends="prepare, preprocess"
+            description="Same as main, but with debugging off and optimizations on.">
+        <javac srcdir="${build.src}" destdir="${build.dest}" excludes="${excludes}"
+               debug="off" deprecation="off" optimize="on">
+            <classpath refid="compilation-classpath"/>
+        </javac>
+        <javac srcdir="${build.srctest}" destdir="${build.desttest}" excludes="${excludes}"
+               debug="off" deprecation="off" optimize="on">
+            <classpath refid="compilation-classpath"/>
+        </javac>
+        <javac srcdir="${build.srctools}" destdir="${build.desttools}" excludes="${excludes}"
+               debug="off" deprecation="off" optimize="on">
+            <classpath refid="compilation-classpath"/>
+        </javac>
+		<javac srcdir="${build.srcjca}" destdir="${build.destjca}" excludes="${excludes}"
+			   debug="on" deprecation="${deprecation}">
+			<classpath refid="compilation-classpath" />
+		</javac>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- set the runtime jdbc driver                                        -->
+    <!-- if the property useP6Spy is set, the P6Spy Tracing driver is used. -->
+    <!-- I did not find any other way to set this property with two         -->
+    <!-- conditional tasks. Maybe there's a better solution ?               -->
+    <!-- ================================================================== -->
+
+	<target name="checkP6Spy" depends="">
+	    <condition property="shouldUseP6Spy">
+		<istrue value="${useP6Spy}">
+		</istrue>
+ 	    </condition>
+	</target>
+
+	<target name="useP6Spy" if="shouldUseP6Spy">
+		<echo message="using P6Spy to trace JDBC calls."/>
+		<property name="jdbcRuntimeDriver" value="com.p6spy.engine.spy.P6SpyDriver"/>
+	</target>
+
+	<target name="dontUseP6Spy" unless="shouldUseP6Spy">
+		<echo message="NOT using P6Spy to trace JDBC calls."/>
+		<property name="jdbcRuntimeDriver" value="${torque.database.driver}"/>
+	</target>
+
+	<target name="prepare-repository" depends="checkP6Spy, useP6Spy, dontUseP6Spy">
+		<delete dir="${build.test}" verbose="false"/>
+        <copy todir="${build.test}/ojb">
+            <fileset dir="${build.srctest}/org/apache/ojb"
+                includes="Test_*,database*,repository*,*.properties,*.dtd,*.jdo,*.ccf">
+                <exclude name="build.properties" />
+                <exclude name="build.xml" />
+            </fileset>
+            <filterset>
+                <filter token="JCD_ALIAS" value="${jcdAlias}" />
+                <filter token="DBMS_NAME" value="${dbmsName}" />
+                <filter token="JDBC_LEVEL" value="${jdbcLevel}" />
+                <filter token="DRIVER_NAME" value="${jdbcRuntimeDriver}" />
+                <filter token="URL_PROTOCOL" value="${urlProtocol}" />
+                <filter token="URL_SUBPROTOCOL" value="${urlSubprotocol}" />
+                <filter token="URL_DBALIAS" value="${urlDbalias}" />
+                <filter token="USER_NAME" value="${torque.database.user}" />
+                <filter token="USER_PASSWD" value="${torque.database.password}" />
+                <filter token="VALIDATION_QUERY" value="${validationQuery}" />
+                <filter token="TEST_ON_BORROW" value="${testOnBorrow}" />
+                <filter token="TEST_ON_RETURN" value="${testOnReturn}" />
+            </filterset>
+
+        </copy>
+    	<copy file="${src.test}/org/apache/ojb/faraway-db/OJB_FarAway.properties" tofile="${build.test}/OJB_FarAway.properties"/>
+    	<copy file="${src.test}/org/apache/ojb/faraway-db/OJB_FarAway.script" tofile="${build.test}/OJB_FarAway.script"/>
+
+    </target>
+
+    <target name="prepare-testdb"
+            description="prepare testdb using torque or ddlutils"
+            depends="prepare-testdb-torque, prepare-testdb-ddlutils"/>
+ 
+    <target name="prepare-testdb-torque"
+            description="prepare testdb using torque"
+            depends="prepare, prepare-repository"
+            unless="use-ddlutils">
+
+        <copy todir="${build.test}">
+            <fileset dir="${src.dir}/schema" includes="*.xml,*.dtd"/>
+            <filterset>
+                <filter token="DATABASE_DEFAULT" value="${torque.project}" />
+            </filterset>
+
+        </copy>
+        <antcall target="getJSQLDriver"/>
+
+        <!-- create sql scripts -->
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="sql"/>
+
+        <!-- create db -->
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="create-db"/>
+
+        <!-- create data sql -->
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="datasql"/>
+
+        <!-- create tables -->
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="insert-sql"/>
+
+    </target>
+
+    <target name="prepare-testdb-ddlutils"
+            description="prepare testdb using DdlUtils"
+            depends="prepare, prepare-repository"
+            if="use-ddlutils">
+        <taskdef name="ddl2Database"
+                 classname="org.apache.ddlutils.task.DdlToDatabaseTask"
+                 classpathref="runtime-classpath"/>
+        <taskdef name="ojbData"
+                 classname="org.apache.ojb.broker.ant.RepositoryDataTask"
+                 classpathref="runtime-classpath"/>
+  
+        <copy todir="${build.test}">
+            <fileset dir="${src.dir}/schema" includes="*.xml,*.dtd"/>
+            <filterset>
+                <filter token="DATABASE_DEFAULT" value="${project}" />
+            </filterset>
+        </copy>
+        <ddl2Database usedelimitedsqlidentifiers="false">
+            <database driverclassname="${torque.database.driver}"
+                      url="${torque.database.createUrl}"
+                      username="${torque.database.user}"
+                      password="${torque.database.password}"/>
+            <fileset dir="${build.test}"
+                     includes="*schema.xml"/>
+
+            <createdatabase failonerror="false"/>
+            <writeschematodatabase alterdatabase="false"/>
+        </ddl2Database>
+        <ojbData usedelimitedsqlidentifiers="false"
+                 ojbpropertiesfile="${build.test}/ojb/OJB.properties" >
+            <database driverclassname="${torque.database.driver}"
+                      url="${torque.database.createUrl}"
+                      username="${torque.database.user}"
+                      password="${torque.database.password}"/>
+            <fileset dir="${build.test}"
+                     includes="*schema.xml"/>
+            <writedatatodatabase datafile="${build.test}/ojbtest-data-new.xml"/> 
+        </ojbData> 
+    </target> 
+ 
+    <!-- ================================================================== -->
+    <!-- dump testdb using torque                                        -->
+    <!-- ================================================================== -->
+    <target name="dump-testdb"
+            description="dump testdb using torque">
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="project-datadtd-classpath"/>
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="project-datadump-classpath"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the JAR file using main-opt                                  -->
+    <!-- ================================================================== -->
+
+    <target name="jar" depends="" description="Builds the binary ojb-xxx.jar in the dist directory.">
+		<ant target="main-opt"/>
+		<ant target="jar-internal"/>
+    </target>
+
+	<!-- ================================================================== -->
+    <!-- Build the JAR file using main-debug                                  -->
+    <!-- ================================================================== -->
+
+    <target name="jar-debug" description="Builds the binary ojb-xxx.jar in the dist directory in debug mode.">
+  		<ant target="main"/>
+		<ant target="jar-internal"/>
+    </target>
+
+	<target name="jar-internal" depends="init">
+		<delete file="${dist}/${archive}.jar"/>
+		<delete file="${dist}/${archive}-junit.jar"/>
+		<delete file="${dist}/${archive}-src.jar"/>
+		<delete file="${dist}/${archive}-tools.jar"/>
+		<delete file="${build.dest}/MANIFEST.MF"/>
+		<copy file="${source}/etc/MANIFEST.MF" tofile="${build.dest}/MANIFEST.MF"/>
+		<replace file="${build.dest}/MANIFEST.MF" token="$$VERSION$$" value="${version}"/>
+		<copy todir="${build.dest}">
+		<fileset dir="${source}/etc" excludes="MANIFEST.MF"/>
+		</copy>
+		<jar jarfile="${dist}/${archive}.jar" basedir="${build.dest}"
+			manifest="${build.dest}/MANIFEST.MF"
+			includes="LICENSE,NOTICE,README,javax/**,org/**"
+			excludes="org/apache/ojb/tools/**"/>
+		<jar jarfile="${dist}/${archive}-junit.jar" basedir="${build.desttest}"
+			manifest="${build.dest}/MANIFEST.MF"
+			includes="LICENSE,NOTICE,README,org/**"/>
+		<jar jarfile="${dist}/${archive}-src.jar" basedir="${build.src}"
+			manifest="${build.dest}/MANIFEST.MF"
+			includes="LICENSE,NOTICE,README,org/**"/>
+        <jar jarfile="${dist}/${archive}-tools.jar" basedir="${build.desttools}"
+			manifest="${build.dest}/MANIFEST.MF"
+			includes="LICENSE,NOTICE,README,org/apache/ojb/tools/**"/>
+	</target>
+    <!-- ================================================================== -->
+    <!-- Build sample war-file for deployment in tomcat                     -->
+    <!-- ================================================================== -->
+    <target name="war" depends="jar, prepare-testdb"
+            description="Builds a sample war-file for deployment in tomcat">
+        <delete file="${dist}/ojb-servlet.war"/>
+        <delete dir="${build.dir}/WEB-INF" verbose="false"/>
+        <mkdir dir="${build.dir}/WEB-INF/classes"/>
+        <mkdir dir="${build.dir}/WEB-INF/lib"/>
+
+        <!-- 1. apache-ojb-xxx.jar -->
+        <copy file="${dist}/${archive}.jar" todir="${build.dir}/WEB-INF/lib"/>
+
+        <!-- 2. OJB.properties and repository*.* files -->
+        <copy todir="${build.dir}/WEB-INF/classes">
+            <fileset dir="${build.test}/ojb" includes="*.properties,*.dtd,*.xml"/>
+        </copy>
+
+        <!-- 3. additional jar files -->
+        <copy todir="${build.dir}/WEB-INF/lib">
+            <fileset dir="${lib}">
+              <include name="*.jar"/>
+              <exclude name="ant.jar"/>
+              <exclude name="antlr.debug.jar"/>
+              <exclude name="antlr_compiletime.jar"/>
+              <exclude name="junit.jar"/>
+              <exclude name="optional.jar"/>
+              <exclude name="xalan.jar"/>
+              <exclude name="ejb.jar"/>
+              <exclude name="servlet.jar"/>
+              <exclude name="jakarta-regexp-1.2.jar"/>
+              <exclude name="torque-3.0-b3-dev.jar"/>
+              <exclude name="velocity-1.3-dev.jar"/>
+            </fileset>
+        </copy>
+
+        <!-- 4. don't forget the jdbc driver -->
+        <!-- In this case the jdbc driver is in hsqldb.jar, which has been
+             written in step 3. already -->
+
+		<!-- 5. the business code, that is your servlet-->
+        <copy todir="${build.dir}/WEB-INF/classes">
+            <fileset dir="${build.desttest}" includes="org/apache/ojb/servlet/**"/>
+        </copy>
+
+        <jar jarfile="${dist}/ojb-servlet.war" basedir="${build.dir}"
+             includes="WEB-INF/**"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build sample war-file for deployment in tomcat                     -->
+    <!-- ================================================================== -->
+    <target name="lockservlet-war" depends="jar, prepare, prepare-repository"
+            description="Builds The Lockserver servlet for deployment in tomcat">
+
+        <property name="build.servlet" value="${build.dir}/lock-servlet"/>
+
+        <delete file="${dist}/ojb-lockserver.war"/>
+        <delete dir="${build.servlet}/WEB-INF" verbose="false"/>
+        <mkdir dir="${build.servlet}/WEB-INF/classes"/>
+        <mkdir dir="${build.servlet}/WEB-INF/lib"/>
+
+        <!-- 1. apache-ojb-xxx.jar -->
+        <copy file="${dist}/${archive}.jar" todir="${build.servlet}/WEB-INF/lib"/>
+
+        <!-- 2. OJB.properties and repository*.* files -->
+        <copy todir="${build.servlet}/WEB-INF/classes">
+            <fileset dir="${build.test}/ojb" includes="*.properties,*.dtd,*.xml">
+                <exclude name="Test_*"/>
+            </fileset>
+        </copy>
+
+        <copy todir="${build.servlet}/WEB-INF">
+            <fileset dir="${build.srctest}/org/apache/ojb" includes="web.xml"/>
+        </copy>
+
+        <!-- 3. additional jar files -->
+        <copy todir="${build.servlet}/WEB-INF/lib">
+            <fileset dir="${lib}">
+                <include name="**/*.jar"/>
+                <exclude name="jdo*.jar"/>
+                <exclude name="ant-*.jar"/>
+                <exclude name="xerces*.jar"/>
+                <exclude name="xml-*.jar"/>
+                <exclude name="xalan*.jar"/>
+                <exclude name="jakarta-regexp*.jar"/>
+                <exclude name="torque*.jar"/>
+                <exclude name="velocity*.jar"/>
+                <exclude name="xdoclet*.jar"/>
+                <exclude name="xjava*.jar"/>
+            </fileset>
+        </copy>
+
+
+		<!-- 4. the business code, that is our servlet-->
+        <copy todir="${build.servlet}/WEB-INF/classes">
+            <fileset dir="${build.dest}" includes="org/apache/ojb/broker/locking/**"/>
+        </copy>
+
+        <jar jarfile="${dist}/ojb-lockserver.war" basedir="${build.servlet}"
+             includes="WEB-INF/**"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the sample jar-files                                         -->
+    <!-- ================================================================== -->
+    <target name="sample-jars"
+            description="Build jars containing the sources of the tutorials and sample classes">
+    	<!-- Tutorial 1 src -->
+        <delete file="${dist}/${tutorial1.src-jar.name}"
+        		failonerror="false"/>
+        <jar jarfile="${dist}/${tutorial1.src-jar.name}"
+             basedir="${tutorial1.src.dir}"
+             includes="${tutorial1.src.includes}"/>
+
+    	<!-- Tutorial 1 src -->
+    	<delete file="${dist}/${tutorial2.src-jar.name}"
+        		failonerror="false"/>
+        <jar jarfile="${dist}/${tutorial2.src-jar.name}"
+             basedir="${tutorial2.src.dir}"
+             includes="${tutorial2.src.includes}"/>
+
+    	<!-- Tutorial 1 src -->
+    	<delete file="${dist}/${tutorial5.src-jar.name}"
+        		failonerror="false"/>
+        <jar jarfile="${dist}/${tutorial5.src-jar.name}"
+             basedir="${tutorial5.src.dir}"
+             includes="${tutorial5.src.includes}"/>
+
+    	<!-- Misc src -->
+    	<delete file="${dist}/${miscsamples.src-jar.name}"
+        		failonerror="false"/>
+        <jar jarfile="${dist}/${miscsamples.src-jar.name}"
+             basedir="${miscsamples.src.dir}"
+             includes="${miscsamples.src.includes}"/>
+	</target>
+
+    <!-- ================================================================== -->
+    <!-- Build sample jar-file for a new project                            -->
+    <!-- ================================================================== -->
+    <target name="ojb-blank" depends="init,jar-debug"
+            description="Build a sample project">
+        <property name="build.ojb-blank" value="${build.dir}/ojb-blank"/>
+
+        <delete file="${dist}/ojb-blank.jar" failonerror="false"/>
+        <delete dir="${build.ojb-blank}" verbose="false" failonerror="false"/>
+        <mkdir dir="${build.ojb-blank}"/>
+        <mkdir dir="${build.ojb-blank}/src"/>
+        <mkdir dir="${build.ojb-blank}/src/java"/>
+        <mkdir dir="${build.ojb-blank}/src/schema"/>
+        <mkdir dir="${build.ojb-blank}/src/resources"/>
+        <mkdir dir="${build.ojb-blank}/src/test"/>
+        <mkdir dir="${build.ojb-blank}/lib"/>
+
+        <copy file="${dist}/${archive}.jar" todir="${build.ojb-blank}/lib"/>
+        <copy todir="${build.ojb-blank}/src/resources">
+            <fileset dir="${src.test}/org/apache/ojb"
+            	     includes="${ojb-blank.resource.includes}"/>
+            <filterset>
+                <filter token="VALIDATION_QUERY" value="${validationQuery}"/>
+                <filter token="TEST_ON_BORROW" value="${testOnBorrow}"/>
+                <filter token="TEST_ON_RETURN" value="${testOnReturn}"/>
+            </filterset>
+        </copy>
+
+        <copy todir="${build.ojb-blank}">
+            <fileset dir="${src.ojb-blank}"/>
+            <filterset>
+                <filter token="OJB_JAR" value="${archive}.jar"/>
+            </filterset>
+        </copy>
+
+        <copy todir="${build.ojb-blank}/src/schema">
+            <fileset dir="${source}/schema">
+                <include name="ojbcore-schema.xml"/>
+            </fileset>
+        </copy>
+        <copy file="build-torque.xml" todir="${build.ojb-blank}/src/schema"/>
+
+        <copy todir="${build.ojb-blank}/lib">
+            <fileset dir="${lib}"
+            	     includes="${ojb-blank.lib.includes}"/>
+        </copy>
+
+        <jar jarfile="${dist}/ojb-blank.jar"
+             basedir="${build.dir}"
+             includes="ojb-blank/**"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build quickstart samples using hsqldb                              -->
+    <!-- ================================================================== -->
+    <target name="ojb-quickstart"
+            depends="ojb-blank"
+            description="Build the sample projects for the tutorials">
+        <mkdir dir="${build.dir}/ojb-quickstart"/>
+        <property name="build.ojb-quickstart" value="${build.dir}/ojb-quickstart/ojb-blank"/>
+
+        <!-- We're using fresh ojb-blank's and copy the tutorial source into it
+             to generate the quickstart apps -->
+        <!-- Tutorial 1 -->
+        <delete dir="${build.ojb-quickstart}" verbose="false" failonerror="false"/>
+        <unjar src="${dist}/ojb-blank.jar" dest="${build.dir}/ojb-quickstart"/>
+        <copy todir="${build.ojb-quickstart}/src/java">
+            <fileset dir="${tutorial1.src.dir}"
+            		 includes="${tutorial1.src.includes}"/>
+        </copy>
+        <ant antfile="${build.ojb-quickstart}/build.xml"
+             inheritall="false"
+             dir="${build.ojb-quickstart}"
+             target="setup-db">
+            <property name="databaseName" value="${tutorial1.database.name}"/>
+            <property name="jar.name" value="${tutorial1.quickstart-jar.name}"/>
+            <property name="source.main.class" value="${tutorial1.main.class}"/>
+            <property name="target.dir" value="target"/>
+            <!-- For some reason we have to override the createUrl -->
+            <property name="torque.database.createUrl" value="jdbc:hsqldb:${build.ojb-quickstart}/build/database/${tutorial1.database.name}"/>
+        </ant>
+        <ant antfile="${build.ojb-quickstart}/build.xml"
+             inheritall="false"
+             dir="${build.ojb-quickstart}"
+             target="dist">
+            <property name="databaseName" value="${tutorial1.database.name}"/>
+            <property name="jar.name" value="${tutorial1.quickstart-jar.name}"/>
+            <property name="source.main.class" value="${tutorial1.main.class}"/>
+            <property name="target.dir" value="target"/>
+            <property name="torque.database.createUrl" value="jdbc:hsqldb:${build.ojb-quickstart}/build/database/${tutorial1.database.name}"/>
+        </ant>
+        <move file="${build.ojb-quickstart}/target/${tutorial1.quickstart-jar.name}" todir="${dist}"/>
+
+        <!-- Tutorial 2 -->
+        <delete dir="${build.ojb-quickstart}" verbose="false" failonerror="false"/>
+        <unjar src="${dist}/ojb-blank.jar" dest="${build.dir}/ojb-quickstart"/>
+        <copy todir="${build.ojb-quickstart}/src/java">
+            <fileset dir="${tutorial2.src.dir}"
+        	         includes="${tutorial2.src.includes}"/>
+        </copy>
+        <ant antfile="${build.ojb-quickstart}/build.xml"
+             inheritall="false"
+             dir="${build.ojb-quickstart}"
+             target="setup-db">
+            <property name="databaseName" value="${tutorial2.database.name}"/>
+            <property name="jar.name" value="${tutorial2.quickstart-jar.name}"/>
+            <property name="source.main.class" value="${tutorial2.main.class}"/>
+            <property name="target.dir" value="target"/>
+            <!-- For some reason we have to override the createUrl -->
+            <property name="torque.database.createUrl" value="jdbc:hsqldb:${build.ojb-quickstart}/build/database/${tutorial2.database.name}"/>
+        </ant>
+        <ant antfile="${build.ojb-quickstart}/build.xml"
+             inheritall="false"
+             dir="${build.ojb-quickstart}"
+             target="dist">
+            <property name="databaseName" value="${tutorial2.database.name}"/>
+            <property name="jar.name" value="${tutorial2.quickstart-jar.name}"/>
+            <property name="source.main.class" value="${tutorial2.main.class}"/>
+            <property name="target.dir" value="target"/>
+            <property name="torque.database.createUrl" value="jdbc:hsqldb:${build.ojb-quickstart}/build/database/${tutorial2.database.name}"/>
+        </ant>
+        <move file="${build.ojb-quickstart}/target/${tutorial2.quickstart-jar.name}" todir="${dist}"/>
+
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the webapp sample                                            -->
+    <!-- ================================================================== -->
+    <target name="webapp-sample"
+            depends="init,jar-debug"
+            description="Build the webapp sample">
+        <mkdir dir="${build.dir}/webapp-sample"/>
+        <copy todir="${build.dir}/webapp-sample">
+            <fileset dir="${webapp-sample.src.dir}"
+            		 excludes="**/*.jar"/>
+            <filterset>
+                <filter token="OJB_JAR" value="${archive}.jar"/>
+            </filterset>
+        </copy>
+        <copy todir="${build.dir}/webapp-sample">
+            <fileset dir="${webapp-sample.src.dir}"
+            		 includes="**/*.jar"/>
+        </copy>
+    	<!-- The sample comes only with libraries that OJB itself does not need
+    	     i.e. Struts (1.2.4) and JSTL (jakarta implementation). All other
+    	     libs will be copied from OJB's lib folder -->
+        <copy todir="${build.dir}/webapp-sample/lib">
+            <fileset dir="${lib}"
+            		 includes="${webapp-sample.lib.includes}"/>
+        </copy>
+        <copy file="${dist}/${archive}.jar"
+        	  todir="${build.dir}/webapp-sample/lib"/>
+    	<!-- Likewise we copy common resource files -->
+        <mkdir dir="${build.dir}/webapp-sample/src/schema"/>
+        <copy todir="${build.dir}/webapp-sample/src/schema">
+            <fileset dir="${source}/schema">
+                <include name="ojbcore-schema.xml"/>
+            </fileset>
+        </copy>
+        <copy file="build-torque.xml" todir="${build.dir}/webapp-sample/src/schema"/>
+
+    	<copy todir="${build.dir}/webapp-sample/src/resources">
+            <fileset dir="${src.test}/org/apache/ojb"
+            	     includes="${webapp-sample.resource.includes}"/>
+            <filterset>
+                <filter token="VALIDATION_QUERY" value="${validationQuery}"/>
+                <filter token="TEST_ON_BORROW" value="${testOnBorrow}"/>
+                <filter token="TEST_ON_RETURN" value="${testOnReturn}"/>
+            </filterset>
+        </copy>
+
+    	<!-- Note that we don't pre-build the webapp simply because it will get too big -->
+        <jar jarfile="${dist}/webapp-sample.jar"
+             basedir="${build.dir}"
+             includes="webapp-sample/**"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the documentation                                            -->
+    <!-- ================================================================== -->
+    <target name="sitedoc-prepare" depends="prepare">
+        <fail message="Please set the ANT_HOME environment variable to the root of your Ant installation.">
+            <condition>
+                <not>
+                    <isset property="env.ANT_HOME"/>
+                </not>
+            </condition>
+        </fail>
+        <fail message="To generate OJB docs, please set the environment variables as described in Forrest documentation.
+         If you don't have yet installed Forrest, you can get it from http://forrest.apache.org.">
+            <condition>
+                <not>
+                    <isset property="env.FORREST_HOME"/>
+                </not>
+            </condition>
+        </fail>
+        <fail message="Please check Forrest enviroment variables (e.g. between 0.6 and 0.7 these values change).">
+            <condition>
+                <not>
+                    <isset property="env.FORREST_HOME"/>
+                </not>
+            </condition>
+        </fail>
+        <fail message="Please make the Apache XML Commons Resolver library available in the classpath, e.g. by copying the xml-commons-resolver jar file from the 'tools/ant/lib' subdirectory of your Forrest installation (${env.FORREST_HOME}/tools/ant/lib) into the lib subdirectory of your Ant installation (${env.ANT_HOME}/lib).">
+            <condition>
+                <not>
+                    <available classname="org.apache.xml.resolver.Resolver"/>
+                </not>
+            </condition>
+        </fail>
+
+        <echo message="*** Preparing generation of documentation ..."/>
+
+        <delete dir="${build.doc}" failonerror="false"/>
+        <mkdir dir="${build.doc}"/>
+
+        <!-- Copy generated javadoc into the forrest structure in the temporary directoy -->
+        <copy todir="${forrest.javadoc.destdir}">
+            <fileset dir="${build.javadoc}"/>
+        </copy>
+    </target>
+
+    <target name="run-forrest"
+        description="Generates the complete site documentation using Forrest">
+        <!-- Copy auxiliary documentation src files to the temporary directory -->
+        <copy file="${forrest.staticfiles.srcdir}/repository.dtd"
+              tofile="${forrest.staticfiles.destdir}/repository.dtd.txt" />
+        <copy file="${forrest.staticfiles.srcdir}/repository.xml"
+              tofile="${forrest.staticfiles.destdir}/repository.xml.txt" />
+        <copy file="${forrest.staticfiles.srcdir}/repository_database.xml"
+              tofile="${forrest.staticfiles.destdir}/repository_database.xml.txt" />
+        <copy file="${forrest.staticfiles.srcdir}/repository_internal.xml"
+              tofile="${forrest.staticfiles.destdir}/repository_internal.xml.txt" />
+        <copy file="${forrest.staticfiles.srcdir}/repository_junit.xml"
+              tofile="${forrest.staticfiles.destdir}/repository_junit.xml.txt" />
+        <copy file="${forrest.staticfiles.srcdir}/repository_user.xml"
+              tofile="${forrest.staticfiles.destdir}/repository_user.xml.txt" />
+        <copy file="${miscsamples.src.dir}/org/apache/ojb/tutorials/PBExample.java"
+              tofile="${forrest.staticfiles.destdir}/PBExamples.txt" />
+	    <copy file="${forrest.staticfiles.srcdir}/OJB.properties"
+	          tofile="${forrest.staticfiles.destdir}/OJB.properties.txt" />
+	    <copy file="release-notes.txt"
+	          tofile="${forrest.staticfiles.destdir}/release-notes.txt" />
+
+        <mkdir dir="${forrest.staticfiles.destdir}/dtdx"/>
+
+        <!-- ** workaround part 1**
+            This is needed to use a plugin which generates a html file of .dtd
+            files. The plugin only work with resources in forrest classpath. This
+            should be fixed in next version of forrest
+        -->
+        <echo>Workaround: Copy repository.dtd to a Forrest installation directory</echo>
+        <copy file="${forrest.staticfiles.srcdir}/repository.dtd"
+              todir="${env.FORREST_HOME}/main/webapp/resources/schema/dtd"/>
+
+        <!-- Do temporary copy OJB's repository.dtd to Forrest directory, will be removed at end of process -->
+
+        <!-- Copy all forrest src stuff to a temporary directoy -->
+        <copy todir="${build.doc}">
+            <fileset dir="${src.forrest}"/>
+        </copy>
+        <!-- clean forrest build -->
+        <ant antfile="${env.FORREST_HOME}/main/forrest.build.xml"
+    		 dir="${build.doc}"
+    		 inheritall="false"
+    		 target="clean">
+            <property name="forrest.home" value="${env.FORREST_HOME}"/>
+    	</ant>
+        <!-- Run, Forrest! Run! :-) -->
+        <echo>
+            ** Start running Forrest in '${forrest-mode}' mode **
+        </echo>
+        <ant antfile="${env.FORREST_HOME}/main/forrest.build.xml"
+    		 dir="${build.doc}"
+    		 inheritall="false"
+    		 target="${forrest-mode}">
+    		<property name="forrest.home" value="${env.FORREST_HOME}"/>
+    	</ant>
+
+        <!-- ** workaround part 2 **
+            This is needed to use a plugin which generates a html file of .dtd
+            files. The plugin only work with resources in forrest classpath. This
+            should be fixed in next version of forrest
+        -->
+        <delete file="${env.FORREST_HOME}/main/webapp/resources/schema/dtd/repository.dtd"/>
+
+    </target>
+
+    <target name="doc" depends="javadoc,sitedoc-prepare"
+            description="Generates complete API- and site documentation">
+        <!-- start forrest in "site" mode -->
+        <antcall target="run-forrest">
+            <param name="forrest-mode" value="site"/>
+        </antcall>
+        <!-- Finally we can copy the generated documentation to its designated place -->
+        <mkdir dir="${doc}"/>
+        <copy todir="${doc}">
+            <fileset dir="${forrest.output.dir}"/>
+        </copy>
+    </target>
+
+    <!--
+    Specific developer target, sync Forrest webApp directory with OJB's
+    Forrest documentation files. Use this target in combination with
+    target 'dev-doc-forrest'
+    -->
+    <target name="dev-doc-sync" depends=""
+            description="dev-target: Copy changed doc files to forrest src directory">
+        <echo>Copy changed doc files to Forrest working directory</echo>
+        <copy todir="${build.doc}">
+            <fileset dir="${src.forrest}"/>
+        </copy>
+    </target>
+
+    <!--
+    Specific developer target, run Forrest as webApp to render OJB's
+    Forrest documentation files just in time. Use this target in
+    combination with target 'dev-doc-sync' to copy changed files to
+    Forrest webApp
+    -->
+    <target name="dev-doc-forrest" depends=""
+            description="dev-target: Run Forrest as webApp">
+        <echo message="Start Forrest as webApp (default is http://localhost:8888/)
+        use target 'dev-doc-sync' to sync changes in forrest .xml files" />
+        <!-- start forrest in "site" mode -->
+        <antcall target="run-forrest">
+            <param name="forrest-mode" value="run"/>
+        </antcall>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the API JavaDocs                                             -->
+    <!-- ================================================================== -->
+    <target name="javadoc" depends="prepare" description="Builds the API javadocs.">
+        <mkdir dir="${build.javadoc}"/>
+        <javadoc sourcepath="${build.src}:${build.srctools}"
+        		 classpathref="compilation-classpath"
+                 destdir="${build.javadoc}"
+                 doctitle="${icon}${br}${name} ${version} API documentation"
+                 windowtitle="${name} ${version} API documentation"
+                 bottom="${copyright}${br}Version: ${version}, ${versiondate}"
+                 public="true"
+                 author="true"
+                 version="true"
+                 packagenames="${apipackagenames}"
+                 stylesheetfile="${javadoc.stylesheet}"
+        >
+            <!-- Rather than specifying ${build.srctest} in the sourcepath, we
+                 have to use an enclosed fileset because the unit tests have the
+                 same packagenames as the tested features, but we don't want them
+                 in the javadoc -->
+            <fileset dir="${src.test}" defaultexcludes="yes">
+                <include name="org/apache/ojb/junit/**" />
+                <include name="org/apache/ojb/performance/**" />
+            </fileset>
+        </javadoc>
+        <copy todir="${build.javadoc}">
+            <fileset dir="${build.src}" includes="**/*.gif"/>
+        </copy>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the docs and doc archives                                    -->
+    <!-- ================================================================== -->
+    <target name="docs" depends="doc"
+            description="Builds the complete documentation archive.">
+        <zip zipfile="${dist}/${archive}-doc.zip"
+             basedir="."
+             includes="doc/**"/>
+        <tar tarfile="${dist}/${archive}-doc.tar"
+             basedir="."
+             includes="doc/**"/>
+        <gzip src="${dist}/${archive}-doc.tar"
+              zipfile="${dist}/${archive}-doc.tgz"/>
+        <delete file="${dist}/${archive}-doc.tar"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the website                                                  -->
+    <!-- ================================================================== -->
+    <target name="website" depends="doc" description="Builds the ojb-website archive.">
+        <tar tarfile="${dist}/${archive}-website.tar"
+             basedir="${doc}"
+             includes="**"/>
+        <gzip src="${dist}/${archive}-website.tar"
+              zipfile="${dist}/${archive}-website.tgz"/>
+        <delete file="${dist}/${archive}-website.tar"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the contributions archive                                    -->
+    <!-- ================================================================== -->
+    <target name="contrib" description="Builds the contributions archive">
+        <tar tarfile="${dist}/${archive}-contrib.tar"
+             basedir="contrib"
+             includes="**"/>
+        <gzip src="${dist}/${archive}-contrib.tar"
+              zipfile="${dist}/${archive}-contrib.tgz"/>
+        <delete file="${dist}/${archive}-contrib.tar"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build the source distribution                                      -->
+    <!-- ================================================================== -->
+    <target name="source" depends="prepare"
+            description="Builds the ojb source distribution in the dist directory.">
+        <delete file="${dist}/${archive}-src.tgz"/>
+        <delete file="${dist}/${archive}-src.zip"/>
+        <delete dir="${build.dir}/${archive}"/>
+        <mkdir dir="${build.dir}/${archive}"/>
+
+        <mkdir dir="${build.dir}/${archive}/bin"/>
+        <copy todir="${build.dir}/${archive}/bin">
+            <fileset dir="${bin}"/>
+        </copy>
+
+        <mkdir dir="${build.dir}/${archive}/src"/>
+        <copy todir="${build.dir}/${archive}/src">
+            <fileset dir="${source}"/>
+        </copy>
+
+        <mkdir dir="${build.dir}/${archive}/lib"/>
+        <copy todir="${build.dir}/${archive}/lib">
+            <fileset dir="${lib}">
+              <include name="*.jar"/>
+              <exclude name="jdo.jar"/>
+              <exclude name="jdori.jar"/>
+              <exclude name="jdori-enhancer.jar"/>
+              <exclude name="ejb.jar"/>
+              <exclude name="servlet.jar"/>
+              <exclude name="jta-spec1_0_1.jar"/>
+	      	  <exclude name="j2ee.jar"/>
+	          <exclude name="jndi.jar"/>
+	          <exclude name="proxy.jar"/>
+	          <exclude name="db2java.jar"/>
+	          <exclude name="db2jcc.jar"/>
+            </fileset>
+        </copy>
+
+        <mkdir dir="${build.dir}/${archive}/contrib"/>
+
+        <mkdir dir="${build.dir}/${archive}/profile"/>
+        <copy todir="${build.dir}/${archive}/profile">
+            <fileset dir="profile"/>
+        </copy>
+
+        <copy todir="${build.dir}/${archive}">
+            <fileset dir="." includes="*.sh,*.bat,*.xml,*.html,*.txt,*.properties,LICENSE,NOTICE"/>
+        </copy>
+        <chmod dir="${build.dir}/${archive}" perm="ugo+rwx" includes="*.sh"/>
+
+        <tar includes="${archive}/**"
+             basedir="${build.dir}"
+             tarfile="${dist}/${archive}-src.tar"/>
+        <gzip src="${dist}/${archive}-src.tar"
+              zipfile="${dist}/${archive}-src.tgz"/>
+        <delete file="${dist}/${archive}-src.tar"/>
+
+        <zip zipfile="${dist}/${archive}-src.zip"
+             basedir="${build.dir}"
+             includes="${archive}/**"/>
+    </target>
+
+	<target name="snapshot" depends="useDate,release"/>
+
+	<target name="useDate">
+		<tstamp/>
+		<property name="useDate" value="true"/>
+	</target>
+
+    <!-- ================================================================== -->
+    <!-- Build a full release including JAR, zip/tarball, source            -->
+    <!-- and documentation                                                  -->
+    <!-- ================================================================== -->
+    <target name="release"
+            depends="clean,with-jdori,jar,source,docs,tarball,website,contrib,ojb-blank,sample-jars,webapp-sample"
+            description="Cleans and builds all release archives." />
+
+    <!-- ================================================================== -->
+    <!-- Build the binary distribution including JAR                        -->
+    <!-- ================================================================== -->
+    <target name="tarball" depends="prepare,jar"
+            description="Builds the binary distribution in the dist directory.">
+        <delete file="${dist}/${archive}-bin.tgz"/>
+        <delete file="${dist}/${archive}-bin.zip"/>
+        <delete file="${dist}/${archive}-bin-without-dependencies.tgz"/>
+        <delete file="${dist}/${archive}-bin-without-dependencies.zip"/>
+        <delete dir="${build.dir}/${archive}"/>
+        <mkdir dir="${build.dir}/${archive}"/>
+        <mkdir dir="${build.dir}/${archive}/lib"/>
+
+        <mkdir dir="${build.dir}/${archive}/bin"/>
+        <copy todir="${build.dir}/${archive}/bin">
+            <fileset dir="${bin}"/>
+        </copy>
+        <copy todir="${build.dir}/${archive}/etc">
+            <fileset dir="${etc}" includes="**"/>
+        </copy>
+
+        <mkdir dir="${build.dir}/${archive}/profile"/>
+        <copy todir="${build.dir}/${archive}/profile">
+            <fileset dir="profile"/>
+        </copy>
+
+        <copy todir="${build.dir}/${archive}">
+            <fileset dir=".">
+                 <include name="*.sh"/>
+                 <include name="*.bat"/>
+                 <include name="*.html"/>
+                 <include name="*.txt"/>
+                 <include name="LICENSE"/>
+                 <include name="NOTICE"/>
+            </fileset>
+        </copy>
+        <chmod dir="${build.dir}/${archive}" perm="ugo+rwx" includes="*.sh"/>
+
+		<mkdir dir="${build.dir}/${archive}/src/test/org/apache/ojb"/>
+        <copy todir="${build.dir}/${archive}/src/test/org/apache/ojb">
+            <fileset dir="${source}/test/org/apache/ojb"
+                     includes="*.xml,*.dtd,*.jdo,*.properties,*.xsl,*.ccf"/>
+        </copy>
+
+		<mkdir dir="${build.dir}/${archive}/src/test/org/apache/ojb/quick-db"/>
+        <copy todir="${build.dir}/${archive}/src/test/org/apache/ojb/quick-db">
+            <fileset dir="${source}/test/org/apache/ojb/quick-db" />
+        </copy>
+
+		<mkdir dir="${build.dir}/${archive}/src/test/org/apache/ojb/faraway-db"/>
+        <copy todir="${build.dir}/${archive}/src/test/org/apache/ojb/faraway-db">
+            <fileset dir="${source}/test/org/apache/ojb/faraway-db" />
+        </copy>
+
+
+		<mkdir dir="${build.dir}/${archive}/src/java"/>
+		<mkdir dir="${build.dir}/${archive}/src/jca"/>
+		<mkdir dir="${build.dir}/${archive}/src/schema"/>
+		<copy todir="${build.dir}/${archive}/src/schema">
+            <fileset dir="${source}/schema"/>
+        </copy>
+
+        <copy todir="${build.dir}/${archive}/lib">
+            <fileset dir="${dist}" includes="*.jar"/>
+        </copy>
+
+        <zip zipfile="${dist}/${archive}-without-dependencies.zip"
+             basedir="${build.dir}"
+             includes="${archive}/**"/>
+        <checksum file="${dist}/${archive}-without-dependencies.zip"
+                  forceOverwrite="yes"/> 
+
+        <tar tarfile="${dist}/${archive}-bin-without-dependencies.tar" basedir="${build.dir}"
+             includes="${archive}/**"
+             excludes="${archive}/*.tar,${archive}/*.zip"/>
+        <gzip src="${dist}/${archive}-bin-without-dependencies.tar" zipfile="${dist}/${archive}-bin-without-dependencies.tgz"/>
+        <delete file="${dist}/${archive}-bin-without-dependencies.tar"/>
+
+        <copy todir="${build.dir}/${archive}/lib">
+            <fileset dir="${lib}">
+              <include name="*.jar"/>
+              <exclude name="jdo.jar"/>
+              <exclude name="jdori.jar"/>
+              <exclude name="jdori-enhancer.jar"/>
+              <exclude name="ejb.jar"/>
+              <exclude name="servlet.jar"/>
+              <exclude name="jta-spec1_0_1.jar"/>
+              <exclude name="j2ee.jar"/>
+              <exclude name="jndi.jar"/>
+              <exclude name="proxy.jar"/>
+              <exclude name="db2java.jar"/>
+              <exclude name="db2jcc.jar"/>
+              <exclude name="xalan.jar"/>
+            </fileset>
+        </copy>
+
+        <zip zipfile="${dist}/${archive}-bin.zip"
+             basedir="${build.dir}"
+             includes="${archive}/**"/>
+
+        <tar tarfile="${dist}/${archive}-bin.tar" basedir="${build.dir}"
+             includes="${archive}/**"
+             excludes="${archive}/*.tar,${archive}/*.zip"/>
+        <gzip src="${dist}/${archive}-bin.tar" zipfile="${dist}/${archive}-bin.tgz"/>
+        <delete file="${dist}/${archive}-bin.tar"/>
+
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Perform JUnit Tests                                                -->
+    <!-- ================================================================== -->
+    <target name="junit" depends="main, junit-no-compile"
+    	description="Performs all JUnit regression tests."/>
+
+    <!-- property 'test.package' has to be set at command line -->
+    <target name="run-test" depends="prepare-repository, copy-testdb">
+        <junit printsummary="yes" showoutput="true" fork="yes" dir="${build.test}/ojb">
+            <classpath refid="runtime-classpath"/>
+            <formatter type="plain" />
+            <test name="${test.package}"
+                  haltonfailure="no"
+                  outfile="target/test/run-test"
+             >
+            </test>
+        </junit>
+    </target>
+
+    <target name="junit-no-compile"
+    	    depends="prepare, prepare-testdb, junit-no-compile-no-prepare,junit-no-compile-no-prepare-selected"
+    />
+
+    <target name="junit-no-compile-no-prepare"  unless="ojb.testsToRun">
+
+        <junit printsummary="yes" fork="yes" dir="${build.test}/ojb">
+            <jvmarg value="-DOJB.skip.issues=${OJB.skip.issues}" />
+            <classpath refid="runtime-classpath"/>
+            <formatter type="plain" />
+            <formatter type="xml" />
+
+            <test name="org.apache.ojb.broker.AllTests"
+                  haltonfailure="no"
+                  outfile="target/test/tests-broker" >
+            </test>
+
+            <test name="org.apache.ojb.odmg.AllTests"
+                  haltonfailure="no"
+                  outfile="target/test/tests-odmg" >
+            </test>
+            <test name="org.apache.ojb.soda.AllTests"
+                  haltonfailure="no"
+                  outfile="target/test/tests-soda" >
+            </test>
+
+            <test name="org.apache.ojb.otm.AllTests"
+                  haltonfailure="no"
+                  outfile="target/test/tests-otm" >
+            </test>
+
+        </junit>
+    </target>
+
+    <target name="junit-no-compile-no-prepare-selected" if="ojb.testsToRun">
+
+        <junit printsummary="yes" fork="yes" dir="${build.test}/ojb">
+            <jvmarg value="-DOJB.skip.issues=${OJB.skip.issues}" />
+            <classpath refid="runtime-classpath"/>
+            <formatter type="plain" />
+            <formatter type="xml" />
+
+            <!-- For whatever reason you have to provide source files to batchtest
+                 so the usage of this would be somthing like:
+
+                 ant -Dojb.testsToRun=org/apache/ojb/broker/AllTests.java junit
+
+                 to execute all PB tests -->
+            <batchtest fork="yes" haltonfailure="no"
+                       todir="target/test" >
+                <fileset dir="${build.srctest}">
+                    <include name="${ojb.testsToRun}"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+      <target name="junit-sqlcount-no-compile"
+    	    depends="prepare, prepare-testdb, junit-sqlcount-no-compile-no-prepare, junit-sqlcount-impossible"
+          description="Run the sql statement count tests"
+    />
+
+  <target name="junit-sqlcount-impossible" depends="checkP6Spy" unless="shouldUseP6Spy">
+ 		<echo message="junit-sqlcount does not run without p6spy.  Please set ant property -DuseP6Spy=true."/>
+  </target>
+
+  <!-- run the sql count tests.-->
+  <!-- todo: maybe let them run in an extra directory -->
+  <target name="junit-sqlcount-no-compile-no-prepare" depends="checkP6Spy" if="shouldUseP6Spy">
+    <junit printsummary="yes" fork="yes" dir="${build.test}/ojb">
+        	<jvmarg value="-DOJB.skip.issues=${OJB.skip.issues}" />
+            <classpath refid="runtime-classpath"/>
+            <formatter type="plain" />
+            <formatter type="xml" />
+            <test name="org.apache.ojb.broker.sqlcount.AllTests"
+                  haltonfailure="no"
+                  outfile="target/test/tests-sqlcount" >
+            </test>
+    </junit>
+  </target>
+
+	<target name="junit-report" depends="" description="create JUnit HTML report, requires Xalan">
+		<junitreport todir="target/test">
+			<fileset dir="target/test">
+				<include name="tests-*.xml"/>
+			</fileset>
+			<report format="frames" todir="target/test"/>
+		</junitreport>
+	</target>
+
+    <target name="copy-testdb" depends="prepare">
+    	<delete file="${build.test}/OJB.properties"/>
+    	<delete file="${build.test}/OJB.script"/>
+    	<delete file="${build.test}/OJB.log"/>
+    	<copy file="${src.test}/org/apache/ojb/quick-db/OJB.properties" tofile="${build.test}/OJB.properties"/>
+    	<copy file="${src.test}/org/apache/ojb/quick-db/OJB.script" tofile="${build.test}/OJB.script"/>
+
+    </target>
+
+    <target name="junit-quick" depends="prepare-repository, copy-testdb, junit-no-compile-no-prepare,junit-no-compile-no-prepare-selected" />
+
+    <!-- ================================================================== -->
+    <!-- Performance tests                                                  -->
+    <!-- ================================================================== -->
+    <target name="performance" depends="prepare-repository, copy-testdb"
+            description="Performance benchmark, compare the PB-api/ODMG-api
+            with direct JDBC calls">
+        <java fork="yes" classname="org.apache.ojb.compare.PerformancePBTest"
+              dir="${build.test}/ojb" taskname="ojb" failonerror="true" >
+            <classpath refid="runtime-classpath"/>
+            <arg value="1500"/>
+            <arg value="3"/>
+            <jvmarg value="-Xms128m"/>
+            <jvmarg value="-Xmx256m"/>
+        </java>
+
+        <java fork="yes" classname="org.apache.ojb.compare.PerformanceJdbcTest"
+              dir="${build.test}/ojb" taskname="jdbc" failonerror="true" >
+            <classpath refid="runtime-classpath"/>
+            <arg value="1500"/>
+            <arg value="3"/>
+            <jvmarg value="-Xms128m"/>
+            <jvmarg value="-Xmx256m"/>
+            <!--jvmarg value="-Xrunhprof:cpu=times,file=perf.hprof.txt" /-->
+        </java>
+
+        <java fork="yes" classname="org.apache.ojb.compare.PerformanceODMGTest"
+              dir="${build.test}/ojb" taskname="odmg" failonerror="true" >
+            <classpath refid="runtime-classpath"/>
+            <arg value="1500"/>
+            <arg value="3"/>
+            <jvmarg value="-Xms128m"/>
+            <jvmarg value="-Xmx256m"/>
+        </java>
+
+        <java fork="yes" classname="org.apache.ojb.compare.PerformanceOTMTest"
+              dir="${build.test}/ojb" taskname="otm" failonerror="true" >
+            <classpath refid="runtime-classpath"/>
+            <arg value="1500"/>
+            <arg value="3"/>
+            <jvmarg value="-Xms128m"/>
+            <jvmarg value="-Xmx256m"/>
+        </java>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- failover tests                                                  -->
+    <!-- ================================================================== -->
+    <target name="failover"
+            description="db failover tests">
+        <java fork="yes" classname="org.apache.ojb.compare.PerformanceJdbcFailoverTest"
+              dir="${build.test}/ojb" taskname="ojb" failonerror="true" >
+            <classpath refid="runtime-classpath"/>
+            <arg value="10000"/> <!-- number of operations per run-->
+            <arg value="5"/>     <!-- number of subsequent runs to perform-->
+            <arg value="3"/>     <!-- number of retries for each operation-->
+            <arg value="60"/>    <!-- maximum wait time during failover in seconds-->
+            <jvmarg value="-Xms128m"/>
+            <jvmarg value="-Xmx256m"/>
+        </java>
+
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Simple Performance Framework                                       -->
+    <!-- ================================================================== -->
+    <target name="perf-test" depends="prepare-testdb"
+            description="Simple performance benchmark and stress test for PB- and ODMG-api">
+        <java fork="yes" classname="org.apache.ojb.performance.PerfMain"
+              dir="${build.test}/ojb" taskname="ojb" failonerror="true" >
+            <classpath refid="runtime-classpath"/>
+            <!-- comma separated list of the PerfTest implementations -->
+            <arg value=
+            "org.apache.ojb.compare.OJBPerfTest$JdbcPerfTest,
+            org.apache.ojb.compare.OJBPerfTest$PBPerfTest,
+            org.apache.ojb.compare.OJBPerfTest$ODMGPerfTest"
+            />
+            <arg value="6"/> <!-- test loops, default was 6 -->
+            <arg value="12"/> <!-- performed threads, default was 12 -->
+			<arg value="500"/> <!-- number of managed objects per thread, default was 500 -->
+            <arg value="false"/> <!-- if 'false' we use performance mode, 'true' we do run in stress mode -->
+            <arg value="true"/> <!-- if 'true' all log messages will be print -->
+            <jvmarg value="-Xms128m"/>
+            <jvmarg value="-Xmx256m"/>
+        </java>
+        <!-- do some cleanup -->
+        <ant target="copy-testdb"/>
+    </target>
+
+    <target name="perf-test-jar" depends="prepare">
+
+
+        <!-- compile perf classes -->
+        <javac srcdir="${build.srctest}"
+            includes="**/performance/*"
+			destdir="${build.desttest}"
+			debug="${debug}"
+			optimize="${optimize}"
+			deprecation="${deprecation}"
+        >
+			<classpath refid="compilation-classpath"/>
+		</javac>
+
+        <!-- jar the connector classes -->
+        <jar jarfile="${dist}/${archive}-performance.jar">
+            <fileset dir="${build.desttest}"
+                    includes="**/performance/*"
+            />
+            <fileset dir="${build.srctest}"
+                    includes="**/performance/*"
+            />
+            <manifest>
+                <attribute name="Vendor" value="db-ojb"/>
+                <attribute name="Title" value="Simple performance framework"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Browse Demo Database                                               -->
+    <!-- ================================================================== -->
+    <target name="browse-db" depends="init"
+            description="browses the test database">
+        <java fork="yes" classname="org.hsqldb.util.DatabaseManagerSwing"
+              dir="${build.test}" taskname="browse" failonerror="false">
+            <classpath refid="runtime-classpath"/>
+            <arg value="-url"/>
+            <arg value="jdbc:hsqldb:OJB"/>
+
+        </java>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- start Florian's reverse db tool                                    -->
+    <!-- ================================================================== -->
+    <target name="reverse-db"
+            description="Starts the OJB RDBMS reverse engineering tool">
+        <java fork="yes" classname="org.apache.ojb.tools.mapping.reversedb.Main"
+              dir="${build.test}" taskname="reversedb" failonerror="false" >
+            <classpath refid="runtime-classpath"/>
+        </java>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- start Florian's new reverse db tool                                    -->
+    <!-- ================================================================== -->
+    <target name="reverse-db2"
+            description="Starts the next generation OJB RDBMS reverse engineering tool">
+        <java fork="yes" classname="org.apache.ojb.tools.mapping.reversedb2.Main"
+              dir="${build.test}" taskname="reversedb2" failonerror="false" >
+            <classpath refid="runtime-classpath"/>
+        </java>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build OQL Parser classes from oql-ojb.g grammar                    -->
+    <!-- ================================================================== -->
+    <target name="oql" depends="init"
+            description="Builds OQL parser sources from ANTLR grammar file.">
+        <java fork="yes" classname="antlr.Tool" dir="${src.java}/org/apache/ojb/odmg/oql"
+              taskname="build oql parser" failonerror="true" >
+            <classpath refid="compilation-classpath"/>
+            <arg value="oql-ojb.g" />
+        </java>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Build JDO lexer/parser classes from jdoql-ojb-*.g grammars         -->
+    <!-- ================================================================== -->
+    <target name="jdoql" depends="init"
+            description="Builds JDO lexer/parser sources from ANTLR grammar files.">
+        <java fork="yes" classname="antlr.Tool" dir="${src.java}/org/apache/ojb/jdo/jdoql"
+              taskname="build jdoql lexer" failonerror="true" >
+            <classpath refid="compilation-classpath"/>
+            <arg value="jdoql-ojb-lexer.g" />
+        </java>
+        <java fork="yes" classname="antlr.Tool" dir="${src.java}/org/apache/ojb/jdo/jdoql"
+              taskname="build jdoql parser" failonerror="true" >
+            <classpath refid="compilation-classpath"/>
+            <arg value="jdoql-ojb-parser.g" />
+        </java>
+        <java fork="yes" classname="antlr.Tool" dir="${src.java}/org/apache/ojb/jdo/jdoql"
+              taskname="build jdoql tree-parser" failonerror="true" >
+            <classpath refid="compilation-classpath"/>
+            <arg value="jdoql-ojb-treeparser.g" />
+        </java>
+    </target>
+
+    <target name="declare" depends="main">
+        <taskdef name="verifymappings" classname="org.apache.ojb.broker.ant.VerifyMappingsTask">
+            <classpath refid="runtime-classpath" />
+        </taskdef>
+    </target>
+
+	<target name="verify" depends="declare" description="Verifies the ojb mapping file.">
+		<echo message="using cp: ${runtime.classpath}"/>
+    	<verifymappings propertiesFile="${build.dir}/test/ojb/OJB.properties"
+    					repositoryFile="${build.dir}/test/ojb/repository.xml"
+    					jdbcDriver="org.hsqldb.jdbcDriver"
+    					url="jdbc:hsqldb:target/test/OJB"
+    					logon="sa"
+    					password=""
+    					ignoreFieldNameCase="true"
+    					useStrictTypeChecking="false"
+    					useXMLValidation="true"
+    					failonerror="true">
+			<classpath refid="${runtime.classpath}"/>
+    	</verifymappings>
+   	</target>
+
+    <!-- ================================================================== -->
+    <!-- clover based code coverage analysis                                -->
+    <!-- 1. obtain clover from www.thecortex.net/clover                     -->
+    <!-- 2. place clover.jar in $ANT_HOME/lib and in $OJB_HOME/lib          -->
+    <!--                                                                    -->
+    <!-- ================================================================== -->
+	<target name="with-clover">
+    	<property
+    		name="build.compiler"
+            value="org.apache.tools.ant.taskdefs.CloverCompilerAdapter"
+        />
+	</target>
+
+	<target name="clover-report1">
+  		<java
+  			classname="com.cortexeb.tools.clover.reporters.jfc.Viewer"
+  			fork="yes"
+  		>
+   			<arg line="${clover.initstring}"/>
+   			<classpath refid="runtime-classpath"/>
+  		</java>
+	</target>
+
+	<target name="clover-report2">
+  		<java
+  			classname="com.cortexeb.tools.clover.reporters.html.HtmlReporter "
+  			fork="true"
+  		>
+   			<arg line="--outputdir ${build.dir}/clover_html --showSrc --initstring ${clover.initstring} --title 'My Project'"/>
+   			<classpath refid="runtime-classpath"/>
+  		</java>
+	</target>
+
+	<target name="getJSQLDriver" if="isJNETSQLServer" depends="initJNETSQLServer">
+		<get src="http://www.j-netdirect.com/Internal/JSQLConnect2/JSQLConnect.jar"
+			dest="lib/JSQLConnect.jar"
+			verbose="true"
+			usetimestamp="true"/>
+	</target>
+
+	<target name="initJNETSQLServer">
+	<condition property="isJNETSQLServer">
+		<equals arg1="${profile}" arg2="mssqldb-JSQLConnect"/>
+	</condition>
+	</target>
+
+  <!-- ================================================================== -->
+  <!-- Runs Checkstyle over OJB                                      -->
+  <!-- ================================================================== -->
+  <target name="checkstyle"
+          depends="prepare" 
+          description="Checks the sourcecode via Checkstyle">
+    <fail message="Due to licensing issues, OJB is not distributed with Checkstyle. If you want to use this task, then please put the checkstyle jar into the lib subdirectory.">
+      <condition>
+        <not>
+          <available classpathref="compilation-classpath"
+                     resource="checkstyletask.properties"/>
+        </not>
+      </condition>
+    </fail>
+
+    <taskdef resource="checkstyletask.properties"
+             classpathref="compilation-classpath"/>
+
+    <mkdir dir="${build.check}"/> 
+    <checkstyle config="${src.check}/ojb-checks.xml"
+                failOnViolation="false"
+                classpathref="compilation-classpath">
+      <fileset dir="${src.java}"
+               includes="**/*.java"/>
+
+      <formatter type="plain" usefile="false"/>
+      <!-- Location of cache-file (project specific) -->
+      <property key="checkstyle.cache.file" file="${build.check}/checkstyle/cachefile"/>
+    </checkstyle>
+  </target>
+
+    <!-- ================================================================== -->
+    <!-- Targets for the sample session bean ejb jar                        -->
+    <!-- ================================================================== -->
+    <target name="ejb-examples"
+            description="Generate the sample session bean ejb-app jar">
+        <ant dir="."
+             antfile="${basedir}/build-ejb-examples.xml"
+             target="jar-beans"/>
+        <ant dir="."
+             antfile="${basedir}/build-ejb-examples.xml"
+             target="jar-client"/>
+    </target>
+
+    <target name="prepare-jboss"
+            description="Copy jboss mbeans to code base">
+        <ant dir="."
+             antfile="${basedir}/build-ejb-examples.xml"
+             target="prepare-jboss"/>
+    </target>
+
+    <target name="ejb-examples-run"
+            description="Run the ejb-examples test clients">
+        <ant dir="."
+             antfile="${basedir}/build-ejb-examples.xml"
+             target="ejb-examples-run"/>
+    </target>
+
+    <!--
+    <target name="prepare-ejb-jar"
+            description="Prepare and extend the generated ejb jar">
+        <ant dir="."
+             antfile="${basedir}/build-ejb-examples.xml"
+             target="prepare-ejb-jar"/>
+    </target>
+    -->
+    <!-- ================================================================== -->
+    <!-- sample target that demonstrates the ojb xdoclet module             -->
+    <!-- ================================================================== -->
+
+   <target name="repository-files">
+        <taskdef name="ojbdoclet" classname="xdoclet.modules.ojb.OjbDocletTask"  classpathref="runtime-classpath"/>
+
+        <ojbdoclet destdir="${build.desttest}">
+            <fileset dir="${build.srctest}"/>
+            <ojbrepository destinationFile="repository_user.xml"/>
+            <torqueschema databaseName="test" destinationFile="project_schema.xml"/>
+        </ojbdoclet>
+    </target>
+
+	<!-- ================================================================== -->
+	<!-- Generate the JCA adapter for the OTM					            -->
+	<!-- ================================================================== -->
+	<target name="jca-compile">
+		<javac srcdir="${build.srcjca}" destdir="${build.destjca}" excludes="${excludes}"
+			   debug="on" deprecation="${deprecation}">
+			<classpath refid="compilation-classpath" />
+		</javac>
+	</target>
+
+	<target name="rar" depends="jca-compile" description="Builds the RAR for the OTM in optimized mode">
+		<ant target="jar"/>
+		<ant target="rar-internal"/>
+	</target>
+
+	<target name="rar-debug" depends="jca-compile" description="Builds the RAR for the OTM in debug mode">
+		<ant target="jar-debug"/>
+		<ant target="rar-internal"/>
+	</target>
+
+	<target name="rar-internal">
+		<delete file="${dist}/ojb-jca.rar"/>
+		<mkdir dir="${build.destjca}/META-INF/"/>
+		<copy file="${src.dir}/etc/MANIFEST.MF" todir="${build.destjca}/META-INF/"/>
+		<copy file="${src.dir}/etc/ra.xml" todir="${build.destjca}/META-INF/"/>
+		<echo message="${build.destjca}"/>
+		<jar jarfile="${dist}/ojb-jca.rar">
+			<fileset dir="${build.destjca}" excludes=".dependency-info/**"/>
+			<fileset dir="${lib}">
+				<exclude name="j2ee.jar"/>
+				<exclude name="ant.jar"/>
+				<exclude name="optional.jar"/>
+				<exclude name="antlr_compiletime.jar"/>
+				<exclude name="servlet.jar"/>
+				<exclude name="jboss-system.jar"/>
+				<exclude name="jboss-common.jar"/>
+				<exclude name="jboss-jmx.jar"/>
+				<exclude name="jcs.jar"/>
+				<exclude name="xdoclet.jar"/>
+				<exclude name="xalan.jar"/>
+				<exclude name="junit.jar"/>
+			</fileset>
+			<fileset dir="${dist}">
+				<include name="${archive}.jar"/>
+			</fileset>
+		</jar>
+	</target>
+
+    <!-- ================================================================== -->
+    <!-- End of targets                                                     -->
+    <!-- ================================================================== -->
+
+</project>

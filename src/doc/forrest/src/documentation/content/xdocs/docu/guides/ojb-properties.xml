@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: ojb-properties.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>OJB.properties Configuration File</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>OJB Configuration</title>
+            <p>
+                OJB provides two different configuration
+                mechanisms:
+            </p>
+            <ol>
+                <li>
+                    An XML based
+                    <strong>
+                        <code>repository.xml</code>
+                    </strong> is used to
+                    define the Object/Relational Mapping. This Mapping is translated
+                    into a metadata dictionary at runtime. The metadata layer may also be
+                    manipulated at runtime through OJB API calls.
+                    <a href="site:repository">Follow
+                        this link to learn more about the XML repository</a>.
+                </li>
+                <li>
+                    A properties file
+                    <a href="ext:ojb.properties">
+                        <strong>
+                            <code>OJB.properties</code>
+                        </strong>
+                    </a>
+                    that is responsible for the configuration of the OJB runtime
+                    environment. It contains information that does not
+                    change at runtime and does not contain O/R mapping
+                    related information.
+                </li>
+            </ol>
+            <p>
+                The rest of this document details on this properties file.
+            </p>
+        </section>
+
+        <section>
+            <title>OJB.properties File</title>
+            <p>
+                By default this file is named
+                <strong>
+                    <code>OJB.properties</code>
+                </strong> and is loaded from the
+                <strong>classpath</strong>
+                by a J2EE compliant resource lookup:
+            </p>
+            <source><![CDATA[
+Thread.currentThread().getContextClassLoader().getResource(getFilename());]]></source>
+            <p>
+                The  filename of
+                the properties file can be changed by setting a Java system property.
+                This can be done programmatically:
+            </p>
+            <source><![CDATA[
+System.setProperty("OJB.properties","myOwnPropertiesFile.props");]]></source>
+            <p>
+                or by setting a -D option to the JVM:
+            </p>
+            <source><![CDATA[
+ java -DOJB.properties=myOwnPropertiesFile.props my.own.ojb.Application]]></source>
+            <p>
+                All things that can be configured by OJB.properties are commented
+                in the file itself.
+                <a href="ext:ojb.properties">Have a look at the default version of this file</a>.
+            </p>
+        </section>
+    </body>
+</document>
+
+
+
+
+
+

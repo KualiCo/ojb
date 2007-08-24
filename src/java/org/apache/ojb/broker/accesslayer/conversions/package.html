@@ -1,0 +1,63 @@
+<html>
+<head>
+<title>Conversions package</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF">
+This package contains classes related to type and value conversions 
+between attributes of persistent classes and their mapped columns in
+the relational database. 
+<P>
+The <code>FieldConversion>/code> interface defines two callback methods
+for conversion from Java to Database (<code>javaToSql(Object source)</code>) 
+and from Database to Java (<code>sqlToJava(Object source)</code>).
+<br>
+OJB users can use predefined FieldConversion implementations contained in 
+this package and can also implement their own conversions that perform 
+arbitrary mappings.
+The usage of a FieldConversion must be declared in the FieldDescriptor
+element in the repository.xml file.
+<P>
+The conversion-methods of the <code>FieldConversion>/code> interface may 
+throw a <code>ConversionException</code> to signal errors 
+during the conversion operations.
+<P>
+The class <code>FieldConversionDefaultImpl</code> is the default 
+implementation of the <code>FieldConversion>/code> interface.
+This implementation does not modify its input.
+<P>
+The class <code>Boolean2IntFieldConversion</code> is an 
+implementation of the <code>FieldConversion>/code> interface 
+that provides a conversion from persistent classes attributes of type
+<code>Boolean</code> to rdbms columns of type <code>BIGINT</code>, 
+<code>INTEGER</code>, <code>SMALLINT</code>, <code>TINYINT</code> or 
+<code>BIT</code>. 
+<P>
+The class <code>JavaDate2SqlDateFieldConversion</code> is an 
+implementation of the <code>FieldConversion>/code> interface 
+that provides a conversion from persistent classes attributes of type
+<code>java.util.Date</code> to rdbms columns of type <code>java.sql.Date</code>.
+<P>
+The class <code>Object2ByteArrFieldConversion</code> is an 
+implementation of the <code>FieldConversion>/code> interface 
+that provides a conversion from persistent classes attributes of type
+<code>java.lang.Object</code> (or any subtype)
+to rdbms columns of a type able of holding byte arrays (<code>CHAR</code>, 
+<code>VARCHAR</code>, <code>LONGVARCHAR</code>, <code>BINARY</code>, 
+<code>VARBINARY</code>, or <code>LONGVARBINARY</code>).
+<br>
+This conversion can be useful if embedded objects can not be mapped on a
+dedicated extra table but must be "inlined".
+This approach is used for the mapping of DListEntry object that hold an 
+inlined Identity Object. 
+
+<P>
+Patterns applied:
+Callback, Strategy
+
+<P>
+Todo:
+Provide more predefined implementations
+</body>
+</html>

@@ -1,0 +1,901 @@
+@version $Id: release-notes.txt,v 1.1 2007-08-24 22:17:36 ewestfal Exp $
+
+========================================================================
+ObJectRelationalBridge -- Bridging Java Objects and Relational Databases
+========================================================================
+
+Apache ObJectRelationalBridge (OJB) is an Object/Relational mapping tool
+that provides transparent transactional persistence for Java Objects
+against relational databases. OJB provides ODMG and JDO interfaces.
+
+More information is available at http://db.apache.org/ojb
+
+Please refer to our issue tracker for more details on issues with id [OJB-xxx]
+http://issues.apache.org/jira/browse/OJB
+
+
+---------------------------------------------------------------------
+Release 1.0.4
+---------------------------------------------------------------------
+NEW FEATURES:
+* Support for embedded & network Derby (only distinct count queries don't work yet)
+* Added ability to prepare the database for OJB's unit tests via DdlUtils (instead of Torque)
+  Note that this is required when running the tests against Derby
+* [OJB-10] - Configurable Proxy generation (including CGLIB based generation)
+* [OJB-31] - Configurable JDBC driver-setting setFetchSize
+* [OJB-14] - Setting custom JDBC driver tuning options trough jdbc-connection-descriptor
+* [OJB-6]  - Support for stored procedures returning ResultSet.
+* [OJB-41] - ODMG-api: Allow cascading delete using auto-delete setting in metadata
+* [OJB-66] - Allow to specify a sequence start element for SequenceManagerNextValImpl.
+  Fixed for Oracle, PostgreSQL, MaxDB/SapDB, DB2. Additionally sequence properties
+  like 'increment by', 'cache', 'order',... are supported too. See 'sequence manger'
+  guide and javadoc
+* Add new ODMG extensions and configuration properties. All properties can be set
+  at runtime as global property in class ImplementationExt and for a specific
+  transaction in class TransactionExt:
+  - 'ordering' Allow to dis-/enable OJB's object ordering on transaction commit
+  - 'implicitLocking' Dis-/enable OJB's implicit locking
+* Add new property 'TxCheck' in OJB.properties file. When enabled, on PB store and
+  delete calls OJB checks for a running PB-tx, if not found an error is logged in order to
+  avoid store/delete calls without a running PB-tx (while development).
+
+NOTES:
+* Internal OJB class configuration files are changed, don't forget to replace
+  these files on upgrade from older version (by default the internal used
+  classes are located in repository_internal.xml).
+* Improved performance comparison tests ('ant perf-test' and 'ant performance').
+  Now the tests more fair for registered API's
+* In order to facilitate [OJB-10] the constructor signature of VirtualProxy has been changed.  
+
+CHANGES:
+* INTERNAL API CHANGES:
+  Pluggable class interfaces changed to support and fix OJB-31, OJB-6, OJB-63:
+  - StatementsForClassIF
+  - StatementManagerIF
+  - Platform
+  - RowReader
+  - SqlGenerator
+* Configurable ProxyFactory is now available. Both JDK-based (default) and CGLIB
+  are provided. CGLIB-based generation allows for proxies to be generated for all
+  persistent classes, and not just ones that implement an interface.
+* Change in behavior of property 'useAutoCommit="1"' in jdbc-connection-descriptor
+  detailed info can be found in reference guide of the repository file
+* ConnectionFactoryManagedImpl is declared deprecated. Now OJB automatic detect the
+  running JTA-transaction and suppress critical method calls on the used connection
+* Removed deprecated SequenceManager implementation SequenceManagerMySQLImpl
+* Remove unused method #setReferenceFKs from SequenceManager interface
+* ODMG-api: Method behavior of ImplementationImpl#setImplicitLocking(boolean) changed.
+  Now this method set the global property for 'implicitLocking'. Old version only changed the
+  implicit locking behavior for the current used transaction, this is moved to
+  TransactionExt#setImplicitLocking
+* Internal used OJB_HL_SEQ table changed. Remove of deprecated column.
+  If the SequenceManagerHighLowImpl was used and problems occur after upgrade, please
+  drop and recreate this table without removed column
+* Cleanup naming of 'PersistentField' implementation classes: Remove deprecated classes, rename
+  implementation classes, declare all ...ImplNew classes as deprecated.
+  See OJB.properties file.
+* Upgraded ANTLR to v2.7.5 (OQL and JDOQL parser classes have been re-generated)
+* Upgraded commons-dbcp to v1.2.1
+* Upgraded commons-pool to v1.2
+* Upgraded commons-beanutils to v1.7
+* Upgraded commons-logging to v1.0.4
+* Upgraded commons-collections to v3.1
+* Upgraded hsql to v1.8.0.2
+* Upgraded Torque to v3.1.1
+
+BUG FIXES:
+* [OJB-18] - ODMG ordering problem with circular/bidirectional 1:1 references
+* [OJB-25] - Inheritance (each subclass on separate table) PK problem with
+  nextval SequenceManager
+* [OJB-26] - JDBC-ODBC bridge problem
+* [OJB-27] - [ODMG] Foreign key violation
+* [OJB-29] - Infinite loop in case of refresh=true and cycles in references
+* [OJB-40] - CallableStatement check doesn't work with maxDB
+* [OJB-42] - MsSQLServer, auto-generated querry error (m:n relation)
+* [OJB-44] - ReferenceMap$Entry keeps growing over period of application usage.
+* [OJB-52] - KeyConstraintViolatedException during store
+* [OJB-54] - ConnectionFactoryManagedImpl may try to use pool
+* [OJB-55] - Getting foreignkeyField's FieldDescriptor is failing if the foreignkey
+  field is defined in the base class
+* [OJB-59] - Incorrect identity management in SequenceManagerNativeImpl
+  because of wrong plate-forme settings
+* [OJB-62] - addPathClass in QueryByCriteria does not consider inheritance
+* [OJB-63] - Bug when query against objects mapped on multiple joined tables ("super"-references)
+* [OJB-70] - Connection reset by peer: socket write error
+* [OJB-76] - OJB MtoN implementor failes to work properly with composite M&N keys that
+  have some fields common.
+* [OJB-77] - PlatformMsSQLServerImpl.getLastInsertIdentityQuery creates incorrect SQL
+  statement to pull the identity from the last
+
+KNOWN ISSUES:
+* Auto-Detection for insert/update objects checks to avoid DB queries the PK fields of the object.
+  If at least one PK field is 'NULL' or if primitive field '0', OJB assume the object is new and
+  needs insert. This will be configurable in next upcoming version. Workaround for PB-api: use method
+  PB#store(Object obj, ObjectModification mod) to state update or insert.
+* Batch handling doesn't work properly with optimistic locking. This will be fixed
+  in version 1.1
+* Subqueries are not extent aware. see QueryTest#testSubQueryAgainstExtents
+* Managed Environment: When run OJB in managed environment and using PBStateListener, the call of
+  PBStateListener#beforeClose(PBStateEvent event) is made twice when
+  a PB instance was closed in a JTA-tx (for the first time when PB.close() was called
+  in bean on the PB handle, second time when the JTA-tx completes)
+* otm-api: The OTM API has a known caching issue and should not be considered for code used
+  in production environments. The future of the OTM layer will be subject for discussion on the
+  OJB developers list, if you are using it - please subscribe to ojb-dev and make your voice heard.
+* Oracle9i platform: when using statement batching, there is a 2k limit on BLOB + 4k limit on CLOB.
+
+
+
+---------------------------------------------------------------------
+Release 1.0.3
+---------------------------------------------------------------------
+NEW FEATURES:
+
+
+NOTES:
+- odmg-api: Named objects can now be non- and persistence capable objects. At least
+  the named object have to be serializable.
+
+CHANGES:
+- Refactoring DCollection implementations, remove DListImpl_2 classes (code moved to DListImpl)
+- Object2ByteArrFieldConversion: If source object on conversion javaToSQL is 'null', no longer create an
+  byte array simply return 'null'
+
+BUG FIXES:
+Please refer to our Bug tracking site (http://issues.apache.org/jira/secure/BrowseProject.jspa?id=10700)
+to see details for a bug with id OJB-xxx.
+
+- odmg-api: OJB-7 - Fix critical property setting in OJB.properties file
+- odmg-api: OJB-8 - Fix bug when using cascading delete on empty 1:1 reference
+- odmg-api: Fix bug with named object. On 'unbind' of a named object, if the object is a persistence capable
+  object (object with metadata mapping), the object itself will not be deleted. All other (serializable)
+  named objects will be deleted on unbind.
+- odmg-api: Fix bug with named objects when using database based Identity columns (SequenceManagerNativeImpl)
+- odmg-api: Fix bug when persisting DCollection instances when using database based
+  Identity columns (SequenceManagerNativeImpl).
+
+
+
+KNOWN ISSUES:
+- Auto-Detection for insert/update objects checks to avoid DB queries the PK fields of the object.
+  If at least one PK field is 'NULL' or if primitive field '0', OJB assume the object is new and
+  needs insert. This will be configurable in next upcoming version. Workaround for PB-api: use method
+  PB#store(Object obj, ObjectModification mod) to state update or insert.
+- Batch handling doesn't work proper with optimistic locking. This will be fixed
+  in version 1.1
+- Subqueries are not extent aware. see QueryTest#testSubQueryAgainstExtents
+- When a class mapped on multiple joined tables was used in a reference only objects
+  of the base type class will be instantiated, e.g. a Company class has
+  a 1:n reference 'employees' to a base class Employee and class Manager extends Employee,
+  then 'employees' only contains objects of type Employee even if the real type was Manager.
+  See in OJB test suite ...broker.InheritanceMultipleTableTest#testInheritancedObjectsInCollectionReferences
+  Same problem occur when query the base class, then OJB only returns objects of base type instead
+  the real type.
+- Managed Environment: When run OJB in managed environment and using PBStateListener, the call of
+  PBStateListener#beforeClose(PBStateEvent event) is made twice when
+  a PB instance was closed in a JTA-tx (for the first time when PB.close() was called
+  in bean on the PB handle, second time when the JTA-tx completes)
+- otm-api: The OTM API has a known caching issue and should not be considered for code used
+  in production environments. The future of the OTM layer will be subject for discussion on the
+  OJB developers list, if you are using it - please subscribe to ojb-dev and make your voice heard.
+- Oracle9i platform: when using statement batching, there is a 2k limit on BLOB + 4k limit on CLOB.
+
+---------------------------------------------------------------------
+Release 1.0.2
+---------------------------------------------------------------------
+NEW FEATURES:
+
+- New ant-target ojb-quickstart creates archives of ready-to-run apps for tutorials 1 and 2
+  complete with pre-created Hsqldb databases (based on ojb-blank).
+  These archives are also available in the binary download area.
+- Introduce first version of a two-level cache (transactional session cache with an application cache
+  handle with copies of cached objects). More detailed information see 'object cache' reference guide in docs.
+- All Oracle platforms will now transparently handle java.lang.Character fields mapped to
+  jdbc-types CHAR or VARCHAR, without any conversion class.
+- Oracle9i plaform now handles CLOB>4k and BLOB>2k when DBCP and/or P6Spy are used.
+- Oracle9i plaform can now be used with Oracle10g JDBC-driver. Escape processing statements are
+  removed and OracleConnection unwrapping have been adjusted to be compatible with 10g JDBC.
+- XDoclet module:
+    * Important: generate-table-info now only prevents the generation of a table in the database schema,
+      the class-descriptor is unaffacted
+    * The new ojb.class#generate-repository-info attribute prevents the generation of field/reference/collection
+      descriptors in the repository as well as the table in the database schema
+      This attribute should be used when using inheritance with interfaces/abstract classes
+    * Database foreignkeys are now generated for collections, as well
+    * It is possible to prevent the generation of database foreignkeys for individual references
+      or collections using the database-foreignkey attribute (ojb.collection/ojb.reference).
+      However this attribute cannot be used to force generation of database-foreignkeys
+    * Inheritance with interfaces/abstract classes (i.e. classes without table) is now handled properly
+      for types that are referenced by references/collections even if the relevant foreignkey
+      (reference/1:n collection) or primarykey (m:n collection) is not defined in the basetype itself
+      but only in the subtypes. The XDoclet module will determine these fields and generate virtual
+      field descriptors in the class-descriptor of the basetype (even if generate-repository-info=false).
+      Additionally, database foreignkeys are generated if the subtypes map to the same table
+    * Additional attributes for generating documentation in the database schema:
+        - ojb.class#table-documentation
+        - ojb.field#column-documentation
+        - ojb.collection#indirection-table-documentation
+        -               #foreignkey-documentation
+        -               #remote-foreignkey-documentation
+    * Foreignkey columns of an m:n collection can be made primarykeys of the indirection table by
+      using the ojb.collection#indirection-table-primarykeys attribute
+
+NOTES:
+- ODMG-api refactoring!! All known issues in test suite are fixed. But the refactored odmg-api
+  version needs changes in auto-xxx settings in metadata and changed OJB.properties settings.
+  Please read carefully the 'CHANGES notes' below.
+- Don't forget to replace the old repository.dtd and OJB.properties file (both files changed).
+- If you plan to use OJB with an J2SE version older than 1.4, then you have to
+  replace the Geronimo jars with the corresponding ones from Sun's J2EE SDK. This
+  is because Geronimo is a J2EE 1.4 implementation and thus dependant upon
+  J2SE 1.4. Use instead the version of Sun's J2EE reference implementation that
+  correspond to your J2SE version. E.g. for J2SE 1.3 use the J2EE 1.3 SDK which
+  you can get from here: http://java.sun.com/j2ee/1.3/index.jsp
+- Performance improvement in handling of m:n relations
+- Add new property 'sequenceStart' for SequenceManagerHighLowImpl and SequeceManagerInMemoryImpl
+  more info see docs section 'sequence manager'
+- Recommended to read the updated 'object cache' reference guide to reflect on the changes made in
+  caching behavior.
+- By default a new locking implementation was used for odmg, to enable the old deprecated odmg-locking,
+  please see comments in OJB.properties file.
+
+CHANGES:
+- When using Oracl9i platform and DBCP connection factory, no PreparedStatement caching will occur
+  in the DBCP pool (Oracle JDBC-driver statement caching is performed by the platform as default).
+  statement pool, to avoid running out of server-side cursors when using Oracle9i platform.
+- Oracle9i default platform should now be usable and have large LOB support in JBoss environemnts,
+  please try the default Oracle9i platform and report your results to the ojb-user list.
+- Oracle9i default platform should now be usable and have large LOB support in BEA WebLogic,
+  please try the default Oracle9i platform in favor of WLOracle9i and report your results to
+  the ojb-user list.
+- Oracle9i platform no longer throws exceptions when Oracle-specific extensions initializer fails,
+  this should enable Oracle9i platform to degrade smoothly in not yet handled managed environments.
+- Oracle9i platform now uses ANSI SQL92 join syntax as per user-request. The Oracle platform
+  still uses Oracle join syntax to be compatible with Oracle 8 and older versions.
+- CollectionProxy classes will now throw an exception in constructor, if trying
+  to use dynamic proxies with MetadataManager in 'per thread changes' mode but
+  without any metadata profile key loaded in the current thread. See note about
+  fix in CollectionProxy under "BUG FIXES" below.
+- Minor changes in the repository.dtd. Add element object-cache to metadata interface and abstract class
+  declaration in class-descriptor. So replacement of old repository.dtd is needed.
+- Remove object-cache declaration from OJB.properties file. Use the 'object-cache' element in
+  repository file (example see repository_database.xml file shipped with OJB) to specify the cache
+  implementation. More detailed information see caching reference guide in docs.
+- Remove redundant ObjectCache implementations (ObjectCacheSoftImpl, ObjectCacheUnlimitiedImpl), same
+  behavior is possible with ObjectCacheDefaultImpl.
+- Remove undocumented 'ObjectCacheFilter' (used to filter out whole packages or classes from being cached).
+  Filter out packages or classes from being cached is still possible, please see 'object cache' reference guide.
+- !!!In managed enviroments the org.odmg.Transaction#abort() call no longer throws an
+  TransactionAbortedExceptionOJB, instead OJB does internal cleanup and set used
+  JTA-tx to setRollbackOnly if possible. Thus the client does no longer get an RemoteException.
+  The user have to throw an EJBException by himself to notify the client.
+- Performance of the default RowReader (RowReaderDefaultImpl) was improved, when mapping
+  several classes to the same table ("ojb-conrete class" feature), now only the fields of the
+  associated class were performed in RowReader instead invoking all fields of the table used by
+  the mapped classes.
+- Introduce new locking-package in kernel api. Now top-level api like odmg-api can use a kernel
+  lock manager to provide locking. Adapt odmg-locking to the new lock management and declare old locking stuff
+  in org.apache.ojb.odmg.locking package as deprecated. Add support for apache's commons-transaction locking part.
+- Use of database identity column (SequenceManagerNativeImpl). Move assign of PK values from
+  PersistenceBrokerImpl to JdbcAccessImpl#executeInsert. Remove usage of SequenceManager#setReferenceFKs,
+  will be handled by OJB in same way as without usage of database identity column.
+- odmg-api: Introduced new object reordering implementation (replaces old algorithm
+  in ObjectEnvelopeTable).
+- odmg-api: Change used 'OqlCollectionClass' in OJB.properties from a DList impl to ArrayList impl
+  to improve performance. If you need the additional features of odmg DList comment in the DList impl.
+- odmg-api: ** All relations (1:1, 1:n and m:n) need auto-update/delete setting 'none' to proper work.**
+- odmg-api: Cascade delete is now configurable via OJB.properties file and at runtime using
+  TransactionExt#setCascadingDelete method (cast Transaction instance to TransactionExt)
+
+BUG FIXES:
+Please refer to our Bug tracking site (http://issues.apache.org/scarab/servlet/scarab/)
+under http://issues.apache.org/scarab/servlet/scarab/issues/id/OJBxxx
+to see details for a bug with id OJBxxx.
+
+- Fix problem with StatementManager when binding delete-statement parameters
+  with null-values for numeric type columns under certain conditions.
+  (Oracle9i and jdbc-type=NUMERIC with a conversion class that can return null-values
+   was such a combination, resulting in SQLException in OracleStatement#get_internal_type.)
+- Fix bug in MetadataManager, when 'per thread changes' is enabled and CollectionProxy
+  proxies are used. Using proxies in this mode used to be undefined, since the lazy
+  loading might or might not succeed depending on in which thread the data was loaded.
+  OJB will now reload the metadata profile used when creating the proxy,
+  before attempting to reference any persistence capable classes.
+  (Fixes occasional ClassNotPersistenceCapable exceptions seen in multithreaded
+   applications when using 'per thread changes'.)
+  See http://mail-archives.apache.org/eyebrowse/ReadMsg?listName=ojb-dev@db.apache.org&msgNo=9143
+- Managed Environment: Fix problem of abandoned connections and statements (e.g. detected
+  by JBoss) when query (iterator) result sets only partially materialized.
+- Fix bug in ObjectCacheDefaultImpl resolve cache object conflicts, see
+  http://mail-archives.apache.org/eyebrowse/ReadMsg?listName=ojb-user@db.apache.org&msgNo=15063
+- LockManager#releaseLock, when a write lock was found all read locks will be released too.
+  http://mail-archives.apache.org/eyebrowse/ReadMsg?listName=ojb-user@db.apache.org&msgNo=14885
+- Fix problem with automatic generated sequence names in SequenceManagerHighLowImpl and
+  SequenceManagerInMemoryImpl when different DB use the same table and column name for auto
+  incremented fields.
+  See http://mail-archives.apache.org/eyebrowse/ReadMsg?listName=ojb-user@db.apache.org&msgNo=14528
+- Fix materialization problem under heavy load, OJB no longer returns partially materialized
+  objects from cache.
+  See http://mail-archives.apache.org/eyebrowse/ReadMsg?listId=107&msgNo=14472
+- Fix key constraint problems when insert m:n relation manually via "linking"
+- Fix bug in SequenceManagerNativeImpl used to support DB identity columns, make counter for
+  temporary keys static to prevent lock not granted exceptions on insert of new objects.
+- odmg-api: if within a transaction the client returns a different instance of an already
+  locked object (e.g. serialized through network) method tx.lock and tx.markDirty do not
+  replace the already locked object instance by the new one. Now it will do so.
+- odmg-api: In managed environment odmg-api does clenup internal stuff (cache, locking) when
+  Synchronization#afterCompletion(int status) was called by the JTA-TxManager instead doing all this
+  stuff in #beforeCompletion()
+- odmg-api: Assign FK for 1:1 relations when persistent objects are written to DB, instead when objects
+  were locked.
+- odmg-api: Mixing of pessimistic and optimistic locking should be possible. Now all lock calls on objects
+  with optimistic locking enabled will be ignored.
+- odmg-api: Fixed: If a user exchange already existing objects in 1:n references without changing the size
+  of the collection, the main object will not become dirty and the FK values of the exchanged objects
+  will not be updated. This is fixed.
+- odmg-api: Fixed: Creation of m:n relation only works when objects created step by step (or use PB-api
+  as workaround), persist a whole object graph seems not to work proper. This is fixed.
+- odmg-api: Fixed: Mapping classes on multiple joined tables was not supported in
+  ODMG-API implementation. This is fixed (!except the known issue when Query or refer to a base class).
+
+KNOWN ISSUES:
+- Auto-Detection for insert/update objects checks to avoid DB queries the PK fields of the object.
+  If at least one PK field is 'NULL' or if primitive field '0', OJB assume the object is new and
+  needs insert. This will be configurable in next upcoming version. Workaround for PB-api: use method
+  PB#store(Object obj, ObjectModification mod) to state update or insert.
+- Batch handling doesn't work proper with optimistic locking. This will be fixed
+  in version 1.1
+- Subqueries are not extent aware. see QueryTest#testSubQueryAgainstExtents
+- When a class mapped on multiple joined tables was used in a reference only objects
+  of the base type class will be instantiated, e.g. a Company class has
+  a 1:n reference 'employees' to a base class Employee and class Manager extends Employee,
+  then 'employees' only contains objects of type Employee even if the real type was Manager.
+  See in OJB test suite ...broker.InheritanceMultipleTableTest#testInheritancedObjectsInCollectionReferences
+  Same problem occur when query the base class, then OJB only returns objects of base type instead
+  the real type.
+- Managed Environment: When run OJB in managed environment and using PBStateListener, the call of
+  PBStateListener#beforeClose(PBStateEvent event) is made twice when
+  a PB instance was closed in a JTA-tx (for the first time when PB.close() was called
+  in bean on the PB handle, second time when the JTA-tx completes)
+- otm-api: The OTM API has a known caching issue and should not be considered for code used
+  in production environments. The future of the OTM layer will be subject for discussion on the
+  OJB developers list, if you are using it - please subscribe to ojb-dev and make your voice heard.
+- Oracle9i platform: when using statement batching, there is a 2k limit on BLOB + 4k limit on CLOB.
+
+
+---------------------------------------------------------------------
+Release 1.0.1
+---------------------------------------------------------------------
+NEW FEATURES:
+- Add new service for Identity object creation - PersistenceBroker#serviveIdentity()
+  This service makes creation of Identiy objects to lookup objects by primary key much
+  easier. More info see PersistenceBroker Tutorial section "Find object by primary key".
+    For example, to lookup an object by its Identity with PB.getObjectByIdentity, for
+    a single Long PK field (with value '23') you can call:
+    Identity oid = broker.serviceIdentity().buildIdentity(MyClass.class, new Long(23));
+    result = (MyClass) broker.getObjectByIdentity(oid);
+
+NOTES:
+- Changed build dependency from Sun's SCSL licensed J2EE specification jars to the
+  Geronimo projects's ASL 2.0 licensed J2EE specification jars. Users now can build
+  the core of OJB (everything but the jdori plugin) directly from the source tarball
+  or CVS.
+  NOTE: If you plan to use OJB with an J2SE version older than 1.4, then you have to
+        replace the Geronimo jars with the corresponding ones from Sun's J2EE SDK. This
+        is because Geronimo is a J2EE 1.4 implementation and thus dependant upon
+        J2SE 1.4. Use instead the version of Sun's J2EE reference implementation that
+        correspond to your J2SE version. E.g. for J2SE 1.3 use the J2EE 1.3 SDK which
+        you can get from here: http://java.sun.com/j2ee/1.3/index.jsp
+
+CHANGES:
+- PersistenceBroker interface changed, add service method for IdentityFactory
+- Performance improvement in RsIterator, first only map PK values from the
+  result set and check against the cache. If no match map all field values
+  from result set to internal Map class (old version always maps all values
+  from the result set to the internal Map class).
+- add in ObjectCacheDefaultImpl new attribute 'cachingKeyType' this allows to
+  differ cached objects of same class for different databases.
+  http://mail-archives.apache.org/eyebrowse/ReadMsg?listName=ojb-user@db.apache.org&msgNo=13931
+
+BUG FIXES:
+Please refer to our Bug tracking site (http://issues.apache.org/scarab/servlet/scarab/)
+under http://issues.apache.org/scarab/servlet/scarab/issues/id/OJBxxx
+to see details for a bug with id OJBxxx.
+
+- fixed issue in AnonymousPersistentFieldForInheritance, class now use
+  specified factory methods (in class-descriptor) for pc objects too
+- fix for OJB275, include PK fields for "super" class-descriptor when using
+  "super" reference. Now on object insert, the PK values are copied from the
+  main object to the temporary created "super" objects.
+- fixed issue in PersistenceBrokerFactorySyncImpl, always wrap requested PB
+  instance with PB handle object
+- fixed issue in ObjectCachePerClassImpl, allow to set 'class-cache' to null
+- fixed issue with CollectionProxy and RemovalAwareCollection
+- RemovalAwareCollection is no longer the default collection-class for m:n-relationships
+- ManageableCollection#afterStore is only called if cascadeStoring is CASCADE_OBJECT
+- ojb no longer adds groupBy columns to the SELECT-clause, orderBy columns are still added because of sapdb
+- orderBy columns of the original query are used as joinAttributes in count-query
+- ALIAS-prefix again works for report-queries (see QueryTest#testReportQueryAlias)
+- odmg-api: Fix problem with TransactionExt#flush() call, always check for
+  changed objects
+- odmg-api: Fix issue with FK assignment, referenced proxy object should not be materialized to assign
+  FK in main object.
+- odmg-api: Fix Database#open(...) issue. In managed environments now no running JTA-tx was expected  
+
+KNOWN ISSUES:
+- odmg-api: If a user exchange already existing objects in 1:n references without changing the size
+  of the collection, the main object will not become dirty and the FK values of the exchanged objects
+  will not be updated.
+  E.g. two objects obj_1 anf obj_2 with 1:n reference to ref objects, each with one
+  existing/persistent reference object, obj_1{ref_1} and obj_2{ref_2}.
+  Lock objects and exchange the references in collection obj_1{ref_2}
+  and obj_2{ref_1} and commit --> FK values of ref_1 and ref_2 will not be updated.
+- odmg-api: Creation of m:n relation only works when objects created step by step (or use PB-api
+  as workaround), persist a whole object graph seems not to work proper.
+- Batch handling doesn't work proper with optimistic locking. This will be fixed
+  in version 1.1
+- Subqueries are not extent aware. see QueryTest#testSubQueryAgainstExtents
+- When using native Identity columns, OJB uses a temporary dummy value for created OJB Identity objects 
+  of new pc objects (negative long values are used as dummy values for Identity columns, the real value 
+  is available after the object insert), so the FK assignment is only valid after store of the 
+  referenced object (PB-api handles this correctly). TransactionImpl#lock assign the FK before the 
+  referenced object was written to DB. This only effects the ODMG API.
+- Mapping of an inheritance hierarchy to multiple joined tables fails in the ODMG
+  API only.
+
+---------------------------------------------------------------------
+Release 1.0
+---------------------------------------------------------------------
+NEW FEATURES:
+--
+
+NOTES:
+--
+
+CHANGES:
+- We introduce new PersistentField implementations in OJB.properties file called
+PersistentFieldXXXXImplNew. Per default one of the new PersistentField implementations was
+used. If you hit problems please send a report. You can reverting to old impl by
+changing property 'PersistentFieldClass' in OJB.prperties file. The new versions
+has much better performance in read/write nested fields (up to 50 times faster than
+the 'old' implementions) and will replace the old classes on next version. Because
+PersistentField is an important kernel class we wait for community response before
+final replacement.
+
+BUG FIXES:
+Please refer to our Bug tracking site (http://issues.apache.org/scarab/servlet/scarab/)
+under http://issues.apache.org/scarab/servlet/scarab/issues/id/OJBxxx
+to see details for a bug with id OJBxxx.
+
+
+KNOWN ISSUES:
+- The default ojb escape character '\' does not work for database using the same default as well and
+should therefore be double-escaped. As a workaround always use a custom escape character:
+
+	LikeCriteria.setEscapeCharacter('|');
+	Criteria crit = new Criteria();
+	crit.addLike("firstname", "h%|%");
+
+This issue is fixed for MySql and PostgreSql so far.
+
+- odmg-api: If a user exchange already existing objects in 1:n references without changing the size
+of the collection, the main object will not become dirty and the FK values of the exchanged objects
+will not be updated.
+E.g. two objects obj_1 anf obj_2 with 1:n reference to ref objects, each with one
+existing/persistent reference object, obj_1{ref_1} and obj_2{ref_2}.
+Lock objects and exchange the references in collection obj_1{ref_2}
+and obj_2{ref_1} and commit --> FK values of ref_1 and ref_2 will not be updated.
+
+- odmg-api: Creation of m:n relation only works when objects created step by step (or use PB-api
+as workaround), persist a whole object graph seems not to work proper.
+
+- ReportQueries should not be used with columns referencing Classes with extents:
+
+    ReportQueryByCriteria q = QueryFactory.newReportQuery(ProductGroup.class, crit);
+    q.setAttributes(new String[] { "groupName", "sum(allArticlesInGroup.stock)", "sum(allArticlesInGroup.price)" });
+    q.addGroupBy("groupName");
+
+    ProductGroup.allArticlesInGroup points to class Article having multiple extents.
+
+    As a workaround the query can be 'reversed' :
+
+    ReportQueryByCriteria q = QueryFactory.newReportQuery(Article.class, crit);
+    q.setAttributes(new String[] { "productGroup.groupName", "sum(stock)", "sum(price)" });
+    q.addGroupBy("productGroup.groupName");
+
+    Due to the fact the Article has extents multiple selects will be executed,
+    so the same ProductGroup may show up more than once.
+
+    Please see the testcases QueryTest#testReportQueryGroupByExtents1 and
+    QueryTest#testReportQueryGroupByExtents2.
+
+- A count on ReportQueries containing groupBy does not deliver a correct result.
+
+- Batch handling doesn't work proper with optimistic locking. This will be fixed
+before long after 1.0
+
+
+
+---------------------------------------------------------------------
+Release 1.0 rc7
+---------------------------------------------------------------------
+
+NEW FEATURES:
+
+NOTES:
+- OJB.properties file has changed, don't forget to replace on update!
+ Among other things the property 'ImplementationClass' was needed to set in managed environments.
+
+CHANGES:
+
+-OJB.properties file new properties:
+ListProxyClass
+IndirectionHandlerClass
+SetProxyClass
+RowReaderDefaultClass
+ImplementationClass
+The logging properties moved to a separate file - see below.
+
+- Logging settings have moved to separate OJB-logging.properties file
+
+- Logging initialization is now decoupled form OJB initialization; this is
+described in the new reference guide for logging
+
+- It is no longer necessary to provide an empty repository.xml file when starting
+without repository and connection descriptors
+
+- rename/move internal package org.apache.ojb.odmg.transaction to org.apache.ojb.broker.transaction.tm
+In managed environments each (top-level) API use transaction manager access, thus the TM related
+classes are moved to the PB kernel and OJB.properties entries change.
+
+- Base class for ODMG api access within non- or managed environments is now
+org.apache.ojb.odmg.OJB. The used org.odmg.Implementation interface implementation
+is specified in OJB.properties.
+
+- ConnectionManager is more strict on CM.releaseConnection() method calls. Now an
+exception is thrown when CM is in a "local transaction" status when try to release
+the connection. The local tx status of ConnectionManager and PersistenceBroker implementation
+is now decoupled, useful in managed environments allows to "close the connection" without
+change the PB tx-state.
+
+- the indirection handler (for reference proxies), and the list and set proxy classes
+can now be configured in the OJB.properties file
+
+- new CollectionProxy interface introduced to allow the ODMG api to make use of alternate collection proxy implementations.
+
+BUG FIXES:
+
+Please refer to our Bug tracking site (http://issues.apache.org/scarab/servlet/scarab/)
+under http://issues.apache.org/scarab/servlet/scarab/issues/id/OJBxxx
+to see details for a bug with id OJBxxx.
+
+KNOWN ISSUES:
+- odmg-api: If a user exchange already existing objects in 1:n references without changing the size
+of the collection, the main object will not become dirty and the FK values of the exchanged objects
+will not be updated.
+E.g. two objects obj_1 anf obj_2 with 1:n reference to ref objects, each with one
+existing/persistent reference object, obj_1{ref_1} and obj_2{ref_2}.
+Lock objects and exchange the references in collection obj_1{ref_2}
+and obj_2{ref_1} and commit --> FK values of ref_1 and ref_2 will not be updated.
+
+- odmg-api: Creation of m:n relation only works when objects created step by step (or use PB-api
+as workaround), persist a whole object graph seems not to work proper.
+
+- ReportQueries should not be used with columns referencing Classes with extents:
+
+    ReportQueryByCriteria q = QueryFactory.newReportQuery(ProductGroup.class, crit);
+    q.setAttributes(new String[] { "groupName", "sum(allArticlesInGroup.stock)", "sum(allArticlesInGroup.price)" });
+    q.addGroupBy("groupName");
+
+    ProductGroup.allArticlesInGroup points to class Article having multiple extents.
+
+    As a workaround the query can be 'reversed' :
+
+    ReportQueryByCriteria q = QueryFactory.newReportQuery(Article.class, crit);
+    q.setAttributes(new String[] { "productGroup.groupName", "sum(stock)", "sum(price)" });
+    q.addGroupBy("productGroup.groupName");
+
+    Due to the fact the Article has extents multiple selects will be executed,
+    so the same ProductGroup may show up more than once.
+
+    Please see the testcases QueryTest#testReportQueryGroupByExtents1 and
+    QueryTest#testReportQueryGroupByExtents2.
+
+- A count on ReportQueries containing groupBy does not deliver a correct result.
+
+- Batch handling doesn't work proper with optimistic locking. This will be fixed
+before long after 1.0
+
+---------------------------------------------------------------------
+Release 1.0 rc6
+---------------------------------------------------------------------
+
+NEW FEATURES:
+ -
+
+NOTES:
+- Repository.dtd has changed, don't forget to replace this file
+- Upgraded to the new Apache License, Version 2.0
+- No support for HSQLDB 1.7.2RC1 yet
+- No support for Torque 3.1 yet
+
+- Add new PersistenceBrokerFactory implementation for use in managed environments when *only* the
+PB-api was used and participation in JTA transaction via Synchronization interface is needed.
+
+- Add new configuration property 'autoSync' to ObjectCacheDefaultImpl. Used to enable a simple
+synchronization mechanism to keep cache in sync with DB
+
+- Add new attribute values for reference-/collection-descriptor auto-update/-delete attribute.
+Now we have five possible values: none, link, object, true, false. The true, false values
+are now deprecated but will NOT be removed in near future (so don't panic!).
+
+CHANGES:
+- fix bug in internal table OJB_HL_SEQ, column type of MAX_ID was INTEGER but
+needs BIGINT to support Long on java side
+
+- no longer throw an exception when calling abortTransaction more than one time
+or an internal rollback (by ConnectionManager on the used connection) was already done
+
+- Add object-cache tag in standard jdbc-connection-descriptor in repository_database.xml
+to enable new 'autoSync' property of ObjectCacheDefaultImpl for all operations made by
+this DB connection
+
+- Allow infinite lifetime of cached objects in ObjectCacheDefaultImpl (handle with care ;-))
+
+- odmg-api implementation, disable restore of transient objects on transaction abort,
+because we can't really restore the whole object with all references
+
+- now using ANTLR 2.7.2 and Unicode support in OQL queries
+- now using ANT 1.6.0
+
+- RelationshipPrefetcher no longer modifies auto-retrieve setting of Relationship-Descriptor.
+This may result in additional sql-queries but is safer in a multi-threaded environment.
+
+- Added column methods to Criteria. addColumnEqualTo, addColumnIn etc. The column parameter
+of these methods will not be translated during sql-generation. These methods are mainly used
+for internal purpose.
+
+BUG FIXES:
+
+Please refer to our Bug tracking site (http://issues.apache.org/scarab/servlet/scarab/)
+under http://issues.apache.org/scarab/servlet/scarab/issues/id/OJBxxx
+to see details for a bug with id OJBxxx.
+
+- fix bug in MetadataManager, when 'per thread changes' is enabled and many different
+DescriptorRepository instances were used, gc can't collect unused instances because
+StatementManager doesn't release references to used DescriptorRepository instances.
+
+- fix bug in ObjectCacheDefaultImpl, it doesn't make sense to use a soft reference
+for the object wrapper of the cached object. Use a softreference for the cached
+object instead
+
+- fix bug in CacheDistributor (internal used ObjectCache implementation), each CacheDistributor
+instance have to held ObjectCache instances for the associated PersistenceBroker instance
+
+- fix documentation bug in ObjectCacheDefaultImpl, property 'timeout' use
+seconds instead of milliseconds
+
+- fix bug in new DList implementation (DListImpl_2), materialization of objects
+failed when DList instance itself was persisted (using db.bind(...)) and
+re-loaded within tx, but iteration over the list values was done outside of the tx
+
+- The bogus ODMG Distributed Lockmanagement feature has been replaced by a new
+  Servlet based LockServer. Transaction isolation should now work properly even
+  accross a cluster of JVMs.
+
+- fix bug in MtoNCollectionPrefetcher, multi-key handling is now supported.
+
+- ClassCastException with ManageableCollection implementations on m:n relation.
+m:n relation now can handle ManageableCollection collection classes in a correct way,
+the collection class no longer needs to implement java.util.Collection.
+
+KNOWN ISSUES:
+- odmg-api: It is not possible to exchange objects in 1:n references.
+E.g. two objects with 1:n reference, each with one reference object, obj_1{ref_1}
+and obj_2{ref_2}. Lock objects and exchange the references in collection obj_1{ref_2}
+and obj_2{ref_1} and commit.
+
+
+---------------------------------------------------------------------
+Release 1.0 rc5
+---------------------------------------------------------------------
+
+This is the last planned rc before the 1.0 release. If there are no major
+bugs this release will be relabled as 1.0 after two weeks.
+
+NEW FEATURES:
+- With this release we are feature complete for the 1.0 release!
+For 1.0 you should not expect more features to be added.
+
+NOTES:
+- slight changes in repository.dtd, OJB.properties were made
+
+- internal kernel interface method signature changed:
+in JdbcAccess two method signatures change
+in StatementManagerIF one method signature change
+These changes are necessary to fix a "design bug" in handling
+of jdbc type metadata. See discussion on dev-list "[VOTE] Design bug fixed - check in?"
+
+- ObjectCache implementation classes constructor arguments change. We
+now pass a Properties argument too. Allows to set configuration properties
+for each ObjectCache instance
+
+- changed the JDORI plugin to now use the latest 1.0.1 version of the JDO reference implementation.
+
+- OJB is now very strict in handling RsIterator instances. RsIterator is
+bound very closely to the used PersistenceBroker instance.
+Thus if you do a
+PersistenceBroker#close
+PersistenceBroker#commitTransaction
+PersistenceBroker#abortTransaction
+call, the current <tt>RsIterator</tt> instance resources will be cleaned up automatic
+and invalidate current instance.
+
+CHANGES:
+- add possibility to declare ObjectCache implementation on class-descriptor
+and jdbc-connection-descriptor level (means per class and per database connection) too
+
+- add a new interface called org.apache.ojb.odmg.TransactionExt
+to make additional proprietary methods available for user by
+casting org.odmg.Transaction to TransactionExt
+
+- behaviour of org.odmg.Transaction#checkpoint() changed. Now the
+database transaction was commited when checkpoint was called, seems this
+is more in unison with ODMG spec:
+" Calling checkpoint commits persistent object modifications made within the
+transaction since the last checkpoint to the database."
+If you want to flush persistent object
+modifications made within the ODMG transaction to the underlying database
+transaction without commit the changes (old behaviour of checkpoint()),
+please cast Transaction to TransactionExt and use new method flush().
+
+- make odmg collections pluggable via OJB.properties file
+
+- Restructuring and further enhancements of the documentation.
+
+
+BUG FIXES:
+
+Please refer to our Bug tracking site under
+http://scarab.werken.com/scarab/issues/id/OJBxxx to see details for a bug
+with id OJBxxx.
+
+- fix ClassLoader problem when merging DescriptorRepository instances
+
+- fixed the JDORI problems with loading object via extend based queries.
+  now objects are brought under JDO control and equipped with a statemanager
+  in the load process.
+
+---------------------------------------------------------------------
+Release 1.0 rc4
+---------------------------------------------------------------------
+
+NEW FEATURES:
+- With this release we are feature complete for the 1.0 release!
+For 1.0 you should not expect more features to be added.
+- added a XDoclet OJB Module that allows to generate repository.xml
+  and DDL from tagged Java sources to the "contrib" distribution.
+- added an OJB Taglib that allows to use OJB directly from JSP pages
+  to the "contrib" distribution.
+
+NOTES:
+- update used xdoclet version in 'ejb-examples'
+(see section deployment/'Build the OJB sample session beans')
+to version 1.2xx
+
+CHANGES:
+- Enhance MetadataManager, add new methods, simplify handling
+of different persistent object metadata profiles (means different
+org.apache.ojb.broker.metadata.DescriptorRepository instances) at
+runtime
+- Provide a PUBLIC doctype declaration for the repository.xml
+- add a convenience Constructor to QueryByCriteria that
+  builds a query selecting all instances of a class
+- add isClosed() method to PersistenceBroker interface to
+check if a broker instance was already closed.
+- make OJB more strict in handling closed PersistenceBroker
+instances. Now it's not any longer possible to use closed
+PersistenceBroker instances.
+- Package ...metadata.fieldaccess refactored/changed. Now
+all PersistentField implementations support 'nested fields'.
+See new entries in OJB.properties file.
+- added new sections to documentation
+
+
+BUG FIXES:
+- fix several bugs in documentation
+- fixed writing to memo columns in MS Access
+- fixed optimistic locking problem
+- fixed jdo tutorial setup
+
+Please refer to our Bug tracking site under
+http://scarab.werken.com/scarab/issues/id/OJBxxx to see details for a bug
+with id OJBxxx.
+
+
+---------------------------------------------------------------------
+Release 1.0 rc3
+---------------------------------------------------------------------
+
+NEW FEATURES:
+- With this release we are feature complete for the 1.0 release!
+For 1.0 you should not expect more features to be added.
+
+
+NOTES:
+- Intern table OJB_HL_SEQ (used by SequenceManagerHighLowImpl)
+  has changed! Now need an additional column 'VERSION' of type INTEGER
+  When updating from earlier version drop/reinstall table with additional field
+- PersistenceBrokerAware interface changed, methods beforeStore and afterStore
+  split into xxxInsert/xxxUpdate methods, all methods now expect an PersistenceBroker
+  argument
+- PersistenceBrokerListener interface replaced by PBStateListener
+- ManageableCollection interface add new method afterStore(...)
+- Remove obsolete method 'invalidate(Identity oid)' from PB-api
+
+
+CHANGES:
+- enhanced PB-api listener classes
+- unified handling of events in PB-api
+- adapt sequence manager implementations using 'long' instead 'int' keys
+- SequenceManagerHighLowImpl now use optimistic locking to support sequencing
+  across different JVM (except j2ee conform app server, see sequence manager doc).
+- Add new attribute 'autoNaming' to sequence manager implementations. Now
+  the implementations allow to switch on/off auto-generating of sequence names
+- merging the three package o.a.ojb.broker.ta, .singlevm and .server into
+  a new package o.a.ojb.broker.core
+
+BUG FIXES:
+- fixed problems with the JDO FieldManager to work with 1:1, 1:n and m:n
+  associations
+- OJB143, OJB152, OJB153, OJB156, OJB158, OJB159, OJB161
+
+Please refer to our Bug tracking site under
+http://scarab.werken.com/scarab/issues/id/OJBxxx to see details for a bug
+with id OJBxxx.
+
+
+---------------------------------------------------------------------
+Release 1.0 rc2
+---------------------------------------------------------------------
+
+NEW FEATURES:
+- With this release we are feature complete for the 1.0 release!
+For 1.0 you should not expect more features to be added.
+
+
+CHANGES:
+- improve cache package. Now the used cache is no longer a singleton.
+- Add CacheFilter interface to allow easy pre-filtering of cache methods.
+- Add Support for anonymous fields
+- Several improvements to SQL generation
+- improved handling of optimistic lock exceptions in ODMG
+
+
+BUG FIXES:
+- lots
+
+---------------------------------------------------------------------
+Release 1.0 rc1
+---------------------------------------------------------------------
+
+NEW FEATURES:
+- With this release we are feature complete for the 1.0 release!
+For 1.0 you should not expect more features to be added.
+
+
+CHANGES:
+- improved handling for non-distributable jars
+- MetadataManager: new methods, allow merge of new ConnectionDescriptor and RepositoryDescriptor
+(read from any repository file at runtime) with the existing ones.
+- add custom attribute support for DescriptorRepository and JdbcConnectionDescriptor.
+
+
+BUG FIXES:
+
+- repaired tutorial applications
+- fixed several bugs in the JDO RI plugin
+- compilation works for jdk 1.2 and 1.3 again
+- connection problem when using PBKey only with jcdAlias name (e.g. PBKey("myAlias")),
+now the user and password set in the repository file was used.
+- add jcdAlias support for tutorial 1+2

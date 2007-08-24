@@ -1,0 +1,153 @@
+<!-- @version $Id: repository_database.xml,v 1.1 2007-08-24 22:17:30 ewestfal Exp $ -->
+
+<!--
+/* Copyright 2002-2005 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!--
+Define all database connections here.
+One defined connection should be defined as the default one,
+by setingt default-connection="true" - this could be done at runtime too.
+
+It is possible to set user/password at
+runtime or to let different users login at runtime
+using the same database.
+Use PBKey objects for the same jcdAlias name,
+but with different user/password.
+
+It is also possible to add jdbc-connection-descriptor elements
+at runtime,  using the MetadataManager.
+-->
+
+    <!-- This connection is used as the default one within OJB -->
+    <jdbc-connection-descriptor
+   		jcd-alias="@JCD_ALIAS@"
+   		default-connection="true"
+   		platform="@DBMS_NAME@"
+   		jdbc-level="@JDBC_LEVEL@"
+   		driver="@DRIVER_NAME@"
+   		protocol="@URL_PROTOCOL@"
+   		subprotocol="@URL_SUBPROTOCOL@"
+   		dbalias="@URL_DBALIAS@"
+   		username="@USER_NAME@"
+   		password="@USER_PASSWD@"
+   		batch-mode="false"
+        useAutoCommit="1"
+        ignoreAutoCommitExceptions="false"
+     >
+
+        <!--
+            On initialization of connections the ConnectionFactory change the 'autoCommit'
+            state dependent of the used 'useAutoCommit' setting. This doesn't work in all
+            situations/environments, thus for useAutoCommit="1" the ConnectionFactory does
+            no longer set autoCommit to true on connection creation.
+            To use the old behavior (OJB version 1.0.3 or earlier) set this property
+            to 'true', then OJB change the autoCommit state (if needed) of
+            new obtained connections at connection initialization to 'true'.
+            If 'false' or this property is removed, OJB don't try to change connection
+            autoCommit state at connection initialization.
+        -->
+        <attribute attribute-name="initializationCheck" attribute-value="false" />
+
+        <!-- alternative cache implementations, see docs section "Caching" -->
+        <object-cache class="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl">
+            <!-- meaning of attributes, please see docs section "Caching" -->
+            <!-- common attributes -->
+            <attribute attribute-name="cacheExcludes" attribute-value=""/>
+
+            <!-- ObjectCacheTwoLevelImpl attributes -->
+            <attribute attribute-name="applicationCache" attribute-value="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl"/>
+            <attribute attribute-name="copyStrategy" attribute-value="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl$CopyStrategyImpl"/>
+            <attribute attribute-name="forceProxies" attribute-value="false"/>
+            
+            <!-- ObjectCacheDefaultImpl attributes -->
+            <attribute attribute-name="timeout" attribute-value="900"/>
+            <attribute attribute-name="autoSync" attribute-value="true"/>
+            <attribute attribute-name="cachingKeyType" attribute-value="0"/>
+            <attribute attribute-name="useSoftReferences" attribute-value="true"/>
+        </object-cache>
+
+        <!-- For more info, see section "Connection Handling" in docs -->
+        <connection-pool
+            maxActive="30"
+            validationQuery="@VALIDATION_QUERY@"
+            testOnBorrow="@TEST_ON_BORROW@"
+            testOnReturn="@TEST_ON_RETURN@"
+            whenExhaustedAction="0"
+            maxWait="10000">
+
+            <!-- Set fetchSize to 0 to use driver's default. -->
+            <attribute attribute-name="fetchSize" attribute-value="0"/>
+
+            <!-- Attributes with name prefix "jdbc." are passed directly to the JDBC driver. -->
+            <!-- Example setting (used by Oracle driver when Statement batching is enabled) -->
+            <attribute attribute-name="jdbc.defaultBatchValue" attribute-value="5"/>
+
+            <!-- Attributes determining if ConnectionFactoryDBCPImpl
+                 should also pool PreparedStatement. This is programmatically disabled
+                 when using platform=Oracle9i since Oracle statement caching will conflict
+                 with DBCP ObjectPool-based PreparepdStatement caching (ie setting true
+                 here has no effect for Oracle9i platform). -->
+            <attribute attribute-name="dbcp.poolPreparedStatements" attribute-value="false"/>
+            <attribute attribute-name="dbcp.maxOpenPreparedStatements" attribute-value="10"/>
+            <!-- Attribute determining if the Commons DBCP connection wrapper will allow
+                 access to the underlying concrete Connection instance from the JDBC-driver
+                 (normally this is not allowed, like in J2EE-containers using wrappers). -->
+            <attribute attribute-name="dbcp.accessToUnderlyingConnectionAllowed" attribute-value="false"/>
+        </connection-pool>
+
+        <!-- alternative sequence manager implementations, see "Sequence Manager" guide -->
+        <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+            <!-- attributes supported by SequenceManagerHighLowImpl,
+            SequenceManagerInMemoryImpl, SequenceManagerNextValImpl
+            please see "Sequence Manager" guide or/and javadoc of class for more information -->
+            <attribute attribute-name="seq.start" attribute-value="200000"/>
+            <attribute attribute-name="autoNaming" attribute-value="true"/>
+
+            <!-- attributes supported by SequenceManagerHighLowImpl
+            please see "Sequence Manager" guide or/and javadoc of classes for more information -->
+            <attribute attribute-name="grabSize" attribute-value="20"/>
+
+            <!-- optional attributes supported by SequenceManagerNextValImpl (support depends
+            on the used database), please see "Sequence Manager" guide or/and javadoc of
+            classes for more information -->
+            <!-- attribute attribute-name="seq.as" attribute-value="INTEGER"/ -->
+            <!-- attribute attribute-name="seq.incrementBy" attribute-value="1"/ -->
+            <!-- attribute attribute-name="seq.maxValue" attribute-value="999999999999999999999999999"/ -->
+            <!-- attribute attribute-name="seq.minValue" attribute-value="1"/ -->
+            <!-- attribute attribute-name="seq.cycle" attribute-value="false"/ -->
+            <!-- attribute attribute-name="seq.cache" attribute-value="20"/ -->
+            <!-- attribute attribute-name="seq.order" attribute-value="false"/ -->
+
+        </sequence-manager>
+   </jdbc-connection-descriptor>
+
+   <!-- Datasource example -->
+    <!-- jdbc-connection-descriptor
+        jcd-alias="default"
+        default-connection="true"
+   		platform="Hsqldb"
+   		jdbc-level="2.0"
+   		jndi-datasource-name="java:DefaultDS"
+   		username="sa"
+   		password=""
+        batch-mode="false"
+        useAutoCommit="0"
+        ignoreAutoCommitExceptions="false"
+   >
+        Add the other elements like object-cache, connection-pool, sequence-manager here.
+
+   </jdbc-connection-descriptor -->
+

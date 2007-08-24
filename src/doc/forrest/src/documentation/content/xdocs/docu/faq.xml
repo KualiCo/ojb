@@ -1,0 +1,1620 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: faq.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE faqs PUBLIC "-//APACHE//DTD FAQ V1.2//EN" "http://apache.org/forrest/dtd/faq-v12.dtd">
+
+<faqs title="Frequently Asked Questions">
+
+    <part id="General">
+        <title>General</title>
+        <faq id="whyOJB">
+            <question>
+                Why OJB? Why do we need another O/R mapping tool?
+            </question>
+            <answer>
+                <p>
+                    here are some outstanding OJB features:
+                </p>
+                <ul>
+                    <li>It's fully ODMG 3.0 compliant</li>
+                    <li>It will have a full JDO implementation</li>
+                    <li>It's higly scalable (Loadbalanced Multiserver scenario)</li>
+                    <li>It provides multiple APIs:
+                        <ul>
+                            <li>The full fledged ODMG-API,</li>
+                            <li>The JDO API (planned) </li>
+                            <li>
+                                and the PersistenceBroker API. This API provides a O/R persistence
+                                kernel which can be used to build higher level APIs (like the ODMG and
+                                JDO Implementations)
+                            </li>
+                        </ul>
+                    </li>
+                    <li>It's able to handle multiple RDBMS simultaneously.</li>
+                    <li>
+                        it has a slick MetaLevel Architecture: By changing the MetaData at runtime
+                        you can change the O/R mapping behaviour. (E.G. turning on/off usage of
+                        Proxies.)
+                    </li>
+                    <li>
+                        It has a simple CacheMechanisms that is fully garbage	collectable by usage
+                        of weak references.
+                    </li>
+                    <li>It has a simple and clean pattern based design.</li>
+                    <li>
+                        It uses a configurable plugin concept. This allows to replace components
+                        (e.g. the ObjectCache) by user defined Replacements.
+                    </li>
+                    <li>
+                        It has a modular architecture (you can quite easily reuse	some components
+                        in your own applications if you don't want to use	the whole thing:
+                        <ul>
+                            <li>The PersistenceBroker (e.g. to build your own PersistenceManager)</li>
+                            <li>The Query Interface as an abstract query syntax</li>
+                            <li>The OQL Parser</li>
+                            <li>The MetaData Layer</li>
+                            <li>The JDBC Accesslayer</li>
+                        </ul>
+                    </li>
+                    <li>
+                        It has a very sharp focus: It's concerned with O/R mapping and nothing
+                        else.
+                    </li>
+                </ul>
+                <p>
+                    Before making OJB an OpenSource project I had a look around at the
+                    emerging OpenSource O/R scene and was asking myself if there is
+                    really a need for yet another O/R tool.
+                    I came to the conclusion that there was a need for OJB because:
+                </p>
+                <ul>
+                    <li>There was no ODMG/JDO compliant opensource tool available</li>
+                    <li>There was no scalable opensource O/R tool available</li>
+                    <li>
+                        there was no tool available with the idea of a PersistenceBroker Kernel
+                        that could be easiliy extended
+                    </li>
+                    <li>The tools available had no dynamic MetaData architectures.</li>
+                    <li>
+                        The tools available were not as clearly designed as I hoped,
+                        thus extending one of them would have been very difficult.
+                    </li>
+                </ul>
+            </answer>
+        </faq>
+
+        <faq id="relatedTo">
+            <question>
+                How is OJB related to ODMG and JDO?
+            </question>
+            <answer>
+                <p>
+                    ODMG is a standard API for Object Persistence specified by the ODMG
+                    consortium (www.odmg.org).
+                    JDO is Sun's API specification for Object Persistence. ODMG may
+                    well be regarded as a Precursor to JDO.
+                    In fact JDO incorporates
+                    many ideas from ODMG and several people who have been involved in
+                    the ODMG spec are now in the JDO team.
+                    <br/>
+                    I assume JDO will have
+                    tremendous influence on OODBMS-, RDBMS-, J2EE-server and O/R-tool-vendors
+                    to provide compliant products.
+                    <br/>
+                    OJB wants to provide first class support for JDO and ODMG APIs.
+                </p>
+                <p>
+                    OJB currently contains of four main layers, each with its own API:
+                </p>
+                <ol>
+                    <li>
+                        A low-level
+                        <strong>PersistenceBroker</strong> API which serves as the OJB persistence
+                        kernel. The PersistenceBroker also provides a scalable
+                        multi-server architecture that allows to used it in heavy-duty
+                        app-server scenarios.
+                        <br/>
+                        This API can also be used directly by applications that don't need full
+                        fledged object level transactions (see <link href="site:pb-tutorial">PB tutorial</link> for details).
+                    </li>
+
+                    <li>
+                        An Object Transaction Manager (OTM) layer that contains all features that
+                        JDO and ODMG have in common as Object level transactions, lock-management,
+                        instance lifecyle etc. (See <link href="site:otm-tutorial">OTM tutorial</link> for details.)
+                        The OTM is work in progress.
+                    </li>
+
+                    <li>
+                        A full featured
+                        <strong>ODMG 3.0</strong> compliant API. (See
+                        <link href="site:odmg-tutorial">ODMG tutorial</link> for an introduction.)
+                        <br/> Currently this API is implemented on top the PersistenceBroker. Once the
+                        OTM layer is finished ODMG will be implemented on top of OTM.
+                    </li>
+
+                    <li>
+                        A
+                        <strong>JDO</strong> compliant API. This is work in progress.
+                        (See <link href="site:jdo-tutorial">JDO tutorial</link> for an introduction.)
+                        <br/> Currently this API is implemented on top the PersistenceBroker. Once the
+                        OTM layer is finished JDO will be implemented on top of OTM.
+                    </li>
+
+                </ol>
+
+                <p>
+                    The following graphics shows the layering of these APIs. Please note that the
+                    layers coloured in yellow are not yet implemented.
+                </p>
+                <p>
+                    <img src="images/ojb-layers.png" alt="OJB Layer"/>
+                </p>
+
+            </answer>
+        </faq>
+
+        <faq id="designPrincipals">
+            <question>
+                What are the OJB design principals?
+            </question>
+            <answer>
+                <p>
+                    OJB has a "pattern driven" design.
+                    <link href="site:links/design">Please refer to this document for more details</link>
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="learnORMapping">
+            <question>
+                Where can I learn more about Object/Relational mapping in general?
+            </question>
+            <answer>
+                <p>
+                    <link href="site:links/more-or">We have a link list pointing to further readings.</link>
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="performanceToJDBC">
+            <question>
+                How OJB performance compares to native JDBC programming?
+            </question>
+            <answer>
+                <p>
+                    See page <link href="site:performance">Performance</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="performanceToOR">
+            <question>
+                How OJB performance compares to other O/R mapping tools?
+            </question>
+            <answer>
+                <p>
+                    See page <link href="site:performance">Performance</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="readyForProduction">
+            <question>
+                Is OJB ready for production environments?
+            </question>
+            <answer>
+                <p>
+                    Depends on your production environment. If you want to program an aeroplane autopilot
+                    system you should not use Java at all. (according to the official disclaimer).
+                    <br/>
+                    <br/>
+
+                    But I assume we are talking about enterprise business applications, aren't we?
+                    And for such applications it's a clear
+                    <strong>yes</strong>.
+                    OJB is used in production application since version 0.5.
+                    We have about 6.000 downloads each month (and growing) and a large user base using it in a wide
+                    spectrum of production scenarios.
+                    <br/>
+                    <br/>
+
+                    We provide a regression test suite for Quality Assurance. You can use this testsuite to check if
+                    OJB works smoothly in your target environment.
+                    (see
+                    <link href="site:platform">supported platforms documentation</link>)
+                    <br/>
+                    <br/>
+
+                    We also provide a performance testsuite that compares OJB performance against native JDBC.
+                    This test will give you an impression of the performance impact OJB will have in your target
+                    environment.
+                    (see
+                    <link href="site:performance">Performance testsuite documentation</link>)
+                    <br/>
+                    <br/>
+
+                    OJB is also the persistence layer of choice in several books on
+                    programming J2EE based enterprise business systems.
+                    (see
+                    <link href="site:links">our links and references section</link>)
+                    <br/>
+                    <br/>
+
+                    Reference projects and user testimonials are listed
+                    <link href="site:references">here.</link>
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="supportsCaching">
+            <question>
+                Does OJB supports caching?
+            </question>
+            <answer>
+                <p>
+                    Short answer is yes. To get a detailed answer, please read the
+                    <link href="site:object-cache">caching guide</link>.
+                </p>
+            </answer>
+        </faq>
+    </part>
+
+
+    <part id="gettingStarted">
+        <title>Getting Started</title>
+        <faq id="installingProblems">
+            <question>
+                Help! I'm having problems installing and using OJB!
+            </question>
+            <answer>
+                <p>
+                    Please read the
+                    <link href="site:getting-started">Getting Started</link> document. OJB is a
+                    powerful and complex system - installing and configuring OJB is not a trivial task.
+                    Be sure to follow <strong>all the steps</strong> mentioned in that document - don't skip any steps
+                    when first installing OJB on your systems.
+                </p>
+                <p>
+                    If you are having problems running OJB against your target database, read the
+                    respective
+                    <link href="site:platform">platform documentation</link>.  Before you
+                    try to deploy OJB to your environment, read the
+                    <link href="site:deployment">deployment guide</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="stillHavingProblems">
+            <question>
+                Help! I still have serious problems installing OJB!
+            </question>
+            <answer>
+                <p>
+                    The following answer is quoted from the OJB user-list. It is from a
+                    reply to a user who had serious problems getting started with OJB.
+                </p>
+                <p>
+                    I would say it was stupid not to understand OJB. How can you know what
+                    another programmer wrote. I've been a Java programmer for quite some time
+                    and I could show you stuff I wrote that I know you wouldn't understand.
+                    I'll just break it down the best I can on what, where and why.
+                </p>
+                <p>
+                    OJB is a data persistence layer for Java. I'll just use an example of how I
+                    use it. I have an RDMS. I would like to save Java object states to this
+                    database and I would like to be able to search this information as well. If
+                    you serialize objects it's hard to search and if you use SQL it won't work
+                    with any different database. Plus it's a mess having to work with all that
+                    SQL in your code. And by using SQL you don't get to work with just Java
+                    objects. But, with OJB your separated from having to work outside the
+                    object world and unlike serialization you can preform SQL like searches on
+                    your data. Also, there's things like caching and connection pooling in OJB
+                    that help with performance. After setting up OJB you will use either PB-API or
+                    ODMG or JDO to access your information in a object centric manner. PB API is
+                    a non-standard O/R mapping API with many features and great flexibility. All
+                    top-level API's like ODMG or JDO build on top of the PB-api. ODMG is a
+                    standard for the api for accessing your data. That means you can use any
+                    ODMG compliant api if you don't want to use OJB. The JDO part is like ODMG
+                    except it's the SUN JDO standard. I use ODMG because the JDO interface is
+                    not ready yet.
+                </p>
+                <p>
+                    OJB is easy to use. I'll just break it down into two sides. There's the
+                    side your writing your code for your application and there's the side that
+                    you configure to make OJB connect to your database. Starting with your
+                    application side, all that is needed is to use the interface you wish. I
+                    use ODMG because JDO is not complete yet. Here's a
+                    <link href="site:odmg-tutorial">link to the ODMG part</link>
+                    with some code for examples.
+                    <br/>
+                    That's all you need on the application side. Next there's the configuration
+                    side. This is the one your fighting with. Here you need to setup the core
+                    tables for OJB and you will define the classes you wish to store in your
+                    database.
+                </p>
+                <p>
+                    First thing to do is to build the cvs's with the default database HSQL,
+                    because you know it will work. If you get past this point you should have a
+                    working OJB compiled. Now if your using JDK 1.4 you will need to set in
+                    build.properties JDBC=+JDBC30 and do a
+                    <em>ant preprocess</em> first. Next you
+                    will do a
+                    <em>ant junit</em> and this will build OJB and test everything for
+                    you. If you get a build successful then your in business. Then you will
+                    want to run
+                    <em>ant jar</em> to create the OJB jar to put in your /lib. You
+                    will need a couple other jars in you /lib directory to make it all work.
+                    See this page for those. http://jakarta.apache.org/ojb/deployment.html
+                </p>
+                <p>
+                    Next you will need some xml and configuration files in your class path for
+                    OJB. You will find those files under {$OJB_base_dir}/target/test/ojb. All
+                    the repository.xml's and OJB.properties for sure. With all these files in
+                    place with your application you should be ready to use OJB and start
+                    writing your application.
+                </p>
+                <p>
+                    Finally you will want to setup your connection to your database and define
+                    your classes you will be storing in your database. In the repository.xml
+                    file you can configure your JDBC parameters so OJB can connect to your
+                    database. You will also need your JDBC jar somewhere in your class path.
+                    Then you will define your classes in the repository_user.xml file. Look
+                    here for examples. http://jakarta.apache.org/ojb/tutorial1.html Note you
+                    will want to comment out the junit part in repository.xml because it's just
+                    for testing.
+                </p>
+                <p>
+                    The final thing to do is to make sure the OJB core tables are in your
+                    database. Look on this page for <link href="site:platform">the core tables</link>. These core tables are used by
+                    OJB to store internal data while it's running. It needs these. Then there's
+                    the tables you define. The ones you mapped in the repository_user.xml file.
+                </p>
+                <p>
+                    Sorry if any of this is off. OJB is growing so fast that it's hard to keep
+                    up with all changes. The order I gave the steps in is just how I would
+                    think it's understood better. You can go in any order you want. The steps
+                    I've shown are mostly for deployment. Hope this helps you understand OJB a
+                    little better. I'm not sure if this is what your wanting or not.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="mappingProblems">
+            <question>
+                OJB does not start?
+            </question>
+            <answer>
+                <p>
+                    If you carefully attended the <link href="#installingProblems">installing hints</link>
+                    there may be something wrong with your metadata mapping defined in the
+                    <link href="ext:repository.xml">repository file</link> or one the included sub files.
+                </p>
+                <ul>
+                    <li>Are you included all configuration files in classpath?</li>
+                    <li>On update to a new release, make sure you replaced all configuration files</li>
+                    <li>Check your metadata mapping - typos,... ?</li>
+                </ul>
+                <p>
+                    If something going wrong while OJB read the metadata files you can enable <em>debug</em>
+                    log level for <code>org.apache.ojb.broker.metadata.RepositoryXmlHandler</code>
+                    and <code>org.apache.ojb.broker.metadata.ConnectionDescriptorXmlHandler</code> to get more
+                    detailed information.
+                </p>
+                <note>
+                    If OJB default logging was used, change entries for these classes in
+                    <link href="ext:ojb.properties">OJB.properties</link> file (this may change in future).
+                </note>
+            </answer>
+        </faq>
+
+        <faq id="supportRDBMS">
+            <question>
+                Does OJB support my RDBMS?
+            </question>
+            <answer>
+                <p>
+                    <link href="site:platform">please refer to this document</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="internalTables">
+            <question>
+                What are the OJB internal tables for?
+            </question>
+            <answer>
+                <p>
+                    <link href="site:platform">Please refer to this document</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="couldNotBorrow">
+            <question>
+                What does the exception <em>Could not borrow connection from pool</em> mean?
+            </question>
+            <answer>
+                <p>
+                    There can be several reasons
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="anyTools">
+            <question>
+                Any tools help to generate the metadata files?
+            </question>
+            <answer>
+                <p>
+                    <link href="site:large-metadata">Please refer to this document</link>.
+                </p>
+            </answer>
+        </faq>
+    </part>
+
+
+    <part id="apis">
+        <title>OJB APIs</title>
+        <faq id="differencesBetweenAPI">
+            <question>
+                What are the differences between the different OJB APIs?
+                Which one should I use in my applications?
+            </question>
+            <answer>
+                <p>
+                    The PersistenceBroker (PB) provides a minimal API for transparent
+                    persistence:
+                </p>
+                <ul>
+                    <li>O/R mapping</li>
+                    <li>Retrieval of objects with a simple query interface from RDBMS</li>
+                    <li>storing (insert, update) of objects to RDBMS</li>
+                    <li>deleting of objects from RDBMS</li>
+                </ul>
+
+                <p>This is all you need for simple applications as in tutorial1.</p>
+                <p>
+                    The OJB ODMG implementation uses the PB as its persistence kernel.
+                    But it provides much more functionality to the application developer.
+                    ODMG is a full fledged API for Object Persistence, including:
+                </p>
+                <ul>
+                    <li>OQL Query interface</li>
+                    <li>real Object Transactions</li>
+                    <li>
+                        A Locking Mechanism for management of concurrent threads (apps)
+                        accessing the same objects
+                    </li>
+                    <li>predefined persistent capable Collections and Hashtables</li>
+                </ul>
+
+                <p>
+                    Some examples explaining the implications of these functional differences:
+                </p>
+                <ol>
+                    <li>
+                        Say you use the PB to query an object O that has a collection
+                        attribute col with five elements a,b,c,d,e. Next you delete Objects
+                        d and e from col and store O again with
+                        PersistenceBroker.store(O);
+                        <br/>
+                        PB will store the remaining objects a,b,c. But it will not delete d and
+                        e ! If you then requery object O it will again contain a,b,c,d,e !!!
+                        <br/>
+                        The PB keeps no transactional state of the persistent Objects, thus it
+                        does not know that d and e have to be deleted. (as a side note: deletion
+                        of d and e could also be an error, as there might be references to them
+                        from other objects !!!)
+                        <br/>
+                        Using ODMG for the above scenario will eliminate all trouble: Objects
+                        are registered to a transaction so that on commit of the transaction it
+                        knows that d and e do not longer belong to the collection. the ODMG
+                        collection will not delete the objects d and e but only the REFERENCES
+                        from the collection to those objects!
+                    </li>
+                    <li>
+                        Say you have two threads (applications) that try to access
+                        and modify the same object O. The PB has no means to check whether
+                        objects are used by concurrent threads. Thus it has no locking
+                        facilities. You can get all kind of trouble by this situation. The
+                        ODMG implementation has a Lockmanager that is capable of
+                        synchronizing concurrent threads. You can even use four transaction
+                        isolation levels:
+                        <br/>read-uncommitted, read-committed,
+                        repeatable-read, serializable.
+                    </li>
+                </ol>
+
+                <p>
+                    In my eyes the PB is a persistence kernel that can be used to
+                    build high-level PersistenceManagers like an ODMG or JDO
+                    implementation. It can also be used to write simple applications, but
+                    you have to do all management things (locking, tracking objects
+                    state, object transactions) on your own.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="pbQueriesODMG">
+            <question>
+                I don't like OQL, can I use the PersistenceBroker Queries within ODMG?
+            </question>
+            <answer>
+                <p>
+                    Please refer to the <link href="site:odmg-guide/no-oql">ODMG-guide</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="finishedJDO">
+            <question>
+                The OJB JDO implementation is not finished, how can I start using OJB?
+            </question>
+            <answer>
+                <p>
+                    I recommend to not use JDO now, but to use the existing ODMG api
+                    for the time being.
+                </p>
+                <p>
+                    Migrating to JDO later will be smooth if you follow the following steps.
+                    I recommend to first divide your model layer into Activity- (or Process-)
+                    classes and Entity classes.
+                </p>
+                <p>
+                    Entity classes represent classes that must be made persistent at some
+                    point in time, say a "Customer" or a "Order" object.
+                    These persistent classes and the repsective O/R mapping in repository.xml will
+                    remain unchanged.
+                </p>
+                <p>
+                    Activities are classes that perform business tasks and work upon
+                    entities, e.g. "edit a Customer entry", "enter a new Order"...
+                    They implement (parts of) use cases.
+                </p>
+                <p>
+                    Activities are driving transactions against the persistent storage.
+                </p>
+                <p>
+                    I recommend to have a Transaction interface that your Activities can
+                    use. This Transaction interface can be implemented by ODMG or by JDO
+                    Transactions (which are quite similar). The implementation should be made
+                    configurable to allow to switch from ODMG to JDO later.
+                </p>
+                <p>
+                    The most obvious difference between ODMG and JDO are the query
+                    languages: ODMG uses OQL, JDO define JDOQL.
+                    As an OO developer you won't like both of them.
+                    I recommend to use the ojb Query objects that allow an abstract syntax
+                    representation of queries.
+                    It is possible to use these queries within ODMG transactions and it will
+                    also be possible to use them within JDO Transactions. (this is contained in the FAQ too).
+                </p>
+                <p>
+                    Using your own Transaction interface in conjunction with the OJB query
+                    api will provide a simple but powerful abstraction of the underlying
+                    persistence layer.
+                </p>
+                <p>
+                    We are using this concept to provide an abstract layer above OJB-ODMG,
+                    TopLink and LDAP servers in my company.
+                    Making it work with OJB-JDO will be easy!
+                </p>
+            </answer>
+        </faq>
+    </part>
+
+
+    <part id="howto">
+        <title>Howto</title>
+        <faq id="withRDBMS">
+            <question>
+                How to use OJB with my RDBMS?
+            </question>
+            <answer>
+                <p>
+                    <link href="site:platform">please refer to this document</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="usingInWebApp">
+            <question>
+                How to use OJB in an web app?
+            </question>
+            <answer>
+                <p>
+                    If you follow these rules, then OJB works fine in web apps:
+                </p>
+                <ul>
+                	<li>Don't put OJB's jars into one of the servers directories but rather put them into the <code>WEB-INF/lib</code>
+                	    folder of your web app.</li>
+                	<li>OJB searches for its configuration files (<code>OJB.properties</code>, <code>repository.xml</code>) in the classpath.
+                	    Therefore, it is easiest if you put them in the <code>WEB-INF/classes</code> folder which is automatically in the
+                	    classpath of the web app</li>
+                	<li>Don't hold onto the <code>PersistenceBroker</code> instances, rather get one whenever you want to do something, and close
+                	    it once you're done.</li>
+                </ul>
+                <p>
+                    See <link href="site:deployment">deployment doc</link> for more information.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="maxPerformance">
+            <question>
+                What are the best settings for maximal performance?
+            </question>
+            <answer>
+                <p>
+                    See <link href="site:performance">performance section</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="pageAndSort">
+            <question>
+                How to page and sort?
+            </question>
+            <answer>
+                <p>
+                    Sorting can be configured by
+                    <code>org.apache.ojb.broker.query.Criteria::orderBy(column_name)</code>.
+                </p>
+                <p>
+                    There is no paging support in OJB. OJB is concerned with Object/Relational
+                    mapping and not with application specific presentation details like
+                    presenting a scrollable page of items.
+                </p>
+                <p>
+                    OJB returns query results as Collections or Iterators.
+                </p>
+                <p>
+                    You can easily implement your partial display of result data by using an
+                    Iterator as returned by <code>ojb.broker.PersistenceBroker::getIteratorByQuery(...)</code>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="performanceAndMemory">
+            <question>
+                What about performance and memory usage if thousands of
+                objects matching a query are returned as a Collection?
+            </question>
+            <answer>
+                <p>
+                    You can do two things to enhance performance if you have to process queries
+                    that produce thousands of result objects:
+                </p>
+                <ol>
+                    <li>
+                        Use getIteratorByQuery() rather than getCollectionByQuery().
+                        The returned Iterator is lazy and does not materialize Objects in
+                        advance. Objects are only materialized if you call the Iterators
+                        next() method. Thus you have total control about when and how many
+                        Objects get materialized! Please see <link href="#itOrCol">here for
+                        proper handling</link>.
+                    </li>
+                    <li>
+                        You can define Proxy Objects as placeholder for your
+                        persistent business objects. Proxys are lighweight objects that
+                        contain only primary key information. Thus their materialization is
+                        not as expensive as a full object materialization. In your case this
+                        would result in a collection containing 1000 lighweight proxies.
+                        Materialization of the full objects does only occur if the objects
+                        are accessed directly. Thus you can build similar lazy paging as
+                        with the Iterator. You will find examples in the OJB test suite
+                        (src-distribution only: [db-ojb]/src/test). More info about
+                        <link href="site:basic-technique/using-proxy">Proxy object here</link>.
+                    </li>
+                </ol>
+                <p>
+                    The Perfomance of 1. will be better than 2. This approach will
+                    also work for VERY large resultsets, as there are no references to
+                    result objects that would prevent their garbage collectability.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="proxyClasses">
+            <question>
+                When is it helpful to use Proxy Classes?
+            </question>
+            <answer>
+                <p>
+                    Proxy classes can be used for &quot;lazy loading&quot; aka
+                    &quot;lazy materialization&quot;. Using Proxy classes can help you in
+                    reducing unneccessary db lookups. Example:
+                </p>
+                <p>
+                    Say you load a ProductGroup object from the db which contains a
+                    collection of 15 Article objects.
+                </p>
+                <p>
+                    Without proxies all 15 Article objects are immediately loaded from
+                    the db, even if you are not interested in them but just want to
+                    lookup the description-attribute of the ProductGroup object.
+                </p>
+                <p>
+                    With a proxy class, the collection is filled with 15 proxy
+                    objects, that implement the same interface as the &quot;real objects&quot;
+                    but contain only an OID and a void reference.
+                </p>
+                <p>
+                    Once you access such a proxy object it loads its &quot;real
+                    subject&quot; by OID and delegates the method call to it.
+                </p>
+                <p>
+                    have a look at section
+                    <link href="site:basic-technique/using-proxy">proxy usage</link> of page
+                    <link href="site:basic-technique">basic technique</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="convertData">
+            <question>
+                How can I convert data between RDBMS and OJB?
+            </question>
+            <answer>
+                <p>
+                    For Example I have a DB column of type INTEGER but a class atribute of type
+                    boolean. How can I provide an automatic mapping with OJB?
+                </p>
+                <p>
+                    OJB provides a concept of ConversionStrategies that can be used for such
+                    conversion tasks. <link href="site:jdbc-types">Have a look at the respective document</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="traceProfileSQL">
+            <question>
+                How can I trace and/or profile SQL statements executed by OJB?
+            </question>
+            <answer>
+                <p>
+                    OJB  ships with out of the box support for <link href="ext:p6spy">P6Spy</link>.
+                    P6Spy is a JDBC proxy which delegates all JDBC calls to the
+                    real JDBC driver and traces all calls to a log file.
+                </p>
+                <p>
+                    P6Spy is contained in the p6spy.jar, which you'll find in the <code>lib</code>
+                    folder of your OJB distribution. Add this to the classpath of your app
+                    (if you're using the <link href="site:getting-started">ojb-blank</link>
+                    project, then simply copy the jar into the <code>lib</code> folder of the project
+                    and if you're using Eclipse then also add it to the project build path).
+                </p>
+                <p>
+                    Now the only other thing left is to configure OJB to use P6Spy, and P6Spy to
+                    use your database's driver. To achieve this, change the database driver in
+                    your <code>jdbc-connection-descriptor</code> (in your repository file) to 
+                </p>
+                <source><![CDATA[
+<jdbc-connection-descriptor
+    ...
+    driver="com.p6spy.engine.spy.P6SpyDriver"
+    ...
+    />]]></source>
+                <p>
+                    In <code>ojb-blank</code> this setting is changed in the <code>build.properties</code> instead.
+                </p>
+                <p>
+                    Also copy the file <code>spy.properties</code> which can be found in the 
+                    <code>src/test/org/apache/ojb</code> folder into your classpath (e.g. in the same
+                    place where your <code>OJB.properties</code> file is). In this file you'll find a line
+                    starting with <code>realdriver</code> where you should put the name of the jdbc driver of
+                    your database, e.g.
+                </p>
+                <source>realdriver=org.hsqldb.jdbcDriver</source>
+                <p>
+                    Also, here you can influence to where P6Spy will output the SQL statements. The appender
+                    defines how the logging is performed, e.g. to the console or to a file. The
+                    <code>logfile</code> setting defines into which file the statements will be printed
+                    (when a file appender is used). For instance, these settings will write to a file
+                    <code>spy.log</code>:
+                </p>
+                <source><![CDATA[
+logfile  = spy.log
+appender = com.p6spy.engine.logging.appender.FileLogger
+
+# This would be logging to the console
+#appender = com.p6spy.engine.logging.appender.StdoutLogger]]></source>
+                <p>
+                    That's all there is to it, no recompile or other change of your app is necessary.
+                    Btw, P6Spy also measures the time needed to execute each statement!
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="manageFK">
+            <question>
+                How does OJB manage foreign keys?
+            </question>
+            <answer>
+                <p>
+                    Automatically! you just define 1:1, 1:n or m:n associations in the
+                    repository_user.xml file.
+                    OJB does the rest!
+                </p>
+                <p>
+                    Please refer to
+                    <link href="site:basic-technique">basic technique</link> and
+                    <link href="site:repository">xml-metadata repository</link> for details.
+                </p>
+            </answer>
+        </faq>
+
+
+        <faq id="primitiveNull">
+            <question>
+                How does OJB manage 'null' for primitive primary key?
+            </question>
+            <answer>
+                <p>
+                    Primitive values (int, long, ...) can't be <code>null</code>, so OJB interpret '0' as <code>null</code>
+                    for primitive PK/FK fields in persistent objects. Thus primitive PK fields of persistent objects should
+                    never be represented by a '0' value in DB and never used as a
+                    <link href="site:sequence-manager">sequence key</link> value.
+                    <br/>
+                    This is only true for primitive PK/FK fields (e.g. <code>Integer(0)</code> is allowed).
+                    All other fields have 'normal' behavior.
+                </p>
+            </answer>
+        </faq>
+
+
+        <faq id="lookupByPK">
+            <question>
+                How to lookup object by primary key?
+            </question>
+            <answer>
+                <p>
+                    Please see <link href="site:pb-tutorial/find-by-pk">PB tutorial section</link>.
+                </p>
+            </answer>
+        </faq>
+
+
+        <faq id="itOrCol">
+            <question>
+                Difference between getIteratorByQuery() and getCollectionByQuery()?
+            </question>
+            <answer>
+                <p>
+                    The first one returns an <code>org.apache.ojb.broker.OJBIterator</code> instance.
+                    The returned Iterator instance is lazy and does not materialize Objects in
+                    advance. Objects are only materialized from the underlying query result set
+                    if you call the Iterators next() method. If all objects materialized or the calling
+                    <code>org.apache.ojb.broker.PersistenceBroker</code> instance was closed or transaction
+                    demarcations ends the Iterator instance release all used resources (e.g. used Statement
+                    and ResultSet instances).
+                </p>
+                <p>
+                    Method <code>getCollectionByQuery()</code> use an Iterator to materialize all objects
+                    first and then return the materialized objects within the <code>java.util.Collection</code>
+                    instance.
+                </p>
+                <note>
+                    If method <code>getIteratorByQuery()</code> was used keep in mind that the used
+                    Iterator instance is only valid as long as the used <code>org.apache.ojb.broker.PersistenceBroker</code>
+                    instance ends transaction or be closed. So it is NOT possible to get an Iterator, close the
+                    PersistenceBroker and pass the Iterator instance to a servlet or client. In that case use
+                    <code>getCollectionByQuery()</code>.
+                </note>
+            </answer>
+        </faq>
+
+        <faq id="collectionsOfPrimitives">
+            <question>
+                How can Collections of primitive typed elements be mapped?
+            </question>
+            <answer>
+                <p>
+                    The first thing to ask is:
+                    How are these primitive typed elements (Strings are also treated as primitive types here)
+                    stored in the database.
+                    <br/>
+                    1) are they treated as ordinary domain objects and stored in a separate table?
+                    <br/>
+                    2) are they serialized into a Varchar field?
+                    <br/>
+                    3) are they stored as a comma separated varchar field?
+                    <br/>
+                    4) is each element of the vector or array stored in a separate column?
+                    (this solution does only work for a fixed number of elements!)
+                    <br/>
+                    <br/>
+                    Follow these steps for solution 3):
+                    <br/>
+                    a) simply define ordinary collection-descriptors as for every other collection of domain objects.
+                    <br/>
+                    b) use the Object2ByteArrFieldConversion. See jdbc-types.html for details on conversion strategies.
+                    <br/>
+                    c) use the StringVector2VarcharFieldConversion. See jdbc-types.html for details on conversion strategies.
+                    <br/>
+                    d) provide a field-descriptor for each element.
+
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="representCollection">
+            <question>
+                How could class 'myClass' represent a collection of 'myClass' objects
+            </question>
+            <answer>
+                <p>
+                    OJB can handle such recursive associations without problems.
+                </p>
+                <ul>
+                    <li>
+                        add a collection attribute 'myClasses' to the class
+                        <code>myClass</code>
+                        this collection will hold the associated
+                        <code>myClass</code> objects.
+                    </li>
+                    <li>
+                        you have to decide wether this assosciation is 1:n or m:n.
+                        <br/>
+                        for 1:n you just need an additional foreignkey attribute in the MY_CLASS
+                        table. Of course you'll also need a matching attribute in the class
+                        <code>myClass</code>.
+                        <br/>
+                        For a m:n association you'll have to define a intermediary table to hold the
+                        mapping entries.
+                    </li>
+                    <li>
+                        define a
+                        <code>collection-descriptor</code> tag in the
+                        <code>class-descriptor</code>
+                        of
+                        <code>myClass</code> in repository.xml.
+                        Follow the steps in
+                        <link href="site:basic-technique">basic technique</link> on 1:n and m:n.
+                    </li>
+                </ul>
+
+            </answer>
+        </faq>
+
+        <faq id="lookupPB">
+            <question>
+                How to lookup <code>PersistenceBroker</code> instances?
+            </question>
+            <answer>
+                <p>
+                    Please refer to <link href="site:pb-guide/lookup-pb">PB-guide</link>.
+                </p>
+            </answer>
+        </faq>
+
+
+        <faq id="lookupODMG">
+            <question>
+                How to access ODMG?
+            </question>
+            <answer>
+                <p>
+                    Please refer to <link href="site:odmg-guide/lookup-odmg">ODMG-guide</link>.
+                </p>
+            </answer>
+        </faq>
+
+
+        <faq id="userPasswordNeeded">
+            <question>
+                Needed to put user/password of database connection in repository file?
+            </question>
+            <answer>
+                <p>
+                    There is no need to put user/password in the repository file (more exact in the
+                    <code>jdbc-connection-descriptor</code>). You can pass this
+                    information at runtime. See
+                    <link href="#differentDBUsers">Many different database user - How do they login?</link>.
+                </p>
+                <p>
+                    Only if you want to use convenience
+                    <code>PersistenceBroker</code> lookup method
+                    of
+                    <code>PersistenceBrokerFactory</code>, OJB needs
+                    all database connection information in the configuration files. More details see
+                    <link href="site:repository">repository file doc - section jdbc-connection-descriptor
+                        <code>default-connection</code> attribute
+                    </link>
+                </p>
+                <p>
+                    See <link href="#lookupPB">lookup PB api</link>.
+                    <br/>
+                    See <link href="#lookupODMG">lookup ODMG api</link>.
+                </p>
+                <source>
+PBKey pbKey = new PBKey(jcdAlias, user, passwd);
+PersistenceBroker broker = PersistenceBrokerFactory.createPersistenceBroker(pbKey);
+// or using a convenience (when default-connection was set in jdbc-connection-descriptor)
+PersistenceBroker broker = PersistenceBrokerFactory.defaultPersistenceBroker();</source>
+
+            </answer>
+        </faq>
+
+        <faq id="differentDBUsers">
+            <question>
+                Many different database user - How do they login?
+            </question>
+            <answer>
+                <p>
+                    There are two ways to do that. Define for each user a
+                    <code>jdbc-connection-descriptor</code>
+                    (unattractive way, because we have to add each new user to repository file),
+                    or let OJB handle this for you.
+                    <br/>
+                    For it define
+                    <strong>one</strong>
+                    <code>jdbc-connection-descriptor</code>,
+                    now you can use the same
+                    <code>jcdAlias</code> name with different
+                    <code>User/Password</code>. OJB
+                    <strong>copy</strong> the defined
+                    <code>jdbc-connection-descriptor</code> and replace the
+                    <code>username</code>
+                    and
+                    <code>password</code> with the given
+                    <code>User/Password</code>.
+                </p>
+                <p>
+                    PersistenceBroker-api example:
+                </p>
+                <source>
+PBKey user_1 = new PBKey(jcdAlias,username, passwd);
+PersistenceBroker broker =
+PersistenceBrokerFactory.createPersistenceBroker(user_1);
+...</source>
+                <p>
+                    ODMG-api example:
+                </p>
+                <source>
+Implementation odmg = OJB.getInstance();
+Database db = odmg.newDatabase();
+db.open("jcdAlias#username#passwd", Database.OPEN_READ_WRITE);
+...</source>
+                <p>
+                    Keep in mind, when the
+                    <code>connection-pool</code> element enables connection pooling, every user get its separate pool.
+                    See
+                    <link href="#connectionPooling">How does OJB handle connection pooling?</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="multipleDB">
+            <question>
+                How do I use multiple databases within OJB?
+            </question>
+            <answer>
+                <p>
+                    Define for each database a
+                    <code>jdbc-connection-descriptor</code>, use the
+                    different
+                    <code>jcdAlias</code> names in the <link href="site:repository">repositry file</link>
+                    to match the according database.
+                </p>
+                <source><![CDATA[
+<jdbc-connection-descriptor
+    jcd-alias="myFirstDb"
+    ...
+>
+    ...
+</jdbc-connection-descriptor>
+
+<jdbc-connection-descriptor
+    jcd-alias="mySecondDb"
+    ...
+>
+    ...
+</jdbc-connection-descriptor>]]></source>
+                <p>
+                    Specific notes related to the <link href="site:pb-guide/multiple-databases">PB-api here</link>.
+                    <br/>
+                    Specific notes related to the <link href="site:odmg-guide/multiple-databases">ODMG-api here</link>.
+                </p>
+                <note>
+                    OJB does not provide distributed transactions by itself. To use distributed transactions,
+                    OJB have to be <link href="site:deployment/j2ee-server">integrated in an j2ee conform environment</link>
+                    (or made work with an JTA/JTS implementation).
+                </note>
+            </answer>
+        </faq>
+
+        <faq id="connectionPooling">
+            <question>
+                How does OJB handle connection pooling?
+            </question>
+            <answer>
+                <p>
+                    Please have a look in section
+                    <link href="site:connection/connection-pooling">Connection Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="obtainConnection">
+            <question>
+                Can I directly obtain a
+                <code>java.sql.Connection</code> within OJB?
+            </question>
+            <answer>
+                <p>
+                    Please have a look in section
+                    <link href="site:connection/obtain-connection">Connection Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="performSQL">
+            <question>
+                Is it possible to perform my own sql-queries in OJB?
+            </question>
+            <answer>
+                <p>
+                    There are serveral ways in OJB to do that.
+                    <br/>
+                    If you completely want to bypass the OJBquery-api see
+                    <link href="#obtainConnection">Can I directly obtain a java.sql.Connection within OJB?</link>.
+                    <br/>
+                    A more elegant way is to use a <code>QueryBySQL</code> object:
+                </p>
+                <source>
+String sql =
+"SELECT A.Artikel_Nr FROM Artikel A, Kategorien PG"
++ " WHERE A.Kategorie_Nr = PG.Kategorie_Nr"
++ " AND PG.Kategorie_Nr = 2";
+// get the QueryBySQL
+Query q2 = QueryFactory.newQuery(Article.class, sql);
+
+Iterator iter2 = broker.getIteratorByQuery(q2);
+// or
+Collection col2 = broker.getCollectionByQuery(q2);</source>
+            </answer>
+        </faq>
+
+        <faq id="open-close-connection">
+            <question>
+                When does OJB open/close a connection?
+            </question>
+            <answer>
+                <p>
+                    Please see <link href="site:connection/open-close-connection">Connection handling guide</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="withoutRepository">
+            <question>
+                Start OJB without a repository file?
+            </question>
+            <answer>
+                <p>
+                    See section <link href="site:metadata/without-repository">Metadata Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="connectToDB">
+            <question>
+                Connect to database at runtime?
+            </question>
+            <answer>
+                <p>
+                    See section <link href="site:metadata/connect-at-runtime">Metadata Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="listener">
+            <question>
+                Hook into OJB - How to add Listener, callback interface?
+            </question>
+            <answer>
+                <p>
+                    See <em>Listener/Callback</em> section in <link href="site:pb-guide/listener">PB-Guide</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="addPersistentObjects">
+            <question>
+                Add new persistent objects metadata (
+                <code>class-descriptor</code>) at runtime?
+            </question>
+            <answer>
+                <p>
+                    See section <link href="site:metadata/metadata-at-runtime">Metadata Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="metadataChanges">
+            <question>
+                Global metadata changes at runtime?
+            </question>
+            <answer>
+                <p>
+                    Please see section
+                    <link href="site:metadata">Metadata Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="perThreadMetadataChanges">
+            <question>
+                Per thread metadata changes at runtime?
+            </question>
+            <answer>
+                <p>
+                    Please see section
+                    <link href="site:metadata">Metadata Handling</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="ojbAndEjb">
+            <question>
+                Is it possible to use OJB within EJB's?
+            </question>
+            <answer>
+                <p>
+                    Yes, see
+                    <link href="site:deployment">deployment</link> instructions in the docs.
+                    Additional you can find some EJB example beans in package
+                    <code>org.apache.ojb.ejb</code>
+                    under
+                    <code>[jakarta-ojb]/src/ejb</code>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="ternaryAssociations">
+            <question>
+                Can OJB handle ternary (or higher) associations?
+            </question>
+            <answer>
+                <p>
+                    Yes, that's possible. Here is an example.
+                    With a ternary relationship there are three (or more) entities
+                    'related' to each other.
+                    An example would be
+                    <code>Developer</code>,
+                    <code>Language</code> and
+                    <code>Project</code>.
+                </p>
+                <p>
+                    Each entity is mapped to one table (
+                    <code>DEVELOPER</code>,
+                    <code>LANGUAGE</code> and
+                    <code>PROJECT</code>). To represent the combinations
+                    of these entities we need an additional bridge table
+                    (
+                    <code>PROJECTRELATIONSHIP</code>)with three
+                    columns holding the foreign keys to
+                    the other three	tables (just like an m:n association is represented
+                    by an intermediary table with 2 columns).
+                </p>
+                <p>
+                    To handle this table with OJB we have to define a class that is mapped on it.
+                    This Relationship class can then be used to perform
+                    queries/updates as with any other persistent class. Here is the layout
+                    of this class:
+                </p>
+                <source><![CDATA[
+public class ProjectRelationship {
+  Integer developerId;
+  Integer languageId;
+  Integer projectId;
+
+  Developer developer;
+  Language lanuage;
+  Project project;
+
+  /** setters and getters not shown for brevity**/
+}]]></source>
+                <p>
+                    Here is the respective extract from the repository :
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="ProjectRelationship"
+    table="PROJECTRELATIONSHIP"
+>
+    <field-descriptor
+        name="developerId"
+        column="DEVELOPER_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    />
+      <field-descriptor
+          name="languageId"
+          column="LANGUAGE_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    />
+      <field-descriptor
+          name="projectId"
+          column="PROJECT_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    />
+      <reference-descriptor
+          name="developer"
+          class-ref="Developer"
+      >
+        <foreignkey field-id-ref="developerId" />
+      </reference-descriptor>
+      <reference-descriptor
+          name="language"
+          class-ref="Language"
+      >
+        <foreignkey field-id-ref="languageId" />
+      </reference-descriptor>
+      <reference-descriptor
+          name="project"
+          class-ref="Project"
+      >
+        <foreignkey field-ref="projectId" />
+      </reference-descriptor>
+</class-descriptor>]]></source>
+
+                <p>
+                    Here is some sample code for storing a relationship :
+                </p>
+                <source><![CDATA[
+Developer dev = .... ; // create or retrieve
+Project  proj = .... ; // create or retrieve
+Language lang = .... ; // create or retrieve
+
+ProjectRelationship rel = new ProjectRelationship();
+rel.setDeveloper(dev);
+rel.setLanguage(lang);
+rel.setProject(proj);
+
+broker.store(r);]]></source>
+
+                <p>
+                    In the next code sample we are looking up all
+                    Projects that Developer "Bob" has done in "Java".
+                </p>
+                <source><![CDATA[
+Criteria criteria = new Criteria();
+criteria.addEqualTo("developer.name","Bob");
+cirteria.addEquatTo("language.name","Java");
+
+Query q = new QueryByCriteria(ProjectRelationship.class, criteria, true);
+Iterator iter = Broker.getIteratorByQuery(q);
+
+// now iterate over the collection and retrieve all projects:
+while (iter.hasNext())
+{
+    ProjectRelationship rel = (ProjectRelationship)	iter.next();
+    System.out.println(rel.getProject().toString());
+}]]></source>
+
+                <p>
+                    You could also have on the Project class-descriptor a
+                    <code>collection-descriptor</code> that returns all relationships associated with the
+                    Project. If it was call "projectRelationships" the following would give you
+                    all projects that have a relationship with "bob" and the language "java".
+                </p>
+
+                <source><![CDATA[
+Criteria criteria = new Criteria();
+criteria.addEqualTo("projectRelationships.developer.name","bob");
+cirteria.addEquatTo("projectRelationships.language.name","java");
+
+Query q = new QueryByCriteria(Project.class, criteria, true);
+Collection projects = Broker.getCollectionByQuery(q);]]></source>
+                <p>
+                    This is the layout of the Project class:
+                </p>
+                <source><![CDATA[
+public class Project {
+  Integer id;
+  String name;
+  Collection projectRelationships;
+
+  /** setters and getters not shown for brevity**/
+}]]></source>
+                <p>
+                    This is the class-descriptor of the Project class:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Project"
+    table="PROJECT"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    />
+      <field-descriptor
+          name="name"
+          column="NAME"
+        jdbc-type="VARCHAR"
+    />
+      <collection-descriptor
+          name="projectRelationships"
+          element-class-ref="ProjectRelationship"
+      >
+        <inverse-foreignkey field-ref="projectId" />
+      </collection-descriptor>
+</class-descriptor>]]></source>
+
+            </answer>
+        </faq>
+
+        <faq id="mapListStrings">
+            <question>
+                How to map a list of Strings
+            </question>
+            <answer>
+                <p>
+                    You can not map a list of Strings with a collection descriptor. A collection
+                    descriptor can only be used if the element class is a persistent class too.
+                    But element-class-ref="java.lang.String" won't work, because it's no
+                    persistent entity class!
+                    <br/>
+                    Follow these steps to provide a mapping for an attribute holding alist of Strings.
+                    Let's assume your persistent class has an attribute
+                    <code>listOfStrings</code>
+                    holding a list of Strings:
+                </p>
+                <source><![CDATA[
+protected Collection listOfStrings;]]></source>
+<p>
+    The database table mapped to the persistent class has a colum
+    <code>LIST_OF_STRINGS</code> of type
+    <code>VARCHAR</code> that is used to hold all strings.
+</p>
+<source><![CDATA[
+<field-descriptor
+    name="listOfStrings"
+    column="LIST_OF_STRINGS"
+    jdbc-type="VARCHAR"
+    conversion=
+"o.a.ojb.broker.accesslayer.conversions.StringVector2VarcharFieldConversion"
+/>]]></source>
+            </answer>
+        </faq>
+
+        <faq id="optimisticLocking">
+            <question>
+                How to set up Optimistic Locking
+            </question>
+            <answer>
+                <p>
+                    Please see <link href="site:lock-manager/optimistic-locking">locking section</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="cluster">
+            <question>
+                How to use OJB in a cluster
+            </question>
+            <answer>
+                <p>
+                    Q: I'm running a web site in a load-balanced/cluster environment.
+                    Multiple servlet engines (different VMs/HTTP sessions), each running an OJB
+                    instance, against a single shared database.
+                    How should OJB be configured to get the concurrent
+                    servlet engines synchronized properly?
+                </p>
+
+                <p>
+                    <strong>transactional isolation and locking</strong>
+                    <br/>
+                    If you are using the PersistenceBroker API
+                    use <link href="#optimisticLocking">optimistic locking</link> (OL) to let
+                    OJB handle write conflicts.
+                    To use OL define a TIMESTAMP or INTEGER column and the respective Java attribute for it.
+                    In the field-descriptor of this attribute set the attribute
+                    <em>locking="true"</em>.
+                    <br/>
+                    If you are working with the ODMG API
+                    <link href="site:lock-manager">distributed pessemistic locking</link> should
+                    be used, by setting the respective flag in OJB.properties.
+                </p>
+
+                <p>
+                    <strong>sequence numbers</strong>
+                    <br/>
+                    Use a <link href="site:sequence-manager">SequenceManager</link> that is safe
+                    across multiple JVMs. The NextVal based SequenceManagers or any other SequenceManager
+                    based on database mechanisms will be fine.
+                </p>
+
+                <p>
+                    <strong>caching</strong>
+                    <br/>
+                    You could use different <link href="site:object-cache">caching implementations</link>
+                </p>
+                <ol>
+                    <li>
+                        Use the EmptyCacheImpl to avoid any dirty reads. (But: The EmptyCache
+                        cannot handle cyclic structures on load!)
+                    </li>
+                    <li>
+                        Use the PerBrokerCache Implementation to avoid dirty reads.
+                    </li>
+                    <li>
+                        Use the  OSCache cache implementation as distributed object cache.
+                    </li>
+                </ol>
+                <p>
+                    There is also a
+                    <link href="site:clustering">complete howto document</link>
+                    available that covers these topics.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="objectCacheEmptyImpl">
+            <question>
+                How to turn of caching?
+            </question>
+            <answer>
+                <p>
+                    Declare an no-op implementation of the <code>ObjectCache</code> interface as
+                    cache. See <link href="site:object-cache/turn-off-caching">detailed description here</link>.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="jdoPersistenceCapable">
+            <question>
+                JDO - Why must my persisten class implement
+                <code>javax.jdo.spi.PersistenceCapable</code>?
+            </question>
+            <answer>
+                <p>
+                    As specified by JDO all persistent classe must implement the interface
+                    <code>javax.jdo.spi.PersistenceCapable</code>.
+                    If a class does not implement this interface a JDO implementation does not know how to
+                    handle it.
+                    <br/>
+                    On the other hand the JDO spec claims to provide transaparent persistence.
+                    That is no persistence class is required to implement a specific interface or
+                    to be derived from a special base class.
+                    <br/>
+                    Sounds like a contradiction? It is! The JDO spec resolves this contradiction by
+                    stating that a JDO implemention is responsible to add the methods required by
+                    <code>javax.jdo.spi.PersistenceCapable</code> to the the user classes.
+                    This "injection" could be achieved by Pre- or Post-processing.
+                    The strategy most implementations use is called "bytecode-enhancement".
+                    This is a postprocesing step that adds the required methods to the .class files
+                    of the persistent user classes.
+                    <br/>
+                    The JDO Reference implementation also uses bytecode-enhancement.
+                    In order to enhance the Product class to implement the
+                    <code>javax.jdo.spi.PersistenceCapable</code> interface use the ant target
+                    "enhance-jdori" before launching the tutorial5 application.
+                    This is documentated in the first section of tutorial4.html.
+                </p>
+            </answer>
+        </faq>
+    </part>
+</faqs>

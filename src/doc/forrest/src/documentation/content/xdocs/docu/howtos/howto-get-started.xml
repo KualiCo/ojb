@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-get-started.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - Getting Started</title>
+        <authors>
+            <person name="Brian McCallister" email="brian@skife.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section><title>Getting Started with OJB</title>
+        <section><title>Introduction</title>
+            <p>
+                This document is designed to help you get started with OJB for the first
+                time. It is a cookbook type set of instructions designed to get you get
+                OJB installed, and able to work on the other various tutorials.
+            </p>
+            <p>
+                  This tutorial will:
+                </p>
+                <ol>
+                    <li>Install OJB</li>
+                    <li>Set up a database to test against</li>
+                    <li>Set up a basic project using OJB</li>
+                    <li>Configure a PostgreSQL database for use with OJB</li>
+                </ol>
+            <p>
+                This tutorial presumes you are comfortable configuring your relational
+                database of choice, including adding databases and users, and
+                configuring access controls at the database level (ie, you can create a
+                database and user and give the user permission to access and change the
+                database over a JDBC connection).
+            </p>
+        </section>
+
+        <section><title>Setting Up the Database</title>
+            <p>
+                We will look at setting up the database first as being able to run the
+                unit tests is the best way to see if everything has built correctly.
+            </p>
+            <p>
+                This tutorial will speak to using PostgreSQL, however the steps are the
+                same for configuring pretty much any database. OJB defaults to HSQLDB
+                support -- so if you use HSQLDB your life is made a little bit easier.
+                The tutorial will speak to PostgreSQL when a specific is required,
+                however it will try to avoid going terribly database specific. OJB isn't
+                supposed to work that way.
+            </p>
+            <p>
+                It is convenient to use the standard names that OJB likes to use for
+                testing. So, create a database named <code>OJB</code> and a user with
+                read/write access to that database named <code>oleg</code>. In
+                PostgreSQL I prefer to name the database lower-case
+                <code>ojb</code> as it makes the command line psql tools easier to use.
+                Your mileage may vary. Make sure that your database is listening on a
+                TCP/IP port (many PostgreSQL installs do not by default) as JDBC cannot
+                use UNIX sockets, or whatever the Windows equivalent of that is.
+            </p>
+        </section>
+        <section><title>Installing and Building OJB</title>
+            <p>
+                Using the source installation provides a great deal of flexibility when
+                working with OJB, and is the better path to take while learning the
+                tool.
+            </p>
+            <p>
+                Download the most recent source distribution, or retrieve it from CVS
+                and unpack it to a chosen directory. Building OJB will require
+                retrieving several additional libraries which are not redistributable by
+                Jakarta directly. These are specified in the
+                <a href="site:deployment">deployment</a> instructions. Retrieve the needed
+                libraries and install them in <code>lib/</code> directory. As mentioned,
+                make sure to include the JDBC driver for the database you are using.
+            </p>
+            <p>
+                Now, run <code>ant jar</code> in your installation directory to build
+                OJB. If you experience build errors that a class is not found, you have
+                missed a required library. Check again to make sure you have downloaded
+                and added the needed jars to the <code>lib/</code> directory. The
+                package name of the missing class should give you a good clue as to what
+                library you need.
+            </p>
+        </section>
+        <section><title>Accessing Your Database</title>
+            <p>
+                Now that you know you can build the actual OJB library, lets make sure
+                it works with your database.
+            </p>
+            <p>
+                Edit the <code>build.properties</code> file and uncomment the line for
+                the database you are using. For this example we will use PostgreSQL, so
+                we will uncomment the linefor PostgreSQL: <code>profile=postgresql</code>
+                and comment the line for HSQL: <code>#profile=hsqldb</code>. You will
+                uncomment the profile you need for your specific database.
+            </p>
+            <p>
+                Look for your database's entry in the <code>profiles/</code> directory,
+                <code>postgresql.profile</code> for our PostgreSQL example, and open it
+                in your text editor. Make any needed changes (such as specifying a
+                password if you have your database set to require one) to the
+                configuration and save the profile.
+            </p>
+            <p>
+                Now that the raw information needed to access your database is entered,
+                go back to the installation directory for OJB and run
+                <code>ant junit</code> and sit back. This will construct all of the
+                needed tables for OJB, as well as tables for unit testing OJB. It will
+                then happily run all of the various unit tests for you.
+            </p>
+            <p>
+                Assuming the build succeeded, take a look at your database and look at
+                the various tables. Pay particular note to the system tables described
+                in the <a href="site:platform">platforms</a> documentation. You will
+                need these tables in the database for your application as well.
+            </p>
+        </section>
+        </section>
+
+        <section><title>Your Project</title>
+        <section><title>Preparing the Database</title>
+            <p>
+                Once again we will begin by preparing the database. One option is to
+                change the database profile to point directly at your project database
+                and run the ant task to build the database. While this will generated
+                the needed OJB tables, it will also clutter your database with a score
+                or so ugly unit test tables.
+            </p>
+            <p>
+                Assuming you tested against the same type of database you intend to run
+                against, the DDL for the required tables already exists, though. You can
+                use this DDL to generate the OJB tables in your database. The core
+                tables required by OJB will have their DDL in the
+                <code>target/src/sql/ojbcore-schema.sql</code> sql script. You can use
+                it directly to generate the required tables in your project's database.
+            </p>
+            <p>
+                OJB uses <a href="ext:torque">Torque</a> to generate
+                the JUnit tables. An excellent way to generate the OJB tables, instead
+                of using the DDL generated for the tests, is to generate your schema via
+                Torque as well, and include the schema definitions from the JUnit tests
+                in your schema definition. This is, however, beyond the scope of this
+                tutorial. Torque does have an excellent set of tutorials that can make
+                this task very simple though. The schema definition for OJB is in the
+                <code>src/schema/ojbcore-schema.xml</code> file. Just drop this file
+                into your own Torque schema directory and you are good to go, the OJB
+                schema will be built right alongside your own.
+            </p>
+        </section>
+        <section><title>OJB Deployment</title>
+            <p>
+                Detailed deployment information is available in the
+                <a href="site:deployment">deployment</a> documentation, including examples
+                of deployment to various J2EE containers. This tutorial
+                merely steps through the minimum to get a project up and running in a
+                freestanding applications.
+            </p>
+            <p>
+                OJB requires a number of configuration files to function correctly.
+                All of these configuration files can be loaded directly off of the
+                classpath, however so you just need ot get the onto your runtime
+                classpath.
+            </p>
+            <p>
+                The required files are:
+                </p>
+                <ul>
+                    <li>OJB.properties</li>
+                    <li>repository*.xml</li>
+                </ul>
+            <p>
+                It is easiest to just copy the files from the test run to your project
+                and edit them to your needs. The test files can be found in the
+                <code>target/test/ojb/</code> directory. Copy these to a place directly
+                on your classpath - or better, to a place where your build process can
+                copy them to your runtime classpath.
+            </p>
+            <p>
+                Open up the repository.xml file. It is basically a skeleton that
+                includes the other repository-*.xml files. The default layout works
+                fairly well - use repository-user.xml for your mappings,
+                repository-database.xml for the database connection information, etc.
+                You can safely comment out or remove the junit, jdo, and ejb sections
+                however for this. If you intend to use that functionality yourself, go
+                ahead and add it back in after you have a stronger understanding of what
+                it does. For now, we just need the core functionality. make sure to
+                leave the internal reference in - it contains the mappings
+                for OJB's internally used tables.
+            </p>
+            <p>
+                In addition to the configuration information, you will need the ojb jar
+                library, and its required libraries. An up to date list of these is kept
+                on the <a href="site:deployment/additional-jars">Deployment</a> page.
+                Copy these jar files to your runtime classpath as
+                well as the db-ojb-*.jar.
+            </p>
+            <p>
+                You are now ready to begin using OJB!
+            </p>
+        </section>
+        </section>
+    </body>
+</document>
+
+

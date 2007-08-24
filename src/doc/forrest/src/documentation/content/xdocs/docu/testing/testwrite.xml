@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: testwrite.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Write Tests</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                As described in the
+                <a href="site:test-suite">test suite</a> document, OJB emphasizes on quality
+                assurance and provide a huge test suite. But of course it is impossible to cover
+                all parts of OJB with unit tests and OJB will never be perfect (although we would
+                like to think it's s nearly perfect ;-)),
+                thus if you are missing a testcase or think you found an bug -- don't hesitate to
+                write your own test and send it to the
+                <a href="site:mail-lists">developer list</a> or, if you have an existing
+                issue report, attach it in the <a href="ext:bugtracker">issue tracker</a>.
+            </p>
+        </section>
+
+        <section>
+            <title>How to write a new Test</title>
+            <p>
+                Before starting to write your own test case, please pay attention to these rules.
+            </p>
+
+            <section>
+                <title>The Test Class</title>
+                <p>
+                    All test classes have to inherit from
+                    <code>org.apache.ojb.junit.OJBTestCase</code>
+                    and have to provide a static main method to start the Junit test:
+                </p>
+                <source><![CDATA[
+public class MyTest extends OJBTestCase
+{
+    public static void main(String[] args)
+    {
+        String[] arr = {MyTest.class.getName()};
+        junit.textui.TestRunner.main(arr);
+    }
+
+    public void testMyFirstOne()
+    {
+        ....
+    {]]></source>
+                <p>
+                    You will find some test classes for specific scenarios in the
+                    <code>org.apache.ojb.junit</code> package:
+                </p>
+                <ul>
+                    <li>
+                        <code>org.apache.ojb.junit.PBTestCase</code> - provides a
+                        <code>org.apache.ojb.broker.PersistenceBroker</code> instance for tests.
+                    </li>
+                    <li>
+                        <code>org.apache.ojb.junit.ODMGTestCase</code> - provides
+                        <code>org.odmg.Implementation</code> and
+                        <code>org.odmg.Database</code> instances for tests.
+                    </li>
+                    <li>
+                        <code>org.apache.ojb.junit.JUnitExtensions</code> - servers as a base
+                        class when writing multi-threaded test classes.
+                        <br/>
+                        For more info, see the JavaDoc of the class.
+                    </li>
+                </ul>
+                <p>
+                    A test case for the PB-API may look like:
+                </p>
+                <source><![CDATA[
+public class ReferenceRuntimeSettingTest extends PBTestCase
+{
+    public static void main(String[] args)
+    {
+        String[] arr = {ReferenceRuntimeSettingTest.class.getName()};
+        junit.textui.TestRunner.main(arr);
+    }
+
+    public void testChangeReferenceSetting()
+    {
+        ClassDescriptor cld = broker.getClassDescriptor(MainObject.class);
+        // and so on
+        ....
+    }]]></source>
+                <note>
+                    The PersistenceBroker cleanup is done by
+                    <em>PBTestCase</em>.
+                </note>
+            </section>
+
+            <section>
+                <title>Persistent Objects used by Test</title>
+                <p>
+                    We recommend to introduce separate persistent objects for each TestCase class.
+                    In the <a href="site:test-suite">test suite</a> two concepts are used:
+                </p>
+                <ul>
+                    <li>
+                        Include your persistent objects as <em>public static classes</em> in your
+                        test class.
+                    </li>
+                    <li>
+                        Separate your test class in an independent package and include the test
+                        case and all persistent object classes in this new package.
+                    </li>
+                </ul>
+            </section>
+
+            <section>
+                <title>Test Class Metadata</title>
+                <p>
+                    Currently all test specific object metadata (class-descriptor used for tests) are
+                    shared among several xml files. The naming convention is <code>repository_junit_XXX.xml</code>.
+                    Thus metadata for new tests should be included in one of the existing junit repository (sub)
+                    files or writen in an new separate one and included in the main repository file.
+                </p>
+                <source><![CDATA[
+<!DOCTYPE descriptor-repository PUBLIC
+       "-//Apache Software Foundation//DTD OJB Repository//EN"
+       "repository.dtd"
+[
+<!ENTITY database SYSTEM "repository_database.xml">
+<!ENTITY internal SYSTEM "repository_internal.xml">
+<!ENTITY user SYSTEM "repository_user.xml">
+
+<!-- Start of JUnit included files -->
+<!ENTITY junit SYSTEM "repository_junit.xml">
+<!ENTITY junit_odmg SYSTEM "repository_junit_odmg.xml">
+<!ENTITY junit_otm SYSTEM "repository_junit_otm.xml">
+<!ENTITY junit_ref SYSTEM "repository_junit_reference.xml">
+<!ENTITY junit_meta_seq SYSTEM "repository_junit_meta_seq.xml">
+<!ENTITY junit_model SYSTEM "repository_junit_model.xml">
+<!ENTITY junit_cloneable SYSTEM "repository_junit_cloneable.xml">
+
+<!-- Your entity here: -->
+<!ENTITY junit_myfirsttest SYSTEM "repository_junit_myfirsttest.xml">
+]>
+<descriptor-repository version="1.0" isolation-level="read-uncommitted"
+        proxy-prefetching-limit="50">
+
+    <!-- include all used database connections -->
+    &database;
+
+    <!-- include ojb internal mappings here -->
+    &internal;
+
+    <!-- include user defined mappings here -->
+    &user;
+
+    <!-- include mappings for JUnit tests -->
+    &junit;
+    &junit_odmg;
+    &junit_otm;
+    &junit_ref;
+    &junit_meta_seq;
+    &junit_model;
+    &junit_cloneable;
+
+    &junit_myfirsttest;]]></source>
+            </section>
+        </section>
+    </body>
+</document>

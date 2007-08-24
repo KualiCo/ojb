@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: jdbc-types.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>JDBC Types</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <anchor id="jdbc-mapping"/>
+        <section>
+            <title>Mapping of JDBC Types to Java Types</title>
+            <p>
+                OJB implements the mapping conversions for JDBC and Java types as specified by
+                the JDBC 3.0 specification (see JDBC 3.0 specification
+                <em>Appendix B, Data Type Conversion Tables</em>). See the
+                <a href="#mapping-table">table below</a> for details.
+            </p>
+            <p>
+                If a sql-java type mapping is needed, that doesn't match the java types defined by
+                the specification, e.g. a field in the persistent object class is of type <em>int[]</em>
+                and the DB type is <em>VARCHAR</em> or a <em>List</em> field have to be mapped to
+                <em>VARCHAR</em> a <a href="#field-conversion">field-conversion</a>
+                class can be used.
+            </p>
+            <anchor id="mapping-table"/>
+            <table>
+                <tr>
+                    <th>JDBC Type</th>
+                    <th>Java Type</th>
+                </tr>
+                <tr>
+                    <td>CHAR</td>
+                    <td>String</td>
+                </tr>
+                <tr>
+                    <td>VARCHAR</td>
+                    <td>String </td>
+                </tr>
+                <tr>
+                    <td>LONGVARCHAR</td>
+                    <td>String</td>
+                </tr>
+                <tr>
+                    <td>NUMERIC</td>
+                    <td>java.math.BigDecimal</td>
+                </tr>
+                <tr>
+                    <td>DECIMAL</td>
+                    <td>java.math.BigDecimal</td>
+                </tr>
+                <tr>
+                    <td>BIT</td>
+                    <td>boolean</td>
+                </tr>
+                <tr>
+                    <td>BOOLEAN</td>
+                    <td>boolean</td>
+                </tr>
+                <tr>
+                    <td>TINYINT</td>
+                    <td>byte</td>
+                </tr>
+                <tr>
+                    <td>SMALLINT</td>
+                    <td>short</td>
+                </tr>
+                <tr>
+                    <td>INTEGER</td>
+                    <td>int</td>
+                </tr>
+                <tr>
+                    <td>BIGINT</td>
+                    <td>long</td>
+                </tr>
+                <tr>
+                    <td>REAL</td>
+                    <td>float</td>
+                </tr>
+                <tr>
+                    <td>FLOAT</td>
+                    <td>double</td>
+                </tr>
+                <tr>
+                    <td>DOUBLE</td>
+                    <td>double</td>
+                </tr>
+                <tr>
+                    <td>BINARY</td>
+                    <td>byte[]</td>
+                </tr>
+                <tr>
+                    <td>VARBINARY</td>
+                    <td>byte[]</td>
+                </tr>
+                <tr>
+                    <td>LONGVARBINARY</td>
+                    <td>byte[]</td>
+                </tr>
+                <tr>
+                    <td>DATE</td>
+                    <td>java.sql.Date</td>
+                </tr>
+                <tr>
+                    <td>TIME</td>
+                    <td>java.sql.Time</td>
+                </tr>
+                <tr>
+                    <td>TIMESTAMP</td>
+                    <td>java.sql.Timestamp</td>
+                </tr>
+                <tr>
+                    <td>CLOB</td>
+                    <td>Clob</td>
+                </tr>
+                <tr>
+                    <td>BLOB</td>
+                    <td>Blob</td>
+                </tr>
+                <tr>
+                    <td>ARRAY</td>
+                    <td>Array</td>
+                </tr>
+                <tr>
+                    <td>DISTINCT</td>
+                    <td>mapping of underlying type</td>
+                </tr>
+                <tr>
+                    <td>STRUCT</td>
+                    <td>Struct</td>
+                </tr>
+                <tr>
+                    <td>REF</td>
+                    <td>Ref</td>
+                </tr>
+                <tr>
+                    <td>DATALINK</td>
+                    <td>java.net.URL</td>
+                </tr>
+                <tr>
+                    <td>JAVA_OBJECT</td>
+                    <td>underlying Java class</td>
+                </tr>
+            </table>
+        </section>
+
+        <anchor id="field-conversion"/>
+        <section>
+            <title>Type and Value Conversions - The <code>FieldConversion</code> Interface</title>
+
+            <section>
+                <title>Introduction</title>
+                <p>
+                    A typical problem with O/R tools is mismatching datatypes: a
+                    class from the domain model has an attribute of type <em>boolean</em> but the
+                    corresponding database table stores this attribute in a column of
+                    type <em>BIT</em> or int.
+                </p>
+                <p>
+                    This example explains how OJB allows you to define
+                    <strong>FieldConversions</strong> that do the proper translation of types and
+                    values.
+                </p>
+                <p>
+                    The source code of this example is included in the OJB source
+                    distribution and resides in the test package
+                    <code>org.apache.ojb.broker</code>.
+                </p>
+            </section>
+
+            <section>
+                <title>The problem</title>
+                <p>
+                    The test class
+                    <code>org.apache.ojb.broker.Article</code> contains an attribute
+                    <code>isSelloutArticle</code> of type boolean:
+                </p>
+
+                <source><![CDATA[
+public class Article implements InterfaceArticle
+{
+    protected int articleId;
+    protected String articleName;
+
+    // maps to db-column Auslaufartikel of type int
+    protected boolean isSelloutArticle;
+
+    ...
+}]]></source>
+
+                <p>
+                    The coresponding table uses an int column (
+                    <code>Auslaufartikel</code>) to store
+                    this attribute:
+                </p>
+
+                <source><![CDATA[
+CREATE TABLE Artikel (
+    Artikel_Nr         INT PRIMARY KEY,
+    Artikelname        CHAR(60),
+    Lieferanten_Nr     INT,
+    Kategorie_Nr       INT,
+    Liefereinheit      CHAR(30),
+    Einzelpreis        DECIMAL,
+    Lagerbestand       INT,
+    BestellteEinheiten INT,
+    MindestBestand     INT,
+    Auslaufartikel     INT
+  )]]></source>
+            </section>
+
+            <section>
+                <title>The Solution</title>
+                <p>
+                    OJB allows to use predefined (or self-written) FieldConversions that do
+                    the appropiate mapping. The
+                    <code>FieldConversion</code> interface declares two
+                    methods:
+                    <code>javaToSql(...)</code> and
+                    <code>sqlToJava(...)</code>:
+</p>
+                    <source><![CDATA[
+/**
+ * FieldConversion declares a protocol for type and value
+ * conversions between persistent classes attributes and the columns
+ * of the RDBMS.
+ * The default implementation does not modify its input.
+ * OJB users can use predefined implementation and can also
+ * build their own conversions that perform arbitrary mappings.
+ * the mapping has to defined in the xml repository
+ * in the field-descriptor.
+ *
+ * @author Thomas Mahler
+ */
+public interface FieldConversion extends Serializable
+{
+    /**
+     * convert a Java object to its SQL
+     * pendant, used for insert & update
+     */
+    public abstract Object javaToSql(Object source) throws ConversionException;
+
+    /**
+     * convert a SQL value to a Java Object, used for SELECT
+     */
+    public abstract Object sqlToJava(Object source) throws ConversionException;
+}]]></source>
+                <p>
+                    The method
+                    <code>FieldConversion.sqlToJava()</code> is a callback that is called
+                    within the OJB broker when Object attributes are read in from JDBC result sets.
+                    If OJB detects that a FieldConversion is declared for a persistent classes
+                    attributes, it uses the FieldConversion to do the marshalling of this attribute.
+                </p>
+                <p>
+                    For the above mentioned problem of mapping an int column to a boolean attribute
+                    we can use the predefined FieldConversion
+                    <code>Boolean2IntFieldConversion</code>.
+                    Have a look at the code to see how it works:
+                </p>
+                <source><![CDATA[
+public class Boolean2IntFieldConversion implements FieldConversion
+{
+    private static Integer I_TRUE = new Integer(1);
+    private static Integer I_FALSE = new Integer(0);
+
+    private static Boolean B_TRUE = new Boolean(true);
+    private static Boolean B_FALSE = new Boolean(false);
+
+    /**
+     * @see FieldConversion#javaToSql(Object)
+     */
+    public Object javaToSql(Object source)
+    {
+        if (source instanceof Boolean)
+        {
+            if (source.equals(B_TRUE))
+            {
+                return I_TRUE;
+            }
+            else
+            {
+                return I_FALSE;
+            }
+        }
+        else
+        {
+            return source;
+        }
+    }
+
+    /**
+     * @see FieldConversion#sqlToJava(Object)
+     */
+    public Object sqlToJava(Object source)
+    {
+        if (source instanceof Integer)
+        {
+            if (source.equals(I_TRUE))
+            {
+                return B_TRUE;
+            }
+            else
+            {
+                return B_FALSE;
+            }
+        }
+        else
+        {
+            return source;
+        }
+    }
+}]]></source>
+                <p>
+                    There are other helpful standard conversions defined in the package
+                    <code>org.apache.ojb.broker.accesslayer.conversions</code>:
+                    Of course it is possible to map between
+                    <code>java.sql.date</code> and
+                    <code>java.util.date</code> by using a Conversion.
+                    A very interesting Conversion is the
+                    <code>Object2ByteArrFieldConversion</code>
+                    it allows to store inlined objects in varchar columns!
+                </p>
+
+                <p>
+                    Coming back to our example,
+                    there is only one thing left to do: we must tell OJB to use the proper
+                    <em>FieldConversion</em> for the <em>Article</em> class. This is done in the XML
+                    repository file. The <a href="site:repository/field-descriptor">field-descriptor</a>
+                    allows to define a <em>conversion</em> attribute declaring the fully qualified
+                    <em>FieldConversion</em> class:
+                </p>
+
+                <source><![CDATA[
+<!-- Definitions for test.ojb.broker.Article -->
+   <class-descriptor
+         class="org.apache.ojb.broker.Article"
+         proxy="dynamic"
+         table="Artikel"
+   >
+      ...
+      <field-descriptor
+         name="isSelloutArticle"
+         column="Auslaufartikel"
+         jdbc-type="INTEGER"
+         conversion="org.apache.ojb.broker.accesslayer.conversions.Boolean2IntFieldConversion"
+      />
+      ...
+   </class-descriptor>]]></source>
+            </section>
+        </section>
+    </body>
+</document>
+

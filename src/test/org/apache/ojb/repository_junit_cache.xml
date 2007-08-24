@@ -1,0 +1,169 @@
+<!-- Mapping of classes used in junit tests -->
+<!-- @version $Id: repository_junit_cache.xml,v 1.1 2007-08-24 22:17:30 ewestfal Exp $ -->
+<!--
+#/* Copyright 2003-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+
+<!-- ************************************************* -->
+<!--      LocalCacheTest descriptors                  -->
+<!-- ************************************************* -->
+
+<class-descriptor
+    class="org.apache.ojb.broker.cache.LocalCacheTest$Person"
+    table="LOCAL_CACHE_TEST"
+>
+
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="fkChild"
+        column="FK_CHILD"
+        jdbc-type="INTEGER"
+    />
+    <field-descriptor
+        name="fkGrandchild"
+        column="FK_GRANDCHILD"
+        jdbc-type="INTEGER"
+    />
+    <field-descriptor
+        name="fkFather"
+        column="FK_FATHER"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+    <field-descriptor
+        name="fkGrandfather"
+        column="FK_GRANDFATHER"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+    <reference-descriptor
+        name="father"
+        class-ref="org.apache.ojb.broker.cache.LocalCacheTest$Person"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="false"
+        auto-delete="false">
+            <foreignkey field-ref="fkFather"/>
+    </reference-descriptor>
+    <reference-descriptor
+        name="grandfather"
+        class-ref="org.apache.ojb.broker.cache.LocalCacheTest$Person"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="false"
+        auto-delete="false">
+            <foreignkey field-ref="fkGrandfather"/>
+    </reference-descriptor>
+    <collection-descriptor
+        name="childs"
+        element-class-ref="org.apache.ojb.broker.cache.LocalCacheTest$Person"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="false"
+        auto-delete="false"
+    >
+        <inverse-foreignkey field-ref="fkChild"/>
+    </collection-descriptor>
+    <collection-descriptor
+        name="grandchilds"
+        element-class-ref="org.apache.ojb.broker.cache.LocalCacheTest$Person"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="false"
+        auto-delete="false"
+    >
+        <inverse-foreignkey field-ref="fkGrandchild"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<!-- ************************************************* -->
+<!--      ObjectCacheTest descriptors                  -->
+<!-- ************************************************* -->
+    <class-descriptor
+        class="org.apache.ojb.broker.cache.ObjectCacheTest$CacheObject"
+        table="CACHE_TEST">
+
+        <field-descriptor
+         name="objId"
+         column="OBJ_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+    </class-descriptor>
+
+    <class-descriptor
+        class="org.apache.ojb.broker.cache.ObjectCacheTest$TestObjectEmptyCache"
+        table="CACHE_TEST">
+        <!-- declare a per class cache -->
+        <object-cache class="org.apache.ojb.broker.cache.ObjectCacheEmptyImpl">
+            <attribute attribute-name="test-attribute" attribute-value="test-value"/>
+        </object-cache>
+
+        <field-descriptor
+         name="id"
+         column="OBJ_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+    </class-descriptor>
+
+    <class-descriptor
+        class="org.apache.ojb.broker.cache.ObjectCacheTest$TestObjectDefaultCache"
+        table="CACHE_TEST">
+        <!-- declare a per class cache -->
+        <object-cache class="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl">
+            <attribute attribute-name="timeout" attribute-value="1"/>
+        </object-cache>
+
+        <field-descriptor
+         name="id"
+         column="OBJ_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+    </class-descriptor>
+
+
+<!-- Mapping of classes used in junit tests and tutorials ends here -->

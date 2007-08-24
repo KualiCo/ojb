@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: performance.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>OJB Performance</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <section>
+            <title>Introduction</title>
+            <p>
+                <em>&quot;
+                    <strong>There is no such thing as a free lunch.&quot;</strong>
+                    <br/>
+                </em>
+                <em>(North American proverb)</em>
+            </p>
+            <p>
+                Object/relational mapping tools hide the details of relational
+                databases from the application developer. The developer can
+                concentrate on implementing business logic and is liberated from
+                caring about RDBMS related coding with JDBC and SQL.
+            </p>
+
+            <p>
+                O/R mapping tools allow to separate business logic from RDBMS
+                access by forming an additional software layer between business logic
+                and RDBMS. Introducing new software layers always eats up additional
+                computing resources.
+                <br/>In short: the price for using O/R tools is performance. But on the
+                other hand the biggest performance consumption is the database access itself
+                (database performance, network performance, jdbc driver, driver settings, ...).
+                So the percentage of O/R tool performance consumption isn't big.
+            </p>
+
+            <p>
+                Software architects have to take in account this tradeoff between
+                programming comfort and performance to decide if it is appropiate to
+                use an O/R tool for a specific software system.
+            </p>
+            <p>
+                This document describes the
+                <em>OJB Performance Test Suite</em>
+                which was created to lighten the decision between native JDBC,
+                OJB (the different OJB API's) and other O/R mapper.
+            </p>
+        </section>
+
+        <anchor id="performance-test-suite"/>
+        <section>
+            <title>The Performance Test Suite</title>
+            <p>
+                The
+                <em>OJB Performance Test Suite</em> allows to compare all supported OJB API's
+                against
+                <a href="#compares-to-native">native single-threaded JDBC programming</a>
+                against your RDBMS of choice and run OJB API's in a
+                <a href="#multithreaded-performance">virtual multithreaded
+                    environment</a>. Further on it is possible to
+                <a href="#compares-to-other">compare OJB against any O/R mapping tool</a> using a simple
+                <em>performance application</em>.
+            </p>
+            <p>
+                All tests are integrated in the OJB build script, you only need to
+                perform the according ant target:
+            </p>
+            <p>
+                <code>ant target</code>
+            </p>
+            <p>
+                The following 'targets' exist:
+                </p>
+                <ul>
+                    <li>
+                        <code>perf-test</code>  multi-threaded performance/stress test of PB/OTM/ODMG api against native JDBC
+                    </li>
+                    <li>
+                        <code>performance</code>  single-threaded test, OJB API implementations (PB, ODMG) against native JDBC
+                    </li>
+                </ul>
+            <p>
+                By changing the JdbcConnectionDescriptor in the configuration files
+                you can point to your specific RDBMS. Please
+                refer to this
+                <a href="site:platform">document for details</a>.
+            </p>
+
+
+            <section>
+                <title>Interpreting test results</title>
+                <p>
+                    Interpreting the result of these benchmarks carefully will help to
+                    decide whether using OJB is viable for specific application scenarios
+                    or if native JDBC programming should be used for performance reasons.
+                </p>
+                <p>
+                    Take care of compareable configuration properties when run
+                    performance tests with different O/R tools.
+                </p>
+                <p>
+                    If the decision made to use an O/R mapping tool the comparison with
+                    other tools helps to find the best one for the thought scenario.
+                    But performance shouldn't be the only reason to take a specific
+                    O/R tool. There are many other points to consider:
+                </p>
+                <p>
+                    - Usability of the supported API's
+                    <br/>- Flexibility of the framework
+                    <br/>- Scalability of the framework
+                    <br/>- Community support
+                    <br/>- The different licences of Open Source projects
+                    <br/>- etcetera ...
+                </p>
+
+            </section>
+
+
+            <anchor id="compares-to-native"/>
+            <section>
+                <title>How OJB compares to native JDBC programming - single-threaded</title>
+                <p>
+                    OJB is shipped with tests compares native JDBC with ODMG and
+                    PB-API implementation.
+                    This part of the test suite is integrated into the OJB build mechanism.
+                    <br/>
+                    A single client test you can
+                    invoke it by typing
+                    <code>ant performance</code> or
+                    <code>ant performance</code>.
+                </p>
+
+                <p>
+                    If running OJB out of the box the tests will be performed against
+                    the Hypersonic SQL (in-memory mode) shipped with OJB.
+                    A typical console output looks like follows:
+                    </p>
+                    <source><![CDATA[
+performance:
+      [ojb] .[performance] INFO: Test for PB-api
+      [ojb] [performance] INFO:
+      [ojb] [performance] INFO: inserting 1500 Objects: 188 msec
+      [ojb] [performance] INFO: updating 1500 Objects: 265 msec
+      [ojb] [performance] INFO: querying 1500 Objects: 0 msec
+      [ojb] [performance] INFO: querying 1500 Objects: 0 msec
+      [ojb] [performance] INFO: fetching 1500 Objects: 16 msec
+      [ojb] [performance] INFO: deleting 1500 Objects: 63 msec
+....
+      [ojb] Time: 5,672
+      [ojb] OK (1 test)
+
+     [jdbc] .[performance] INFO: Test for JDBC
+     [jdbc] [performance] INFO:
+     [jdbc] [performance] INFO: inserting 1500 Objects: 157 msec
+     [jdbc] [performance] INFO: updating 1500 Objects: 187 msec
+     [jdbc] [performance] INFO: querying 1500 Objects: 94 msec
+     [jdbc] [performance] INFO: querying 1500 Objects: 94 msec
+     [jdbc] [performance] INFO: fetching 1500 Objects: 16 msec
+     [jdbc] [performance] INFO: deleting 1500 Objects: 62 msec
+....
+     [jdbc] Time: 8,75
+     [jdbc] OK (1 test)
+
+     [odmg] .[performance] INFO: Test for ODMG-api
+     [odmg] [performance] INFO:
+     [odmg] [performance] INFO: inserting 1500 Objects: 266 msec
+     [odmg] [performance] INFO: updating 1500 Objects: 359 msec
+     [odmg] [performance] INFO: querying 1500 Objects: 531 msec
+     [odmg] [performance] INFO: querying 1500 Objects: 531 msec
+     [odmg] [performance] INFO: fetching 1500 Objects: 47 msec
+     [odmg] [performance] INFO: deleting 1500 Objects: 125 msec
+....
+     [odmg] Time: 13,75
+     [odmg] OK (1 test)]]></source>
+                <p>
+                    Some notes on these test results:
+                    </p>
+                    <ul>
+                        <li>
+                            You see a consistently better performance in the second and third run.
+                            this is caused by warming up effects of JVM and OJB.
+                        </li>
+                        <li>
+                            PB and native JDBC need about the same time for the three runs although JDBC
+                            performance is better for most operations.
+                            This is caused by the second run of the querying operations.
+                            In the second run OJB can load all objects from the cache, thus the time is
+                            <strong>much</strong> shorter.
+                            Hence the interesting result: if you have an application that has a lot of lookups,
+                            OJB can be faster than a native JDBC application (without caching extensions)!
+                        </li>
+                        <li>
+                            ODMG is much slower than PB or JDBC. This is due to the complex object level
+                            transaction management it is doing and the fact that ODMG doesn't have a specific
+                            method to lookup objects by it's identity. The second reason is responsible for
+                            slow <em>querying</em> results, because in test always a complex query is done for
+                            each object. It is possible to use the PB-api within ODMG, then the query by identity
+                            will be as fast as in PB-api.
+                        </li>
+                        <li>
+                            You can see that for HSQLDB operations like insert and update are faster with
+                            JDBC than with PB. This performance difference strongly depends on the used
+                            <a href="site:object-cache">cache implementation</a> and can rise up
+                            to 50% when the cache operate on object copies.
+                            This ratio is so high, because HSQLDB was running with <em>in memory mode</em> and
+                            is much faster than ordinary database servers.
+                            If you work against Oracle or DB2 the percentual OJB overhead is going down a
+                            lot (10 - 15 %), as the database latency is much longer than the OJB overhead.
+                        </li>
+                    </ul>
+                <p>
+                    It's easy to change target database. Please
+                    refer to this
+                    <a href="site:platform/select-profile">document for details</a>.
+                    <br/>
+                    Also it's possible to change the number of test objects by
+                    editing the ant-target in build.xml.
+                </p>
+                <p>
+                    Another test compares PB-api,ODMG-api and native JDBC you can find
+                    <a href="#multithreaded-performance">next section</a>.
+                </p>
+            </section>
+
+
+            <anchor id="multithreaded-performance"/>
+            <section>
+                <title>OJB performance in multi-threaded environments</title>
+                <p>
+                    This test was created to check the performance and stability of the
+                    supported API's (PB-api, ODMG-api and future API's) in a single/multithreaded
+                    environment and to compare the different api's against native JDBC calls.
+                    <br/>
+                    Running this test out of the box (a virgin OJB version against hsql)
+                    shouldn't cause any problems.
+                </p>
+                <p>
+                    Per default OJB use a in-memory hsql database, by changing the
+                    <a href="site:repository/jdbc-connection-descriptor">JdbcConnectionDescriptor</a>
+                    in the <em>repository.xml</em> file or modify the <em>build.properties</em> file when
+                    running OJB out of the box you can point to your specific RDBMS. Please
+                    refer to this
+                    <a href="site:platform/select-profile">document for details</a>.
+                </p>
+
+                <p>
+                    To run the multithreaded performance test call
+                    </p>
+                <source><![CDATA[
+    ant perf-test]]></source>
+                <p>
+                    A typical output of this test, using OJB against in-memory hsql looks like this
+                    </p>
+                <source><![CDATA[
+[ojb] ================================================================================================
+[ojb]             OJB PERFORMANCE TEST SUMMARY, Thu Dec 29 23:42:20 CET 2005
+[ojb] ------------------------------------------------------------------------------------------------
+[ojb]   12 concurrent threads, handle 500 objects per thread
+[ojb]   500 INSERT operations per test instance
+[ojb]   FETCH collection of 500 objects per test instance
+[ojb]   Repeat FETCH collection of 500 objects per test instance
+[ojb]   125 get by Identity calls  per test instance
+[ojb]   500 UPDATE operations per test instance
+[ojb]   500 DELETE operations per test instance
+[ojb]   - performance mode - results per test instance (average)
+[ojb] ================================================================================================
+[ojb] API         Total       Insert      Fetch       Fetch 2     by Id       Update      Delete
+[ojb]             [%]         [msec]      [msec]      [msec]      [msec]      [msec]      [msec]
+[ojb] ------------------------------------------------------------------------------------------------
+[ojb] JDBC        100         475(100%)   26(100%)    23(100%)    209(836%)   477(100%)   197(100%)
+[ojb] PB          203         1341(282%)  153(588%)   151(656%)   25(100%)    648(135%)   239(121%)
+[ojb] ODMG        250         1469(309%)  104(400%)   105(456%)   527(2108%)  800(167%)   569(288%)
+[ojb] ================================================================================================
+[ojb] PerfTest takes 70 [sec]]]></source>
+                <p>
+                    This test run shows the overhead caused by the O/R layer compared to handcoded sql
+                    statements. Most overheads results in populate the two-level cache which is useless
+                    when using a in-memory database.
+                </p>
+                <p>
+                    Below you can see the same test against <em>MaxDB</em> running on the same machine
+                </p>
+                <source><![CDATA[
+....
+[ojb] ================================================================================================
+[ojb] API         Total       Insert      Fetch       Fetch 2     by Id       Update      Delete
+[ojb]             [%]         [msec]      [msec]      [msec]      [msec]      [msec]      [msec]
+[ojb] ------------------------------------------------------------------------------------------------
+[ojb] JDBC        100         5855(100%)  55(100%)    38(100%)    1628(5087%) 5588(184%)  4084(136%)
+[ojb] ODMG        117         12043(205%) 180(327%)   294(773%)   754(2356%)  3027(100%)  2988(100%)
+[ojb] PB          123         11577(197%) 94(170%)    84(221%)    32(100%)    4240(140%)  3193(106%)
+[ojb] ================================================================================================
+[ojb] PerfTest takes 440 [sec]
+                ]]></source>
+                <note>
+                    The <em>performance test</em> output is written to console and in a
+                    file called <em>OJB-Performance-Result.txt</em>.
+                </note>
+                <p>
+                    To change the test properties go to target
+                    <code>perf-test</code>
+                    in the
+                    <code>build.xml</code> file and change the program parameter.
+                    <br/>
+                    The test needs five parameter:
+                    <br/>- A comma separated list of the test implementation classes (no blanks!)
+                    <br/>- The number of test loops
+                    <br/>- The number of concurrent threads
+                    <br/>- The number of managed objects per thread
+                    <br/>- The desired test mode.
+                    <code>false</code> means run in
+                    performance mode,
+                    <code>true</code> means run in stress mode
+                    (useful only for developer to check stability).
+                </p>
+                <source><![CDATA[
+<target name="perf-test" depends="prepare-testdb"
+        description="Simple performance benchmark and stress test for PB- and ODMG-api">
+    <java fork="yes" classname="org.apache.ojb.performance.PerfMain"
+          dir="${build.test}/ojb" taskname="ojb" failonerror="true" >
+        <classpath refid="runtime-classpath"/>
+        <!-- comma separated list of the PerfTest implementations -->
+        <arg value=
+        "org.apache.ojb.compare.OJBPerfTest$JdbcPerfTest,
+        org.apache.ojb.compare.OJBPerfTest$PBPerfTest,
+        org.apache.ojb.compare.OJBPerfTest$ODMGPerfTest"
+        />
+        <!-- test loops, default was 6 -->
+        <arg value="6"/>
+        <!-- performed threads, default was 12 -->
+        <arg value="12"/>
+        <!-- number of managed objects per thread, default was 500 -->
+        <arg value="500"/>
+        <!-- if 'false' we use performance mode, 'true' we do run in stress mode -->
+        <arg value="false"/>
+        <!-- if 'true' all log messages will be print -->
+        <arg value="true"/>
+        <jvmarg value="-Xms128m"/>
+        <jvmarg value="-Xmx256m"/>
+    </java>
+    <!-- do some cleanup -->
+    <ant target="copy-testdb"/>
+</target>]]></source>
+            </section>
+
+        </section>
+
+
+
+        <anchor id="compares-to-other"/>
+        <section>
+            <title>How OJB compares to other O/R mapping tools?</title>
+            <p>
+                Many user ask this question and there is more than one answer. But OJB was
+                shipped with a simple <em>performance application</em> (independend from OJB)
+                which allows a rudimentarily comparision of OJB with other (java-based) O/R mapping tools.
+                <br/>
+                All involved classes can be found in dirctory <em>[db-ojb]/src/test</em> in package
+                <code>org.apache.ojb.performance</code>.
+            </p>
+            <p>
+                Call
+                <code>ant perf-test-jar</code>
+                to build the jar file contain all necessary classes to set up a test with an
+                arbitrary O/R mapper. After the build, the
+                <code>db-ojb-XXX-performance.jar</code> can
+                be found in
+                <code>[db-ojb]/dist</code> directory.
+            </p>
+            <p>
+                <strong>Steps to set up the test for other O/R frameworks:</strong>
+                </p>
+                <ul>
+                    <li>
+                        Implement a class derived from
+                        <a href="ext:api/perf-test"><code>PerfTest</code></a>
+                    </li>
+                    <li>
+                        If persistent objects (used within your mapping tool) must be derived from a specific
+                        base class or must be implement a specific interface write your own persistent
+                        object class by implementing
+                        <a href="ext:api/perf-article"><code>PerfArticle</code></a>
+                        interface and <strong>override method</strong> <code>#newPerfArticle()</code>
+                        in your <code>PerfTest</code> implementation class.
+                        <br/>
+                        Otherwise a default implementation of interface <a href="ext:api/perf-article"><code>PerfArticle</code></a>
+                        was used.
+                        <br/>
+                        The default implementation class is <code>org.apache.ojb.performance.PerfArticleImpl</code>.
+                    </li>
+                </ul>
+            <p>
+                That's it!
+            </p>
+
+            <p>
+                You can find a example implementation called
+                <code>org.apache.ojb.compare.OJBPerfTest</code> in the test-sources directory
+                under
+                <code>[db-ojb]/src/test</code> (when using source-distribution).
+            </p>
+            <p>
+                This implementation class is used to compare the performance of the PB-API,
+                ODMG-API, OTM-api and native JDBC (to bunch all API's, for each API a static inner implementation class of
+                <a href="ext:api/perf-test"><code>PerfTest</code></a> was used).
+                See more <a href="#multithreaded-performance">about multi-threaded performance</a>.
+            </p>
+
+            <p>
+                <strong>Run the test</strong>
+                <br/>
+                You have two possibilities to run the test:
+                <br/>
+                <br/>
+                a) Integration in the OJB build script
+                <br/>
+                Add the full qualified class name of your PerfTest implementation class
+                to the
+                <code>perf-test</code> target of the OJB
+                <code>build.xml</code>
+                file, add all necessary jar files to
+                <code>[db-ojb]/lib</code>. The working
+                directory of the test is
+                <code>[db-ojb]/target/test/ojb</code>.
+
+                <br/>
+                <br/>
+                b) Run PerfMain
+                <br/>
+                It's possible to run the test using
+                <code>org.apache.ojb.performance.PerfMain</code>.
+                </p>
+            <source><![CDATA[
+java -classpath CLASSPATH org.apache.ojb.performance.PerfMain
+[comma separated list of PerfTest implementation classes, no blanks!]
+[number of test loops]
+[number of threads]
+[number of insert/fetch/delete loops per thread]
+[optional boolean - run in stress mode if set true,
+run in performance mode if set false, default false]
+[optional boolean - if 'true' all log messages will be print, else only a test summary, default 'true']]]></source>
+            <p>
+                For example:
+            </p>
+<source><![CDATA[
+java -classpath CLASSPATH my.A_PerfTest,my.B_PerfTest 3 10 2000]]></source>
+            <p>
+                This will use <code>A_PerfTest</code> and <code>B_PerfTest</code> and perform
+                three loops each loop run 10 threads and each thread operate on 2000 objects. The
+                test run in <em>normal</em> mode and log all messages.
+            </p>
+            <p>
+                Take care of compareable configuration properties when run
+                performance tests with different O/R tools (caching, locking,
+                sequence key generation, connection pooling, ...).
+            </p>
+            <note>
+                <strong>Please, don't start flame wars</strong> by posting performance results to
+                mailing lists made with this simple test. This test was created for
+                OJB QA and to give a clue how good or bad OJB performs, NOT to start
+                discussion like
+                <em>XY is 12% faster then XZ</em>!!.
+            </note>
+        </section>
+
+
+        <anchor id="maximal-performance"/>
+        <section>
+            <title>What are the best settings for maximal performance?</title>
+            <p>
+                We don't know, that depends from the environment OJB runs (hardware, database,
+                driver, application server, ...).
+                But there are some settings which affect the performance:
+                </p>
+                <ul>
+                    <li>
+                        <p>
+                            The API you use, e.g. PB-api is much faster then the ODMG-api. See
+                            <a href="site:faq/api-differences">which API</a> for more information.
+                        </p>
+                    </li>
+                    <li><p>The used <a href="site:object-cache">cache implementation</a>.</p></li>
+                    <li><p>ConnectionFactory implementation / Connection pooling. See
+                        <a href="site:faq">connection pooling</a>
+                        for more information.</p></li>
+                    <li><p>The <em>autocommit</em> setting of used connections. For best performance
+                        it's recommended to use <em>autocommit</em> 'false' setting in the <em>jdbc-driver</em>
+                        to avoid <code>Connection.setAutoCommit(...)</code> calls by OJB.</p></li>
+                    <li><p><a href="site:advanced-technique/persistent-field"><code>PersistentField</code> class
+                        implementation</a>.See <a href="ext:ojb.properties">OJB.properties section
+                        'PersistentFieldClass'</a> to change the implementation.</p></li>
+                    <li><p>Used sequence manager implementation. See
+                        <a href="site:sequence-manager">sequence manager</a> for
+                        more information.</p></li>
+                    <li><p>Use of <em>batch mode</em> (when supported by the DB). See
+                        <a href="site:repository/jdbc-connection-descriptor"><em>jdbc-connection-descriptor</em></a>
+                        <em>batch-mode</em> attribute for more information.</p></li>
+                    <li><p>PersistenceBroker pool size. See
+                        <a href="ext:ojb.properties">OJB.properties</a> for more information.</p></li>
+                    <li><p>The <em>JDBC driver</em> settings (e.g. statement caching on/off).</p></li>
+                </ul>
+            <p>
+                To test the different settings use the tests of the
+                <a href="#performance-test-suite">performance test suite</a>.
+            </p>
+        </section>
+    </body>
+</document>
+
+
+
+

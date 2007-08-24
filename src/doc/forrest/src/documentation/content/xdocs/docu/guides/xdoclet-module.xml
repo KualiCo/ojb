@@ -1,0 +1,2711 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: xdoclet-module.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>XDoclet OJB module documentation</title>
+        <authors>
+            <person name="Thomas Dudziak" email="tomdz@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <section>
+            <title>Acquiring and building</title>
+            <p>
+                The XDoclet OJB module is part of OJB source. As such, the source of the module is part of the OJB source
+                tree and can be found in directory src/xdoclet. Likewise, binary versions of the module and the required
+                libraries (xjavadoc, xdoclet) are to be found in the lib folder.
+            </p>
+            <p>
+                In order to build the XDoclet OJB module from source, you'll need a source distribution of XDoclet
+                version 1.2, either a source distribution from the sourceforge download site or a CVS checkout/drop. See
+                the XDoclet website at
+                <a href="ext:sourceforge/xdoclet/install">http://xdoclet.sourceforge.net/install.html</a> for
+                details.
+            </p>
+
+            <section>
+                <title>Building with a XDoclet source distribution</title>
+                <p>
+                    Unpack the source distribution of XDoclet which is contained in a file
+                    <code>xdoclet-src-&lt;version&gt;.&lt;archive-format&gt;</code> somewhere. If you unpacked it side-by-side of
+                    OJB, you'll get a directory layout similar to:
+                </p>
+                <source><![CDATA[
+\xdoclet-1.2
+    \config
+    \core
+    \lib
+    ...
+\db-ojb
+    \bin
+    \contrib
+    ...]]></source>
+                <p>
+                    The XDoclet OJB module is then build using the
+                    <code>build-xdoclet-module.xml</code> ant script:
+                </p>
+                <source><![CDATA[
+ant -Dxdoclet.src.dir=../xdoclet-1.2 -f build-xdoclet-module.xml]]></source>
+                <p>
+                    The build process will take some time, and after successful compilation the three jars
+                    <code>xjavadoc-&lt;version&gt;.jar</code>,
+                    <code>xdoclet-&lt;version&gt;.jar</code>, and
+                    <code>xdoclet-ojb-module-&lt;version&gt;.jar</code> are copied to the library directory of OJB.
+                </p>
+            </section>
+
+            <section>
+                <title>Building with a XDoclet CVS checkout</title>
+                <p>
+                    When checking out from CVS (the
+                    <code>xdoclet-all</code> target), you'll get a directory like:
+                </p>
+                <source><![CDATA[
+\xdoclet-all
+    \xdoclet
+        \config
+        \core
+        ...
+    \xdocletgui
+    \xjavadoc
+\db-ojb
+    \bin
+    \contrib
+    ...]]></source>
+                <p>
+                    Building is XDoclet OJB module is performed by calling:
+                </p>
+                <source><![CDATA[
+ant -Dxdoclet.src.dir=../xdoclet-all/xdoclet -f build-xdoclet-module.xml]]></source>
+                <p>
+                    Since this is the default structure assumed by the build script, this can be shortend to:
+                </p>
+                <source><![CDATA[
+ant -f build-xdoclet-module.xml]]></source>
+            </section>
+
+
+            <section>
+                <title>Other build options</title>
+                <p>
+                    The build script for the XDoclet OJB module uses the OJB build properties so the following line
+                    added to the
+                    <code>build.properties</code> file in the OJB root directory allows to omit
+                    the
+                    <code>-Dxdoclet.src.dir=&lt;xdoclet src dir&gt;</code> commandline option:
+                </p>
+                <source><![CDATA[
+xdoclet.src.dir=<xdoclet src dir>]]></source>
+            </section>
+        </section>
+
+
+        <section>
+            <title>Usage</title>
+            <p>
+                Using the XDoclet OJB module is rather easy. Put the module jar along with the xdoclet and 
+                xjavadc jars in a place where ant will find it, and then invoke it in your build file like:
+            </p>
+            <source><![CDATA[
+<target name="repository-files">
+    <taskdef name="ojbdoclet"
+             classname="xdoclet.modules.ojb.OjbDocletTask"
+             classpathref="build-classpath">
+    <ojbdoclet destdir="./build">
+        <fileset dir="./src"/>
+        <ojbrepository destinationFile="repository_user.xml"/>
+        <torqueschema databaseName="test" destinationFile="project-schema.xml"/>
+    </ojbdoclet>
+</target>]]></source>
+            <p>
+                The XDoclet OJB module has two sub tasks,
+                <code>ojbrepository</code> and
+                <code>torqueschema</code>,
+                which generate the OJB repository part containing the user descriptors and the torque table schema,
+                respectively. Please note that the XDoclet OJB module (like all xdoclet tasks) expects the directory
+                structure of its input java source files to match their package structure. In this regard it is
+                similar to the <code>javac</code> ant task.<br/>
+                Due to a bug in XDoclet, you should not call the <code>ojbdoclet</code> task more than once in the
+                same <code>taskdef</code> scope. So, each <code>ojbdoclet</code> call should be in its own target
+                with a leading <code>taskdef</code>.
+            </p>
+            <p>The main
+                <code>ojbdoclet</code> task has two attributes:
+            </p>
+
+            <dl>
+                <dt>
+                    <strong>destdir</strong>
+                </dt>
+                <dd>
+                    The destination directory where generated files will be placed.
+                    <br/>
+                </dd>
+
+                <dt>
+                    <strong>checks : none | basic | strict (default)</strong>
+                </dt>
+                <dd>The amount of the checks performed. Per default,
+                    <code>strict</code> checks are performed which
+                    means that for instance classes specified in an attribute (e.g.
+                    <code>collection-class</code>,
+                    <code>row-reader</code> etc.) are loaded from the classpath and checked. So in this mode
+                    it is necessary to have OJB as well as the processed classes on the classpath (using the
+                    <code>classpathref</code> attribute of the
+                    <code>taskdef</code> ant task above). If this is
+                    for some reason not possible, then use
+                    <code>basic</code> which performs most of the
+                    checks but does not load classes from the classpath.
+                    <code>none</code> does not perform any
+                    checks so use it with care and only if really necessary (in this case it would be helpful
+                    if you would post the problem to the ojb-user mailing list).
+                </dd>
+            </dl>
+            <p>The
+                <code>ojbrepository</code> subtask has the following attributes:
+            </p>
+            <dl>
+                <dt>
+                    <strong>destinationFile</strong>
+                </dt>
+                <dd>Specifies the output file. The default is
+                    <code>repository_user.xml</code>.
+                    <br/>
+                </dd>
+
+                <dt>
+                    <strong>verbose : true | false (default)</strong>
+                </dt>
+                <dd>Whether the task should output some information about its progress.</dd>
+            </dl>
+
+            <p>
+                The
+                <code>torqueschema</code> subtask has these attributes:
+            </p>
+            <dl>
+                <dt>
+                    <strong>databaseName</strong>
+                </dt>
+                <dd>
+                    This attribute gives the name of the database for torque (required).
+                    <br/>
+                </dd>
+
+                <dt>
+                    <strong>destinationFile</strong>
+                </dt>
+                <dd>The output file, default is
+                    <code>project-schema.xml</code>.
+                    <br/>
+                </dd>
+
+                <dt>
+                    <strong>dtdUrl</strong>
+                </dt>
+                <dd>
+                    Allows to specify the url of the torque dtd. This is necessary e.g. for XML parsers that have
+                    problems with the default dtd url (http://jakarta.apache.org/turbine/dtd/database.dtd), or
+                    when using a newer version of torque.
+                    <br/>
+                </dd>
+
+                <dt>
+                    <strong>generateForeignkeys : true (default) | false</strong>
+                </dt>
+                <dd>
+                    Whether foreignkey tags are generated in the torque database schema.
+                    <br/>
+                </dd>
+                <dt>
+                    <strong>verbose : true | false (default)</strong>
+                </dt>
+                <dd>Whether the task outputs some progress information.</dd>
+            </dl>
+            <p>
+                The
+                <code>classpathref</code> attribute in the taskdef can be used to define the classpath for xdoclet
+                (containing the xdoclet and ojb module jars), e.g. via:
+            </p>
+            <source><![CDATA[
+<path id="build-classpath">
+    <fileset dir="lib">
+        <include name="**/*.jar"/>
+    </fileset>
+</path>]]></source>
+            <p>
+                Using the generated torque schema is a bit more tricky. The easiest way is to use the
+                <code>build-torque.xml</code> script which is part of OJB. Include the lib subdirectory of the OJB
+                distribution which also includes torque (e.g. in
+                <code>build-classpath</code> as shown above). You
+                will also want to use your OJB settings (if you're using the
+                <a href="site:getting-started">ojb-blank</a> project, then only <code>build.properties</code>),
+                so include them at the beginning of the build script if they are not already there:
+            </p>
+            <source><![CDATA[
+<property file="build.properties"/>]]></source>
+            <p>
+                Now you can create the database with ant calls similar to these:
+            </p>
+            <source><![CDATA[
+<target name="init-db" depends="repository-files">
+    <!-- Torque's build file -->
+    <property name="torque.buildFile"
+              value="build-torque.xml"/>
+
+    <!-- The name of the database which we're taking from the profile -->
+    <property name="torque.project"
+              value="${databaseName}"/>
+
+    <!-- Where the schemas (your project and, if required, ojb's internal tables) are -->
+    <property name="torque.schema.dir"
+              value="src/schema"/>
+
+    <!-- Build directory of Torque -->
+    <property name="torque.output.dir"
+              value="build"/>
+
+    <!-- Torque will put the generated sql here -->
+    <property name="torque.sql.dir"
+              value="${torque.output.dir}"/>
+
+    <!-- Torque shall use the classpath (to find the jdbc driver etc.) -->
+    <property name="torque.useClasspath"
+              value="true"/>
+
+    <!-- Which jdbc driver to use (again from the profile) -->
+    <property name="torque.database.driver"
+              value="${jdbcRuntimeDriver}"/>
+
+    <!-- The url used to build the database; note that this may be different
+         from the url to access the database (e.g. for MySQL) -->
+    <property name="torque.database.buildUrl"
+              value="${urlProtocol}:${urlSubprotocol}:${urlDbalias}"/>
+
+
+    <!-- Now we're generating the database sql -->
+    <ant dir="."
+         antfile="${torque.buildFile}"
+         target="sql">
+    </ant>
+    <!-- Next we create the database -->
+    <ant dir="."
+         antfile="${torque.buildFile}"
+         target="create-db">
+    </ant>
+    <!-- And the tables -->
+    <ant dir="."
+         antfile="${torque.buildFile}"
+         target="insert-sql">
+    </ant>
+</target>]]></source>
+            <p>
+                As you can see, the major problem of using Torque is to correctly setup Torque's build properties.
+            </p>
+            <p>
+                One important thing to note here is that the latter two calls modify the database and in the process
+                remove any existing data, so use them with care. Similar to the above targets, you can use the
+                additional targets <code>datadump</code> for storing the data currently in the database in an XML
+                file, and <code>datasql</code> for inserting the data from an XML file into the database.
+                <br/>
+                Also, these steps are only valid for the torque that is delivered with OJB, but probably not for newer
+                or older versions.
+            </p>
+        </section>
+
+        <section>
+            <title>Tag reference</title>
+            <dl>
+                <dt>Interfaces and Classes</dt>
+                <dd>
+                    <a href="#ojb.class">ojb.class</a>
+                    <br/>
+                    <a href="#ojb.extent-class">ojb.extent-class</a>
+                    <br/>
+                    <a href="#ojb.modify-inherited">ojb.modify-inherited</a>
+                    <br/>
+                    <a href="#ojb.object-cache">ojb.object-cache</a>
+                    <br/>
+                    <a href="#ojb.index">ojb.index</a>
+                    <br/>
+                    <a href="#ojb.delete-procedure">ojb.delete-procedure</a>
+                    <br/>
+                    <a href="#ojb.insert-procedure">ojb.insert-procedure</a>
+                    <br/>
+                    <a href="#ojb.update-procedure">ojb.update-procedure</a>
+                    <br/>
+                    <a href="#ojb.constant-argument">ojb.constant-argument</a>
+                    <br/>
+                    <a href="#ojb.runtime-argument">ojb.runtime-argument</a>
+                </dd>
+
+                <dt>Fields and Bean properties</dt>
+                <dd>
+                    <a href="#ojb.field">ojb.field</a>
+                </dd>
+
+                <dt>References</dt>
+                <dd>
+                    <a href="#ojb.reference">ojb.reference</a>
+                </dd>
+
+                <dt>Collections</dt>
+                <dd>
+                    <a href="#ojb.collection">ojb.collection</a>
+                    <br/>
+                </dd>
+
+                <dt>Nested objects</dt>
+                <dd>
+                    <a href="#ojb.nested">ojb.nested</a>
+                    <br/>
+                    <a href="#ojb.modify-nested">ojb.modify-nested</a>
+                    <br/>
+                </dd>
+            </dl>
+        </section>
+
+        <section>
+            <title>Interfaces and Classes</title>
+            <p/>
+            <section>
+                <title>ojb.class</title>
+                <p>
+                    The
+                    <strong>ojb.class</strong> tag marks interfaces and classes that shall be present in the repository
+                    descriptor. This includes types that are used as reference targets or as collection elements, but
+                    for instance not abstract base classes not used elsewhere.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the class as a comma-separated list of name-value
+                        pairs.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>determine-extents : true (default) | false</strong>
+                    </dt>
+                    <dd>When set to
+                        <code>true</code>, then the XDoclet OJB module will automatically determine all
+                        extents (ojb-relevant sub types) of this type. If set to
+                        <code>false</code>, then extents need to
+                        be specified via the
+                        <a href="#ojb.extent-class">ojb.extent-class</a> class tag (see below).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the class. If no <code>table-documentation</code>
+                        attribute is specified, then the value is also used for the table documentation
+                        in the database schema.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>generate-repository-info : true (default) | false</strong>
+                    </dt>
+                    <dd>
+                        Setting this to <code>false</code> prevents the generation of field/reference/collection
+                        descriptors in the repository XML file, and also automatically enforces
+                        <code>generate-table-info = false</code>.<br/>
+                        Note that there is one case where the XDoclet module will still generate field
+                        descriptors. If the type is referenced by a reference or collection, then
+                        the corresponding foreign key fields (if 1:n collection) or primary keys (if
+                        reference or m:n collection) will be automatically included in the class descriptor,
+                        even if they are only defined in subtypes.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>generate-table-info : true (default) | false</strong>
+                    </dt>
+                    <dd>
+                        This attribute controls whether the type has an associated table. If set to
+                        <code>true</code>, a torque table descriptor will be created in the database
+                        schema. Otherwise, no table will be in the database schema for this type.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>include-inherited : true (default) | false</strong>
+                    </dt>
+                    <dd>
+                        Determines whether base type fields/references/collections with the appropriate tags
+                        (
+                        <a href="#ojb.field">ojb.field</a>,
+                        <a href="#ojb.reference">ojb.reference</a>,
+                        <a href="#ojb.collection">ojb.collection</a>) will be included in the descriptor and table
+                        definition of this class. Note that all base type fields/references/collections with an
+                        appropriate tag are included regardless of whether the base types have the
+                        <strong>ojb.class</strong> tag or
+                        not.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>table</strong>
+                    </dt>
+                    <dd>
+                        The name of the table used for this type. Is only used when table info is generated. If not
+                        specified, then the short name of the type is used.
+                    </dd>
+                    <dt>
+                        <strong>table-documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation for the table in the database schema.
+                        <br/>
+                    </dd>
+                </dl>
+
+                <p>
+                    The following
+                    <code>class-descriptor</code> attributes are also supported in the
+                    <strong>ojb.class</strong>
+                    tag and will be written directly to the generated class descriptor (see the
+                    <a href="repository.html#class-descriptor">repository.dtd</a> for their meaning):
+                </p>
+                <ul>
+                    <li>
+                        <strong>accept-locks</strong>
+                    </li>
+                    <li>
+                        <strong>factory-class</strong>
+                    </li>
+                    <li>
+                        <strong>factory-method</strong>
+                    </li>
+                    <li>
+                        <strong>initialization-method</strong>
+                    </li>
+                    <li>
+                        <strong>isolation-level</strong>
+                    </li>
+                    <li>
+                        <strong>proxy</strong>
+                    </li>
+                    <li>
+                        <strong>proxy-prefetching-limit</strong>
+                    </li>
+                    <li>
+                        <strong>refresh</strong>
+                    </li>
+                    <li>
+                        <strong>row-reader</strong>
+                    </li>
+                </ul>
+                <anchor id="ojb.class.example"/>
+                <p>
+                    <em>Example:</em> (from the unit tests)
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class generate-table-info="false"
+ */
+public abstract class AbstractArticle implements InterfaceArticle, java.io.Serializable
+...
+
+/**
+ * @ojb.class table="ARTICLE"
+ *            proxy="dynamic"
+ *            include-inherited="true"
+ *            documentation="This is important documentation on the Article class."
+ *            table-documentation="And this is important documentation on the ARTICLE table."
+ *            attributes="color=blue,size=big"
+ */
+public class Article extends AbstractArticle implements InterfaceArticle, java.io.Serializable
+...]]></source>
+                <p>
+                    The
+                    <code>AbstractArticle</code> class will have an class descriptor in the repository file, but
+                    no field, reference or collection descriptors. The
+                    <code>Article</code> class however will not
+                    only have descriptors for its own fields/references/collections but also for those inherited from
+                    <code>AbstractArticle</code>. Also, its table definition in the torque file will be called
+                    "Artikel", not "Article". The resulting class descriptors look like:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.AbstractArticle"
+>
+    <extent-class class-ref="org.apache.ojb.broker.Article"/>
+</class-descriptor>
+
+<class-descriptor
+    class="org.apache.ojb.broker.Article"
+    proxy="dynamic"
+    table="ARTICLE"
+>
+    <documentation>This is important documentation on the Article class.</documentation>
+    ...
+    <attribute attribute-name="color" attribute-value="blue"/>
+    <attribute attribute-name="size" attribute-value="big"/>
+</class-descriptor>
+...]]></source>
+            </section>
+            <p/>
+
+            <section>
+                <title>ojb.extent-class</title>
+                <p>
+                    Use the
+                    <strong>ojb.extent-class</strong> to explicitly specify extents (direct persistent sub types) of the
+                    current type. The
+                    <strong>class-ref</strong> attribute contains the fully qualified name of the class. However,
+                    these tags are only evaluated if the
+                    <strong>determine-extents</strong> attribute of the
+                    <a href="#ojb.class">ojb.class</a> tag is set to
+                    <code>false</code>.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>class-ref</strong>
+                    </dt>
+                    <dd>The fully qualified name of the sub-class (required).</dd>
+                </dl>
+                <anchor id="ojb.extent-class.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class determine-extents="false"
+ *            generate-table-info="false"
+ * @ojb.extent-class class-ref="org.apache.ojb.broker.CdArticle"
+ */
+public abstract class AbstractCdArticle extends Article implements java.io.Serializable
+...]]></source>
+                <p>
+                    which results in:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.AbstractCdArticle"
+>
+    <extent-class class-ref="org.apache.ojb.broker.CdArticle"/>
+</class-descriptor>]]></source>
+            </section>
+
+
+            <section>
+                <title>ojb.modify-inherited</title>
+                <p>
+                    Allows to modify attributes of inherited fields/references/collections (normally, all attributes are
+                    used without modifications) for this and all sub types. One special case is the specification of an
+                    empty value which leads to a reset of the attribute value. As a result the default value is used for
+                    this attribute.
+                </p>
+                <p>
+                    <em>Attributes:</em> All of
+                    <a href="#ojb.field">ojb.field</a>,
+                    <a href="#ojb.reference">ojb.reference</a>, and
+                    <a href="#ojb.collection">ojb.collection</a> (with
+                    the exception of the attributes related to indirection tables (
+                    <strong>indirection-table</strong>, <strong>remote-foreignkey</strong>,
+                    <strong>indirection-table-primarykeys</strong>, <strong>indirection-table-documentation</strong>,
+                    <strong>foreignkey-documentation</strong>, <strong>remote-foreignkey-documentation</strong>),
+                    and also:
+                </p>
+                <dl>
+                    <dt>
+                        <strong>ignore : true | false (default)</strong>
+                    </dt>
+                    <dd>
+                        Specifies that this feature will be ignored in this type (but only
+                        in the current type, not in subtypes).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>The name of the field/reference/collection to modify (required).</dd>
+                </dl>
+                <anchor id="ojb.modify-inherited.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class table="Artikel"
+ * @ojb.modify-inherited name="productGroup"
+ *                       proxy="true"
+ *                       auto-update="object"
+ */
+public class ArticleWithReferenceProxy extends Article]]></source>
+                <p>
+                    produces the class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.ArticleWithReferenceProxy"
+    table="Artikel"
+>
+    ...
+    <reference-descriptor
+        name="productGroup"
+        class-ref="org.apache.ojb.broker.ProductGroup"
+        proxy="true"
+        auto-update="object"
+    >
+        <documentation>this is the reference to an articles productgroup</documentation>
+        <attribute attribute-name="color" attribute-value="red"/>
+        <attribute attribute-name="size" attribute-value="tiny"/>
+        <foreignkey field-ref="productGroupId"/>
+    </reference-descriptor>
+</class-descriptor>]]></source>
+            </section>
+            <p/>
+
+            <section>
+                <title>ojb.object-cache</title>
+                <p>
+                    The
+                    <strong>ojb.object-cache</strong> tag allows to specify the ObjectCache implementation that OJB uses for
+                    objects of this class (instead of the one defined in the jdbc connection descriptor or in the
+                    <code>ojb.properties</code> file). Classes specified with this tag have to implement the
+                    <code>org.apache.ojb.broker.cache.ObjectCache</code> interface. Note that object cache specifications
+                    are not inherited.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the object cache as a comma-separated list of name-value
+                        pairs.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>class</strong>
+                    </dt>
+                    <dd>
+                        The fully qualified name of the object cache class (required).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the object cache specification.
+                    </dd>
+                </dl>
+                <anchor id="ojb.object-cache.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class
+ * @ojb.object-cache class="org.apache.ojb.broker.cache.ObjectCachePerBrokerImpl"
+ *                   documentation="Some important documentation"
+ */
+public class SomeClass implements Serializable
+{
+    ...
+}]]></source>
+                <p>
+                    and the class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="SomeClass"
+    table="SomeClass"
+>
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCachePerBrokerImpl">
+        <documentation>Some important documentation</documentation>
+    </object-cache>
+    ...
+</class-descriptor>]]></source>
+            </section>
+            <p/>
+
+            <section>
+                <title>ojb.index</title>
+                <p>
+                    The
+                    <strong>ojb.index</strong> tag is used to define possibly unique indices for the class. An index consists of
+                    at least one field of the class (either locally defined or inherited, anonymous or explicit). There is
+                    an default index (without a name) that is made up by all fields that have the
+                    <strong>indexed</strong> attribute
+                    set to
+                    <code>true</code>. All other indices have to be defined via the
+                    <strong>ojb.index</strong> tag. In contrast
+                    to the
+                    <strong>indexed</strong> attribute, indices defined via the
+                    <strong>ojb.index</strong> tag are not inherited.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the index.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>fields</strong>
+                    </dt>
+                    <dd>
+                        The fields that make up the index separated by commas (required).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        The name of the index (required). If there are multiple indices with the same name, then only the first
+                        one is used (all others are ignored).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>unique : true | false (default)</strong>
+                    </dt>
+                    <dd>
+                        Whether the index is unique or not.
+                    </dd>
+                </dl>
+                <anchor id="ojb.index.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class table="SITE"
+ * @ojb.index name="NAME_UNIQUE"
+ *            unique="true"
+ *            fields="name"
+ */
+public class Site implements Serializable
+{
+    /**
+     * @ojb.field indexed="true"
+     */
+    private Integer nr;
+    /**
+     * @ojb.field column="NAME"
+     *            length="100"
+     */
+    private String name;
+    ...
+}]]></source>
+                <p>
+                    the class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.odmg.shared.Site"
+    table="SITE"
+>
+    <field-descriptor
+        name="nr"
+        column="nr"
+        jdbc-type="INTEGER"
+        indexed="true"
+    >
+    </field-descriptor>
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+        length="100"
+    >
+    </field-descriptor>
+    ...
+    <index-descriptor
+        name="NAME_UNIQUE"
+        unique="true"
+    >
+        <index-column name="NAME"/>
+    </index-descriptor>
+</class-descriptor>]]></source>
+                <p>
+                    and the torque table schema
+                </p>
+                <source><![CDATA[
+<table name="SITE">
+    <column name="nr"
+            javaName="nr"
+            type="INTEGER"
+    />
+    <column name="NAME"
+            javaName="name"
+            type="VARCHAR"
+            size="100"
+    />
+    ...
+    <index>
+        <index-column name="nr"/>
+    </index>
+    <unique name="NAME_UNIQUE">
+        <unique-column name="NAME"/>
+    </unique>
+</table>]]></source>
+            </section>
+
+            <section>
+                <title>ojb.delete-procedure</title>
+                <p>
+                    Declares a database procedure that is used for deleting persistent objects.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>arguments</strong>
+                    </dt>
+                    <dd>
+                        A comma-separated list of the names of
+                        <a href="#ojb.constant-argument">constant</a> or
+                        <a href="#ojb.runtime-argument">runtime</a> arguments specified in the same class.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the procedure as a comma-separated list of name-value pairs.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the procedure.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>include-pk-only : true | false (default)</strong>
+                    </dt>
+                    <dd>Whether all fields of the class that make up the primary key, shall be passed to the procedure.
+                        If set to
+                        <code>true</code> then the
+                        <strong>arguments</strong> value is ignored.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        The name of the procedure (required).
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>return-field-ref</strong>
+                    </dt>
+                    <dd>Identifies a field of the class that will receive the return value of the procedure. Use only
+                        if the procedure has a return value.
+                        <br/>
+                    </dd>
+                </dl>
+                <anchor id="ojb.delete-procedure.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class
+ * @ojb.delete-procedure name="DELETE_PROC"
+ *                       arguments="arg1,arg2"
+ *                       return-field-ref="attr2"
+ *                       documentation="Some important documentation"
+ * @ojb.constant-argument name="arg1"
+ *                        value="0"
+ * @ojb.runtime-argument name="arg2"
+ *                       field-ref="attr1"
+ */
+public class SomeClass
+{
+    /** @ojb.field */
+    private Integer attr1;
+    /** @ojb.field */
+    private String attr2;
+    ...
+}]]></source>
+                <p>
+                    leads to the class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="SomeClass"
+    table="SomeClass"
+>
+    <field-descriptor
+        name="attr1"
+        column="attr1"
+        jdbc-type="INTEGER"
+    >
+    </field-descriptor>
+    <field-descriptor
+        name="attr2"
+        column="attr2"
+        jdbc-type="VARCHAR"
+        length="254"
+    >
+    </field-descriptor>
+    ...
+    <delete-procedure
+        name="DELETE_PROC"
+        return-field-ref="attr2"
+    >
+        <documentation>Some important documentation</documentation>
+        <constant-argument
+            value="0"
+        >
+        </constant-argument>
+        <runtime-argument
+            field-ref="attr2"
+        >
+        </runtime-argument>
+    </delete-procedure>
+</class-descriptor>]]></source>
+            </section>
+
+
+            <section>
+                <title>ojb.insert-procedure</title>
+                <p>
+                    Identifies the database procedure that shall be used for inserting objects into the database.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>arguments</strong>
+                    </dt>
+                    <dd>Comma-separated list of names of
+                        <a href="#ojb.constant-argument">constant</a> or
+                        <a href="#ojb.runtime-argument">runtime</a> arguments that are specified in the same class.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Contains optional attributes of the procedure in a comma-separated list of
+                        name-value pairs.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Contains optional documentation on the procedure.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>include-all-fields : true | false (default)</strong>
+                    </dt>
+                    <dd>
+                        Specifies whether all persistent fields of the class shall be passed to the procedure.
+                        If so, then the
+                        <strong>arguments</strong> value is ignored.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        The name of the procedure (required).
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>return-field-ref</strong>
+                    </dt>
+                    <dd>
+                        The persistent field that receives the return value of the procedure (should only be used if the
+                        procedure returns a value).
+                        <br/>
+                    </dd>
+                </dl>
+
+                <anchor id="ojb.insert-procedure.example"/>
+                <p>
+                    For an example see
+                    <a href="#ojb.constant-argument.example">constant argument</a>.
+                </p>
+            </section>
+
+
+            <section>
+                <title>ojb.update-procedure</title>
+                <p>
+                    The database procedure that will be used for updating persistent objects in the database.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>arguments</strong>
+                    </dt>
+                    <dd>
+                        A comma-separated list of names of
+                        <a href="#ojb.constant-argument">constant</a> or
+                        <a href="#ojb.runtime-argument">runtime</a> arguments in the same class.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        The optional attributes of the procedure in a comma-separated list of
+                        name-value pairs.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optional documentation on the procedure.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>include-all-fields : true | false (default)</strong>
+                    </dt>
+                    <dd>
+                        Whether all persistent fields of the class shall be passed to the procedure in which case the
+                        <strong>arguments</strong> value is ignored.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        Name of the database procedure (required).
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>return-field-ref</strong>
+                    </dt>
+                    <dd>
+                        A persistent field that will receive the return value of the procedure (only to be used if the
+                        procedure returns a value).
+                        <br/>
+                    </dd>
+                </dl>
+
+                <anchor id="ojb.update-procedure.example"/>
+                <p>
+                    For an example see
+                    <a href="#ojb.runtime-argument.example">runtime argument</a>.
+                </p>
+            </section>
+
+            <section>
+                <title>ojb.constant-argument</title>
+                <p>
+                    A constant argument for a database procedure. These arguments are referenced by the procedure tags
+                    in the
+                    <strong>arguments</strong> attribute via their names.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the argument.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the argument.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>value</strong>
+                    </dt>
+                    <dd>
+                        The constant value.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        The identifier of the argument to be used the
+                        <strong>arguments</strong> attribute of a procedure tag (required).
+                        <br/>
+                    </dd>
+                </dl>
+
+                <anchor id="ojb.constant-argument.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class
+ * @ojb.insert-procedure name="INSERT_PROC"
+ *                       arguments="arg"
+ * @ojb.constant-argument name="arg"
+ *                        value="Some value"
+ *                        attributes="name=value"
+ */
+public class SomeClass
+{
+    ...
+}]]></source>
+                <p>
+                    will result in the class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="SomeClass"
+    table="SomeClass"
+>
+    ...
+    <insert-procedure
+        name="INSERT_PROC"
+    >
+        <constant-argument
+            value="Some value"
+        >
+            <attribute attribute-name="name" attribute-value="value"/>
+        </constant-argument>
+    </insert-procedure>
+</class-descriptor>]]></source>
+            </section>
+
+
+            <section>
+                <title>ojb.runtime-argument</title>
+                <p>
+                    An argument for a database procedure that is backed by a persistent field. Similar to constant arguments
+                    the name is important for referencing by the procedure tags in the
+                    <strong>arguments</strong> attribute.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Contains optionally attributes of the argument.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the argument.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>field-ref</strong>
+                    </dt>
+                    <dd>
+                        The persistent field that delivers the value. If unspecified, then in the procedure call
+                        <code>null</code> will be used.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        Identifier of the argument for using it in the
+                        <strong>arguments</strong> attribute of a procedure tag
+                        (required).
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>return</strong>
+                    </dt>
+                    <dd>
+                        If the field receives a value (?).
+                        <br/>
+                    </dd>
+                </dl>
+
+                <anchor id="ojb.runtime-argument.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class
+ * @ojb.update-procedure name="UPDATE_PROC"
+ *                       arguments="arg"
+ * @ojb.runtime-argument name="arg"
+ *                       field-ref="attr"
+ *                       documentation="Some documentation"
+ */
+public class SomeClass
+{
+    /** @ojb.field */
+    private Integer attr;
+    ...
+}]]></source>
+                <p>
+                    will result in the class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="SomeClass"
+    table="SomeClass"
+>
+    <field-descriptor
+        name="attr"
+        column="attr"
+        jdbc-type="INTEGER"
+    >
+    </field-descriptor>
+    ...
+    <update-procedure
+        name="UPDATE_PROC"
+    >
+        <runtime-argument
+            value="attr"
+        >
+            <documentation>Some documentation</documentation>
+        </runtime-argument>
+    </update-procedure>
+</class-descriptor>]]></source>
+            </section>
+
+
+        </section>
+        <p/>
+
+        <section>
+            <title>Fields and Bean properties</title>
+            <p/>
+
+            <section>
+                <title>ojb.field</title>
+                <p>
+                    Fields or accessor methods (i.e. get/is and set methods) for properties are marked with the
+                    <strong>ojb.field</strong> tag to denote a persistent field. When a method is marked, then the corresponding
+                    bean property is used for naming purposes (e.g. "value" for a method
+                    <code>getValue()</code>). The
+                    XDoclet OJB module ensures that a field is not present more than once, therefore it is safe to mark
+                    both fields and their accessors. However, in that case these <strong>ojb.field</strong> tags are required to
+                    have the same attributes.
+                </p>
+                <p>
+                    Due to a bug in XDoclet, it is currently not possible to process <code>final</code> or
+                    <code>transient</code> fields.
+                </p>
+                <p>
+                    Marked fields are used for descriptor generation in the same type (if it has an
+                    <a href="#ojb.class">ojb.class</a> tag) and all sub types with the
+                    <a href="#ojb.class">ojb.class</a>
+                    tag having the
+                    <strong>include-inherited</strong> attribute set to
+                    <code>true</code>.
+                </p>
+                <p>
+                    It is also possible to use the
+                    <strong>ojb.field</strong> tag at the class level (i.e. in the JavaDoc comment of
+                    the class). In this case, the tag is used to define an
+                    <em>anonymous</em> field, e.g. a "field" that has
+                    no counterpart in the class but exists in the database. For anonymous fields, both the
+                    <strong>name</strong> and the <strong>jdbc-type</strong> attributes are required, and the
+                    <strong>access</strong> attribute is ignored (it defaults to the value
+                    <code>anonymous</code>). Beside these differences, anonymous fields are handled like
+                    other fields, e.g. they result in field-descriptor entries in the repository descriptor, and in
+                    columns in the table schema, and they are inherited and can be modified via the
+                    <a href="#ojb.modify-inherited">ojb.modify-inherited</a> tag.
+                </p>
+                <anchor id="ojb.field-ordering-rules"/>
+                <p>
+                    The XDoclet OJB module
+                    orders the fields in the repository
+                    descriptor and table schema according to the following rules:
+                </p>
+                <ol>
+                    <li>Fields (anonymous and non-anonymous) from base types/nested objects and from the current file that
+                        have an id, sorted by the id value. If fields have the same id, then they are sorted following the
+                        rules for fields without an id.</li>
+                    <li>Fields (anonymous and non-anonymous) from base types/nested objects and from the current file that
+                        have no id, in the order they appear starting with the farthest base type. Per class, the anonymous
+                        fields come first, followed by the non-anonymous fields.</li>
+                </ol>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>access : readonly | readwrite (default)</strong>
+                    </dt>
+                    <dd>
+                        Specifies the accessibility of the field.
+                        <code>readonly</code> marks fields that are not to
+                        modified.
+                        <code>readwrite</code> marks fields that may be read and written to. Anonymous fields do
+                        not have to be marked (i.e.
+                        <code>anonymous</code> value) as the position of the
+                        <strong>ojb.field</strong>
+                        tag in the class JavaDoc comment suffices.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the field as a comma-separated list of name-value pairs.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>autoincrement : none (default) | ojb | database</strong>
+                    </dt>
+                    <dd>
+                        Defines whether this field gets its value automatically. If
+                        <code>ojb</code> is specified, then
+                        OJB fills the value using a sequence manager. If the value is
+                        <code>database</code>, then the column
+                        is also defined as
+                        <code>autoIncrement</code> in the torque schema (i.e. the database fills the
+                        field), and in the repository descriptor, the field is marked as
+                        <code>access='readonly'</code>
+                        (if it isn't an anonymous field). The
+                        <code>database</code> value is intended to be used with the
+                        <code>org.apache.ojb.broker.util.sequence.SequenceManagerNativeImpl</code> sequence manager. For
+                        details, see the
+                        <a href="sequencemanager.html#nativeSequenceManager">Sequence Manager documentation</a>.
+                        <br/>The default value is
+                        <code>none</code> which means that the field is not automatically filled.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>column</strong>
+                    </dt>
+                    <dd>
+                        The name of the database column for this field. If not given, then the name of the attribute is
+                        used.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>column-documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the column in the database schema.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>conversion</strong>
+                    </dt>
+                    <dd>
+                        The name of the class to be used for conversion between the java type of the field (e.g.
+                        <code>java.lang.Boolean</code> or
+                        <code>java.util.Date</code>) and the java type for the JDBC type
+                        (e.g.
+                        <code>java.lang.Integer</code> or
+                        <code>java.sql.Date</code>). Conversion classes must
+                        implement the
+                        <code>org.apache.ojb.broker.accesslayer.conversions.FieldConversion</code>
+                        interface. If no explicit JDBC type is defined and the java type has no defined conversion (see
+                        below), then per default the
+                        <code>org.apache.ojb.broker.accesslayer.conversions.Object2ByteArrFieldConversion</code>
+                        conversion class is used.
+                        <br/>
+                        Default conversion is also used for the following java types when no jdbc type is given (default
+                        type is used instead), and no conversion is specified:
+                    </dd>
+                </dl>
+
+                <table>
+                    <tr>
+                        <th>Java type</th>
+                        <th>Default conversion</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>org.apache.ojb.broker.util.GUID</code>
+                        </td>
+                        <td>
+                            <code>org.apache.ojb.broker.accesslayer.conversions.GUID2StringFieldConversion</code>
+                        </td>
+                    </tr>
+                </table>
+                <dl>
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the field. If no <code>column-documentation</code>
+                        attribute value is specified, then this value is also used for the documentation
+                        of the column in the database schema.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>id</strong>
+                    </dt>
+                    <dd>
+                        An integer specifying the position in the repository descriptor and table schema. For the
+                        placement rules see
+                        <a href="#ojb.field-ordering-rules">above</a>.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>jdbc-type : BIT | TINYINT | SMALLINT | INTEGER | BIGINT | DOUBLE | FLOAT | REAL | NUMERIC
+                            | DECIMAL | CHAR | VARCHAR | LONGVARCHAR | DATE | TIME | TIMESTAMP | BINARY | VARBINARY
+                            | LONGVARBINARY | CLOB | BLOB | STRUCT | ARRAY | REF | BOOLEAN | DATALINK</strong>
+                    </dt>
+                    <dd>
+                        The JDBC type for the column. The XDoclet OJB module will automatically determine a jdbc type for
+                        the field if none is specified. This means that for anonymous fields, the
+                        <strong>jdbc-type</strong>
+                        attribute is required. The automatic mapping performed by the XDoclet OJB module from java type to
+                        jdbc type is as follows:
+                    </dd>
+                </dl>
+                <table>
+                    <tr>
+                        <th>Java type</th>
+                        <th>JDBC type</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>boolean</code>
+                        </td>
+                        <td>
+                            <code>BIT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>byte</code>
+                        </td>
+                        <td>
+                            <code>TINYINT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>short</code>
+                        </td>
+                        <td>
+                            <code>SMALLINT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>int</code>
+                        </td>
+                        <td>
+                            <code>INTEGER</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>long</code>
+                        </td>
+                        <td>
+                            <code>BIGINT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>char</code>
+                        </td>
+                        <td>
+                            <code>CHAR</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>float</code>
+                        </td>
+                        <td>
+                            <code>REAL</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>double</code>
+                        </td>
+                        <td>
+                            <code>FLOAT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Boolean</code>
+                        </td>
+                        <td>
+                            <code>BIT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Byte</code>
+                        </td>
+                        <td>
+                            <code>TINYINT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Short</code>
+                        </td>
+                        <td>
+                            <code>SMALLINT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Integer</code>
+                        </td>
+                        <td>
+                            <code>INTEGER</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Long</code>
+                        </td>
+                        <td>
+                            <code>BIGINT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Character</code>
+                        </td>
+                        <td>
+                            <code>CHAR</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Float</code>
+                        </td>
+                        <td>
+                            <code>REAL</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.Double</code>
+                        </td>
+                        <td>
+                            <code>FLOAT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.lang.String</code>
+                        </td>
+                        <td>
+                            <code>VARCHAR</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.util.Date</code>
+                        </td>
+                        <td>
+                            <code>DATE</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Date</code>
+                        </td>
+                        <td>
+                            <code>DATE</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Time</code>
+                        </td>
+                        <td>
+                            <code>TIME</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Timestamp</code>
+                        </td>
+                        <td>
+                            <code>TIMESTAMP</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Blob</code>
+                        </td>
+                        <td>
+                            <code>BLOB</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Clob</code>
+                        </td>
+                        <td>
+                            <code>CLOB</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Ref</code>
+                        </td>
+                        <td>
+                            <code>REF</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.sql.Struct</code>
+                        </td>
+                        <td>
+                            <code>STRUCT</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>java.math.BigDecimal</code>
+                        </td>
+                        <td>
+                            <code>DECIMAL</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>org.apache.ojb.broker.util.GUID</code>
+                        </td>
+                        <td>
+                            <code>VARCHAR</code>
+                        </td>
+                    </tr>
+                </table>
+                <p>
+                    For any other type (including array types) the default mapping is to
+                    <code>LONGVARBINARY</code>
+                    using the
+                    <code>Object2ByteArrFieldConversion</code> conversion (see
+                    <strong>conversion</strong> attribute
+                    above).
+                </p>
+
+                <dl>
+                    <dt>
+                        <strong>length</strong>
+                    </dt>
+                    <dd>
+                        The length of the column which might be required by the jdbc type in some databases. This is
+                        the reason that for some jdbc types, the XDoclet OJB module imposes default lengths if no length
+                        is specified:
+                    </dd>
+                </dl>
+
+                <table>
+                    <tr>
+                        <th>Jdbc type</th>
+                        <th>Default length</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>CHAR</code>
+                        </td>
+                        <td>
+                            <code>1</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>VARCHAR</code>
+                        </td>
+                        <td>
+                            <code>254</code>
+                        </td>
+                    </tr>
+                </table>
+                <dl>
+                    <dt>
+                        <strong>name</strong>
+                    </dt>
+                    <dd>
+                        The name of the field. This attribute is required for anonymous fields, otherwise it is
+                        ignored.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>precision</strong>
+                        <br/>
+                        <strong>scale</strong>
+                    </dt>
+                    <dd>
+                        The precision and scale of the column if required by the jdbc type. They are usually used in
+                        combination with the
+                        <code>DECIMAL</code> and
+                        <code>NUMERIC</code> types, and then specifiy the
+                        number of digits before (
+                        <strong>precision</strong>) and after (
+                        <strong>scale</strong>) the comma (excluding the
+                        plus/minus sign). Due to restrictions in some databases (e.g. MySQL), the XDoclet OJB module
+                        imposes default values for some types if none are specified:
+                    </dd>
+                </dl>
+                <table>
+                    <tr>
+                        <th>Jdbc type</th>
+                        <th>Default values for precision, scale</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>DECIMAL</code>
+                        </td>
+                        <td>
+                            <code>20,0</code> (this corresponds to the range of
+                            <code>long</code> where the longest number
+                            is -9223372036854775808).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>NUMERIC</code>
+                        </td>
+                        <td>
+                            <code>20,0</code>
+                        </td>
+                    </tr>
+                </table>
+                <p>
+                    For other types, if only the precision is specified, the scale defaults to 0. If only scale is
+                    specified, precision defaults to 1.
+                </p>
+                <p>
+                    Other attributes supported in the
+                    <strong>ojb.field</strong> tag that have the same meaning as in the
+                    <a href="repository.html#field-descriptor">repository descriptor</a> (and partly in the torque
+                    table schema) are:
+                </p>
+                <ul>
+                    <li>
+                        <strong>default-fetch</strong>
+                    </li>
+                    <li>
+                        <strong>indexed</strong>
+                    </li>
+                    <li>
+                        <strong>locking</strong>
+                    </li>
+                    <li>
+                        <strong>nullable</strong>
+                    </li>
+                    <li>
+                        <strong>primarykey</strong>
+                    </li>
+                    <li>
+                        <strong>sequence-name</strong>
+                    </li>
+                    <li>
+                        <strong>update-lock</strong>
+                    </li>
+                </ul>
+
+                <anchor id="ojb.field.example"/>
+                <p>
+                    <em>Examples:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.field column="Auslaufartikel"
+ *            jdbc-type="INTEGER"
+ *            conversion="org.apache.ojb.broker.accesslayer.conversions.Boolean2IntFieldConversion"
+ *            column-documentation="Some documentation on the column"
+ *            id="10"
+ *            attributes="color=green,size=small"
+ */
+protected boolean isSelloutArticle;]]></source>
+                <p>
+                    will result in the following field descriptor:
+                </p>
+                <source><![CDATA[
+<field-descriptor
+    name="isSelloutArticle"
+    column="Auslaufartikel"
+    jdbc-type="INTEGER"
+    conversion="org.apache.ojb.broker.accesslayer.conversions.Boolean2IntFieldConversion"
+>
+    <attribute attribute-name="color" attribute-value="green"/>
+    <attribute attribute-name="size" attribute-value="small"/>
+</field-descriptor>]]></source>
+                <p>
+                    The column descriptor looks like:
+                </p>
+                <source><![CDATA[
+<table name="Artikel">
+    ...
+    <column name="Auslaufartikel"
+            javaName="isSelloutArticle"
+            type="INTEGER"
+            description="Some documentation on the column"
+    />
+    ...
+</table>]]></source>
+                <p>
+                    An anonymous field is declared like this:
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class table="TABLE_F"
+ *            include-inherited="false"
+ * @ojb.field name="eID"
+ *            column="E_ID"
+ *            jdbc-type="INTEGER"
+ * @ojb.reference class-ref="org.apache.ojb.broker.E"
+ *                auto-retrieve="true"
+ *                auto-update="object"
+ *                auto-delete="object"
+ *                foreignkey="eID"
+ */
+public class F extends E implements Serializable
+...]]></source>
+                <p>
+                    In this case an anonymous field is declared and also used as the foreignkey of an anonymous reference.
+                    The corresponding class descriptor looks like:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.F"
+    table="TABLE_F"
+>
+    <field-descriptor
+        name="eID"
+        column="E_ID"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    >
+    </field-descriptor>
+    ...
+    <reference-descriptor
+        name="super"
+        class-ref="org.apache.ojb.broker.E"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <foreignkey field-ref="eID"/>
+    </reference-descriptor>
+</class-descriptor>]]></source>
+                <p>
+                    Here the anonymous field and reference (which implicitly refers to
+                    <code>super</code>) are used to
+                    establish the super-subtype relationship between
+                    <code>E</code> and
+                    <code>F</code> on the database
+                    level. For details on this see the
+                    <a href="site:advanced-technique">advanced technique section</a>.
+                </p>
+            </section>
+        </section>
+        <p/>
+
+        <section>
+            <title>References</title>
+            <p/>
+
+            <section>
+                <title>ojb.reference</title>
+                <p>Similar to fields, references (java fields or accessor methods) are marked with the
+                    <strong>ojb.reference</strong> tag. We have a reference when the type of the java field is itself a persistent
+                    class (has an
+                    <a href="#ojb.class">ojb.class</a> tag) and therefore the java field represents an
+                    association. This means that the referenced type of an association (or the one specified by the
+                    <strong>class-ref</strong> attribute, see below) is required to be present in the repository descriptor (it has
+                    the
+                    <a href="#ojb.class">ojb.class</a> tag).
+                    <br/>
+                    Foreign keys of references are also declared in the torque table schema (see example below).
+                    <br/>
+                    OJB currently requires that the referenced type has at least one field used to implement the
+                    reference, usually some id of an integer type.
+                    <br/>
+                    A reference can be stated in the JavaDoc comment of the class (anonymous reference), but in this case
+                    it silently refer to
+                    <code>super</code> (see the example of
+                    <a href="#ojb.field.example">ojb.field</a>)
+                    which can be used to establish an inheritance relationship. Note that anonymous references are not
+                    inherited (in contrast to anonymous fields and normal references).
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the reference as a comma-separated list of name-value
+                        pairs.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>class-ref</strong>
+                    </dt>
+                    <dd>
+                        Allows to explicitly specify the referenced type. Normally the XDoclet OJB module searches the
+                        type of the field and its sub types for the nearest type with the
+                        <a href="#ojb.class">ojb.class</a> tag. If the type is specified explicitly, then this type is
+                        used instead. For anonymous references, the
+                        <strong>class-ref</strong> has to specified as there is no field
+                        to determine the type from.
+                        <br/>
+                        Note that the type is required to have the
+                        <a href="#ojb.class">ojb.class</a> tag.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>database-foreignkey : true (default) | false</strong>
+                    </dt>
+                    <dd>
+                        Specifies whether a database foreignkey shall be generated for the reference. Note
+                        that this attribute is only evaluated if the XDoclet module has determined that
+                        a database foreignkey could be generated. You cannot force the generation with this
+                        attribute, and the value of the attribute is not considered when checking if
+                        database foreignkeys can be generated in case the referencing class has subtypes
+                        (in which case database foreignkeys can only be generated if all subtypes map to the
+                         same table or don't map to a table or the inheritance is mapped via a super-reference).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the reference.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>foreignkey</strong>
+                    </dt>
+                    <dd>
+                        Contains one or more foreign key fields separated by commas (required). The foreign key fields are fields
+                        with the
+                        <a href="#ojb.class">ojb.field</a> tag in the same class as the reference, which
+                        implement the association, i.e. contains the values of the primarykeys of the referenced object.
+                        <br/>
+                    </dd>
+                </dl>
+                <p>
+                    Other supported attributes (see
+                    <a href="repository.html#reference-descriptor">repository.dtd</a> for their
+                    meaning) written directly to the repository descriptor file:
+                </p>
+                <ul>
+                    <li>
+                        <strong>auto-delete</strong>
+                    </li>
+                    <li>
+                        <strong>auto-retrieve</strong>
+                    </li>
+                    <li>
+                        <strong>auto-update</strong>
+                    </li>
+                    <li>
+                        <strong>otm-dependent</strong>
+                    </li>
+                    <li>
+                        <strong>proxy</strong>
+                    </li>
+                    <li>
+                        <strong>proxy-prefetching-limit</strong>
+                    </li>
+                    <li>
+                        <strong>refresh</strong>
+                    </li>
+                </ul>
+
+                <anchor id="ojb.reference.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <source><![CDATA[
+public abstract class AbstractArticle implements InterfaceArticle, java.io.Serializable
+{
+    protected InterfaceProductGroup productGroup;
+
+    /**
+     * @ojb.reference class-ref="org.apache.ojb.broker.ProductGroup"
+     *                foreignkey="productGroupId"
+     *                documentation="this is the reference to an articles productgroup"
+     *                attributes="color=red,size=tiny"
+     */
+    protected InterfaceProductGroup productGroup;
+    /**
+     * @ojb.field
+     */
+    protected int productGroupId;
+    ...
+}]]></source>
+                <p>
+                    Here the java type is
+                    <code>InterfaceProductGroup</code> although the repository reference uses the
+                    sub type
+                    <code>ProductGroup</code>. The generated reference descriptor looks like:
+                </p>
+                <source><![CDATA[
+<field-descriptor
+    name="productGroupId"
+    column="Kategorie_Nr"
+    jdbc-type="INTEGER"
+>
+</field-descriptor>
+<reference-descriptor
+    name="productGroup"
+    class-ref="org.apache.ojb.broker.ProductGroup"
+>
+    <documentation>this is the reference to an articles productgroup</documentation>
+    <attribute attribute-name="color" attribute-value="red"/>
+    <attribute attribute-name="size" attribute-value="tiny"/>
+    <foreignkey field-ref="productGroupId"/>
+</reference-descriptor>]]></source>
+                <p>
+                    In the torque table schema for the
+                    <code>Article</code> class, the foreign key for the product group
+                    is explicitly declared:
+                </p>
+                <source><![CDATA[
+<table name="Artikel">
+    ...
+    <column name="Kategorie_Nr"
+            javaName="productGroupId"
+            type="INTEGER"
+    />
+    ...
+    <foreign-key foreignTable="Kategorien">
+        <reference local="Kategorie_Nr" foreign="Kategorie_Nr"/>
+    </foreign-key>
+</table>]]></source>
+                <p>
+                    For an example of an anonymous reference, see the examples of
+                    <a href="#ojb.field.example">ojb.field</a>.
+                </p>
+            </section>
+        </section>
+
+
+        <section>
+            <title>Collections</title>
+            <section>
+                <title>ojb.collection</title>
+                <p>
+                    Persistent collections which implement 1:n or m:n associations are denoted by the
+                    <strong>ojb.collection</strong> tag. If the collection is an array, then the XDoclet OJB module can determine
+                    the element type automatically (analogous to references). Otherwise the type must be specified using
+                    the
+                    <strong>element-class-ref</strong> attribute. m:n associations are also supported (collections on both
+                    sides) via the
+                    <strong>indirection-table</strong>,
+                    <strong>foreignkey</strong> and
+                    <strong>remote-foreignkey</strong> attributes.
+                </p>
+                <p>
+                    <em>Attributes:</em>
+                </p>
+                <dl>
+                    <dt>
+                        <strong>attributes</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains attributes of the collection as a comma-separated list of name-value
+                        pairs.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>collection-class</strong>
+                    </dt>
+                    <dd>
+                        Specifies the class that implements the collection. This attribute is usually only required if
+                        the actual type of the collection object shall be different from the variable type, e.g. if an
+                        interface like <code>java.util.Collection</code> is used as the declared type.
+                        <br/>
+                        Collections that use <code>java.util.Collection</code>, <code>java.util.List</code> or
+                        <code>java.util.Set</code> can be handled by OJB as-is so specifying <strong>collection-class</strong>
+                        is not necessary. For the types that do not, the XDoclet OJB module checks
+                        whether the declared collection field type implements the
+                        <code>org.apache.ojb.broker.ManageableCollection</code> interface, and if so, generates the
+                        <strong>collection-class</strong> attribute automatically. Otherwise, you have to specify it.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>database-foreignkey : true (default) | false</strong>
+                    </dt>
+                    <dd>
+                        Specifies whether a database foreignkey shall be generated for the collection. Note
+                        that this attribute is only evaluated if the XDoclet module has determined that
+                        a database foreignkey could be generated. You cannot force the generation with this
+                        attribute, and the value of the attribute is not considered when checking if
+                        database foreignkeys can be generated in the case of subtypes of the element type or
+                        the type having the collection (if m:n collection). For 1:n collections, database
+                        foreignkeys can only be generated if all subtypes of the element type map to the
+                        same table or don't map to a table or the inheritance is mapped via a super-reference.
+                        For m:n collections, the same applies to the class owning the collection.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation on the collection.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>element-class-ref</strong>
+                    </dt>
+                    <dd>
+                        Allows to explicitly specify the type of the collection elements. Note that the type is required
+                        to have the
+                        <a href="#ojb.class">ojb.class</a> tag.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>foreignkey</strong>
+                    </dt>
+                    <dd>
+                        Contains one or more foreign key field or columns separated by commas (required).
+                        <br/>
+                        If the collection implements an 1:n association, then this attribute specifies the fields in the
+                        element type that implement the association on the element side, i.e. they refer to the primary
+                        keys of the class containing this collection. Note that these fields are required to have the
+                        <a href="#ojb.class">ojb.field</a> tag.
+                        <br/>
+                        When the collection is one part of an m:n association (e.g. with an indirection table), this
+                        attribute specifies the columns in the indirection table that point to the type owning this
+                        collection. This attribute is required of both collections. If the other type has no explicit
+                        collection, use the
+                        <strong>remote-foreignkey</strong> attribute to specify the foreign keys for the other
+                        type.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>foreignkey-documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation for the columns in the indirection table in the database schema
+                        that point to this class.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>indirection-table</strong>
+                    </dt>
+                    <dd>
+                        Gives the name of the indirection table used for m:n associations. The XDoclet OJB module will
+                        create an appropriate torque table schema. The specified foreign keys are taken from the
+                        <strong>foreignkey</strong> attribute in this class and the corresponding collection in the element class,
+                        or if the element class has no collection, from the
+                        <strong>remote-foreignkey</strong> attribute of this
+                        collection. The XDoclet OJB module associates the foreignkeys (in the order they are stated in the
+                        <strong>foreignkey</strong>/
+                        <strong>remote-foreignkey</strong> attributes) to the ordered primarykey fields (for the
+                        ordering rules see the
+                        <a href="#ojb.field-ordering-rules">ojb.field</a> tag), and use ther jdbc
+                        type (and length setting if necessary) of these primarey keys for the columns.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>indirection-table-documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation for the indirection table in the database schema.
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>indirection-table-primarykeys : true | false (default)</strong>
+                    </dt>
+                    <dd>
+                        Specifies that the columns in the indirection table that point to this type, are
+                        primary keys of the table. If the element type has no corresponding collection,
+                        then this setting is also applied to the columns pointing to the element type.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>orderby</strong>
+                    </dt>
+                    <dd>Contains the fields used for sorting the collection and, optionally, the sorting order (either
+                        <code>ASC</code> or
+                        <code>DESC</code> for ascending or descending, respectively) as a
+                        comma-separated list of name-value pairs. For instance,
+                        <code>field1=DESC,field2,field3=ASC</code>
+                        specifies three fields after which to sort, the first one in descending order and the other two in
+                        ascending order (which is the default and can be omitted).
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>query-customizer</strong>
+                    </dt>
+                    <dd>
+                        Specifies a query customizer for the collection. The type is required to implement
+                        <code>org.apache.ojb.broker.accesslayer.QueryCustomizer</code>.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>query-customizer-attributes</strong>
+                    </dt>
+                    <dd>
+                        Specifies attributes for the query customizer. This attribute is ignored if no query customizer
+                        is specified for this collection.
+                        <br/>
+                    </dd>
+
+                    <dt>
+                        <strong>remote-foreignkey</strong>
+                    </dt>
+                    <dd>
+                        Contains one or more foreign key columns (separated by commas) in the indirection table pointing
+                        to the elements. Note that this field should only be used if the other type does not have a
+                        collection itself which the XDoclet OJB module can use to retrieve the foreign keys. This
+                        attribute is ignored if used with 1:n collections (no indirection table specified).
+                        <br/>
+                    </dd>
+                    <dt>
+                        <strong>remote-foreignkey-documentation</strong>
+                    </dt>
+                    <dd>
+                        Optionally contains documentation for the columns in the indirection table in the database schema
+                        that point to the element type. This value can be used when the element type has no
+                        corresponding collection (i.e. remote-foreignkey is specified) or if the corresponding
+                        collection does not specify the <code>foreignkey-documentation</code> attribute.
+                        <br/>
+                    </dd>
+                </dl>
+                <p>
+                    The same attributes as for references are written directly to the repository descriptor file (see
+                    <a href="repository.html#collection-descriptor">repository.dtd</a>) :
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>auto-delete</strong>
+                        </li>
+                        <li>
+                            <strong>auto-retrieve</strong>
+                        </li>
+                        <li>
+                            <strong>auto-update</strong>
+                        </li>
+                        <li>
+                            <strong>otm-dependent</strong>
+                        </li>
+                        <li>
+                            <strong>proxy</strong>
+                        </li>
+                        <li>
+                            <strong>proxy-prefetching-limit</strong>
+                        </li>
+                        <li>
+                            <strong>refresh</strong>
+                        </li>
+                    </ul>
+
+                <anchor id="ojb.collection.example"/>
+                <p>
+                    <em>Examples:</em>
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.collection element-class-ref="org.apache.ojb.broker.Article"
+ *                 foreignkey="productGroupId"
+ *                 auto-retrieve="true"
+ *                 auto-update="link"
+ *                 auto-delete="object"
+ *                 orderby="productGroupId=DESC"
+ *                 query-customizer="org.apache.ojb.broker.accesslayer.QueryCustomizerDefaultImpl"
+ *                 query-customizer-attributes="attr1=value1"
+ */
+private ArticleCollection allArticlesInGroup;]]></source>
+                <p>
+                    The corresponding collection descriptor is:
+                </p>
+                <source><![CDATA[
+<collection-descriptor
+    name="allArticlesInGroup"
+    element-class-ref="org.apache.ojb.broker.Article"
+    collection-class="org.apache.ojb.broker.ArticleCollection"
+    auto-retrieve="true"
+    auto-update="link"
+    auto-delete="object"
+>
+    <orderby name="productGroupId" sort="DESC"/>
+    <inverse-foreignkey field-ref="productGroupId"/>
+    <query-customizer class="org.apache.ojb.broker.accesslayer.QueryCustomizerDefaultImpl">
+        <attribute attribute-name="attr1" attribute-value="value1"/>
+    </query-customizer>
+</collection-descriptor>]]></source>
+                <p>
+                    An m:n collection is defined using the
+                    <strong>indirection-table</strong> attribute:
+                </p>
+                <source><![CDATA[
+/**
+ * @ojb.class generate-table-info="false"
+ */
+public abstract class BaseContentImpl implements Content
+{
+    /**
+     * @ojb.collection element-class-ref="org.apache.ojb.broker.Qualifier"
+     *                 auto-retrieve="true"
+     *                 auto-update="link"
+     *                 auto-delete="none"
+     *                 indirection-table="CONTENT_QUALIFIER"
+     *                 foreignkey="CONTENT_ID"
+     *                 remote-foreignkey="QUALIFIER_ID"
+     */
+    private List qualifiers;
+    ...
+}
+
+/**
+ * @ojb.class table="NEWS"
+ */
+public class News extends BaseContentImpl
+{
+    ...
+}
+
+/**
+ * @ojb.class generate-table-info="false"
+ */
+public interface Qualifier extends Serializable
+{
+    ...
+}]]></source>
+                <p>
+                    The
+                    <code>BaseContentImpl</code> has a m:n association to the
+                    <code>Qualifier</code> interface. for
+                    the
+                    <code>BaseContentImpl</code> class, this association is implemented via the
+                    <code>CONTENT_ID</code> column (specified by the
+                    <strong>foreignkey</strong>) in the indirection table
+                    <code>CONTENT_QUALIFIER</code>. Usually, both ends of an m:n association have a collection
+                    implementing the association, and for both ends the
+                    <strong>foreignkey</strong> specifies the indirection table
+                    column pointing to the class at this end. The
+                    <code>Qualifier</code> interface however does not
+                    contain a collection which could be used to determine the indirection table column that implements the
+                    association from its side. So, this column is also specified in the
+                    <code>BaseContentImpl</code> class
+                    using the
+                    <strong>remote-foreignkey</strong> attribute. The class descriptors are:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.BaseContentImpl"
+>
+    <extent-class class-ref="org.apache.ojb.broker.News"/>
+</class-descriptor>
+
+<class-descriptor
+    class="org.apache.ojb.broker.News"
+    table="NEWS"
+>
+    ...
+    <collection-descriptor
+        name="qualifiers"
+        element-class-ref="org.apache.ojb.broker.Qualifier"
+        indirection-table="CONTENT_QUALIFIER"
+        auto-retrieve="true"
+        auto-update="link"
+        auto-delete="none"
+    >
+        <fk-pointing-to-this-class column="CONTENT_ID"/>
+        <fk-pointing-to-element-class column="QUALIFIER_ID"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor
+    class="org.apache.ojb.broker.Qualifier"
+>
+    <extent-class class-ref="org.apache.ojb.broker.BaseQualifierImpl"/>
+</class-descriptor>]]></source>
+                <p>
+                    As can be seen, the collection definition is inherited in the
+                    <code>News</code> class and the two
+                    indirection table columns pointing to the ends of the m:n associaton are correctly specified.
+                </p>
+            </section>
+
+
+        </section>
+
+        <section>
+            <title>Nested objects</title>
+            <p/>
+            <section>
+                <title>ojb.nested</title>
+                <p>
+                    The features of a class can be included in another class by declaring a field of that type and using
+                    this tag. The XDoclet OJB module will then add every tagged feature (i.e. fields/bean properties
+                    with
+                    <a href="#ojb.field">ojb.field</a>,
+                    <a href="#ojb.reference">ojb.reference</a> or
+                    <a href="#ojb.collection">ojb.collection</a> tag, or even with
+                    <strong>ojb.nested</strong>) from the type
+                    of the field to the current class descriptor. It is not required that the field's type has the
+                    <a href="#ojb.class">ojb.class</a> tag, though.
+                    <br/>
+                    All attributes of the features are copied (even
+                    <strong>primarykey</strong>) and modified if necessary
+                    (e.g. the
+                    <strong>foreignkey</strong> of a reference is adjusted accordingly). For changing an attribute
+                    use the
+                    <a href="#ojb.modify-nested">ojb.modify-nested</a> tag.
+                </p>
+                <p>
+                    For an example of nesting, see the example of
+                    <a href="#ojb.modify-nested.example">ojb.modify-nested</a>.
+                </p>
+            </section>
+            <p/>
+
+            <section>
+                <title>ojb.modify-nested</title>
+                <p>
+                    Similar to
+                    <a href="#ojb.modify-inherited">ojb.modify-inherited</a>, this tag allows to modify
+                    attributes of a nested feature.
+                </p>
+                <p>
+                    <em>Attributes:</em> All of
+                    <a href="#ojb.field">ojb.field</a>,
+                    <a href="#ojb.reference">ojb.reference</a>, and
+                    <a href="#ojb.collection">ojb.collection</a> with
+                    the exception of the attributes related to indirection tables (
+                    <strong>indirection-table</strong>, <strong>remote-foreignkey</strong>,
+                    <strong>indirection-table-primarykeys</strong>, <strong>indirection-table-documentation</strong>,
+                    <strong>foreignkey-documentation</strong>, <strong>remote-foreignkey-documentation</strong>),
+                    and also:
+                </p>
+                    <dl>
+                        <dt>
+                            <strong>ignore : true | false (default)</strong>
+                        </dt>
+                        <dd>
+                            Specifies that this feature will not be nested.
+                            <br/>
+                        </dd>
+
+                        <dt>
+                            <strong>name</strong>
+                        </dt>
+                        <dd>
+                            The name of the field/reference/collection to modify (required). Use here the
+                            name of the feature in the nested type.
+                            <br/>
+                        </dd>
+                    </dl>
+
+                <anchor id="ojb.modify-nested.example"/>
+                <p>
+                    <em>Example:</em>
+                </p>
+                <p>
+                    The two classes:
+                </p>
+                <source><![CDATA[
+public class NestedObject implements java.io.Serializable
+{
+    /** @ojb.field primarykey="true" */
+    protected int id;
+
+    /** @ojb.field */
+    protected boolean hasValue;
+
+    /** @ojb.field */
+    protected int containerId;
+
+    /**
+     * @ojb.reference foreignkey="containerId"
+     */
+    protected ContainerObject container;
+
+    ...
+}
+
+/** @ojb.class */
+public class ContainerObject implements java.io.Serializable
+{
+    /**
+     * @ojb.field primarykey="true"
+     *            autoincrement="ojb"
+     *            id="1"
+     */
+    protected int id;
+
+    /** @ojb.field id="2" */
+    protected String name;
+
+    /**
+     * @ojb.nested
+     * @ojb.modify-nested name="hasValue"
+     *                    jdbc-type="INTEGER"
+     *                    conversion="org.apache.ojb.broker.accesslayer.conversions.Boolean2IntFieldConversion"
+     *                    id="3"
+     * @ojb.modify-nested name="id"
+     *                    primarykey=""
+     */
+    protected NestedObject nestedObj;
+
+    ...
+}]]></source>
+                <p>
+                    result in the one class descriptor
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="ContainerObject"
+    table="ContainerObject"
+>
+    <field-descriptor
+        name="id"
+        column="id"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="name"
+        jdbc-type="VARCHAR"
+        length="24"
+    />
+    <field-descriptor
+        name="nestedObj::hasValue"
+        column="nestedObj_hasValue"
+        jdbc-type="INTEGER"
+        conversion="org.apache.ojb.broker.accesslayer.conversions.Boolean2IntFieldConversion"
+    />
+    <field-descriptor
+        name="nestedObj::id"
+        column="nestedObj_id"
+        jdbc-type="INTEGER"
+    />
+    <field-descriptor
+        name="nestedObj::containerId"
+        column="nestedObj_containerId"
+        jdbc-type="INTEGER"
+    />
+    <reference-descriptor
+        name="nestedObj::container"
+        class-ref="ContainerObject"
+    >
+        <foreignkey field-ref="nestedObj::containerId"/>
+    </reference-descriptor>
+    ...
+</class-descriptor>]]></source>
+                <p>
+                    and the table descriptor
+                </p>
+                <source><![CDATA[
+<table name="ContainerObject">
+    <column name="id"
+            javaName="id"
+            type="INTEGER"
+            primaryKey="true"
+            required="true"
+    />
+    <column name="name"
+            javaName="name"
+            type="VARCHAR"
+            size="24"
+    />
+    <column name="nestedObj_hasValue"
+            type="INTEGER"
+    />
+    <column name="nestedObj_id"
+            type="INTEGER"
+    />
+    <column name="nestedObj_containerId"
+            type="INTEGER"
+    />
+    <foreign-key foreignTable=\"ContainerObject\">\n"+
+        <reference local=\"nestedObj_containerId\" foreign=\"id\"/>\n"+
+    </foreign-key>\n"+
+    ...
+</table>]]></source>
+                <p>
+                    Note how one
+                    <strong>ojb.modify-nested</strong> tag changes the type of the nested
+                    <code>hasValue</code>
+                    field, add a
+                    <code>conversion</code> and specifies the position for it. The other modification
+                    tag removes the
+                    <code>primarykey</code> status of the nested
+                    <code>id</code> field.
+                </p>
+            </section>
+            <p/>
+        </section>
+    </body>
+</document>

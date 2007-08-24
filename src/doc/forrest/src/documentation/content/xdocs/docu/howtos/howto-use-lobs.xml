@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-use-lobs.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - Work with LOB Data Types</title>
+        <authors>
+            <person name="Torsten Schlabach" email="tschlabach@gmx.net"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <section>
+            <title>Using Oracle LOB Data Types with OJB</title>
+            <section>
+                <title>Introduction</title>
+                <p>
+                    In a lot of applications there is a need to store large text or binary objects into the database.
+                    The definition of large usually means that the object's size is beyond the maximum length of
+                    a character field. In Oracle this means the objects to be stored can grow to &gt; 4 KB each. </p>
+
+                <p>
+                    Depending on the application you are developing your "large objects" may either be in the range of some Kilobytes
+                    (for example when storing text-only E-Mails or regular XML documents), but they may also extend to several Megabytes
+                    (thinking of any binary data such as larger graphics, PDFs, videos, etc.). </p>
+
+                <p>
+                    In practice, the interface between your application and the database used for fetching and storing of your "large objects"
+                    needs to be different depending on the expected size. While it is probably perfectly acceptable to handle XML documents or E-Mails
+                    in memory as a string and always completely retrieve or store them in one chunk this will hardly be a good idea for video files for example.</p>
+
+                <p>
+                    This HOWTO will explain:
+                </p>
+                <ol>
+                    <li>Why you would want to store large objects in the database</li>
+                    <li>Oracle LARGE versus LOB data types</li>
+                    <li>LOB handling in OJB using JDBC LOB types</li>
+                </ol>
+
+
+                <p>
+                    This tutorial presumes you are familiar with the basics of OJB.
+                </p>
+            </section>
+        </section>
+
+        <section>
+            <title>Backgrounder: Large objects in databases</title>
+
+            <p>
+                This section is meant to fill in non-DBA people on some of the topics you need to understand
+                when discussing large objects in databases.
+            </p>
+
+            <section>
+                <title>Your database: The most expensive file system?</title>
+
+                <p>
+                    Depending on background some people tend to store anything in a database while others are biased against that. As databases use a file system
+                    for physical storage anyway, why would it make sense to store pictures, videos and the like as a large object in a database rather that just
+                    create a set of folders and store them right into the database.
+                </p>
+
+                <p>
+                    When listening to Oracle's marketing campaingns one might get the impression that there is no need to have plain filesystems anymore and that
+                    they all will vanish and be replaced by Oracle database servers. If that happened this would definitely boast Oracle's revenues, but at the same
+                    time make IT cost in companies explode.
+                </p>
+
+                <p>
+                    But there are applications where it in fact makes sense to have the database take care of unstructured data that you would otherwise just store in a file.
+                    The most common criteria for storing non-relational data in the database instead of storing it directly into the file system is whenever there is a strong
+                    link between this non-relatinal and some relational data.
+                </p>
+
+                <p>
+                    Typical examples for that would be:
+                </p>
+                <ol>
+                    <li>Pictures or videos of houses in a real estate agent's offer database</li>
+                    <li>E-Mails related to a customer's order</li>
+                </ol>
+
+
+                <p>
+                    If you are not storing these objects into the database you would need to create a link between the relational and the non-relational data by saving
+                    filenames in the database. This means that you application is responsible for managing this weak link in any respect. In order to make sure your
+                    application will be robust you need to make sure in your own code that
+                </p>
+                <ol>
+                    <li>When creating a new record you create a valid and unique filename for storing the object.</li>
+                    <li>When deleting a record you delete the corresponding file as well</li>
+                    <li>When accessing the file referred to in the record you double-check the file is there and no locked</li>
+                </ol>
+                <p>
+                    (There might be other, more subtle implications.)
+                </p>
+
+                <p>
+                    All this is done for you by the database in case you choose to store your objects there. In addition to that, when discussing text data, a database might
+                    come with an option to automatically index the stored text documents for easy retrievel. This would allow you to perform an SQL seach such as "give me all
+                    customers that ever referred to the project foo in an e-mail". (In Oracle you need to install the InterMedia option, aka Oracle Text in order to get this
+                    extra functionality. Several vendors have also worked on technologies that allowed to seach rich content such as PDFs files, pictures or even sound or
+                    video stored in a database from SQL.)
+                </p>
+            </section>
+
+
+            <section>
+                <title>Oracle LARGE versus LOB datatypes</title>
+
+                <p>Some people are worried about the efficiency of storing large objects in databases and the implications on performance. They are not necessarily entirely
+                    wrong in fearing that storing large objects in databases might be problematic the best or might require a lot of tweaks to parameters in order to be able
+                    to handle the large objects. It all depends on how a database implements storing large objects.</p>
+
+                <p>
+                    Oracle comes with two completely different mechanisms for that:
+                </p>
+                <ol>
+                    <li>LARGE objects</li>
+                    <li>LOB objects</li>
+                </ol>
+                <p>
+                    When comparing the LARGE datatypes such as (*fixme*) to the LOB datatypes such as CLOB, BLOB, NCLOB (*fixme*) they don't read that different at first.
+                    But there is a huge difference in how they are handled both internally inside the
+                    database as well when storing and retrieving from the database client.
+                </p>
+
+                <p>
+                    LARGE fields are embedded directly into the table row. This has some consequences you should be aware of:
+                </p>
+                <ol>
+                    <li>
+                        If your record is made up of 5 VARCHAR fields with a maximum length of 40 bytes each and one LONGVARCHAR and you store 10 MB into the LONGVARCHAR column,
+                        your database row will extent to 10.000.200 bytes or roughly 10 MB.
+                    </li>
+                    <li>
+                        The database always reads or writes the entire row. So if you do a SELECT on the VARCHAR fields in order to display their content in a user interface as
+                        a basis for the user to decide if he or she will need the content of the LONGVARCHAR at all the database will already have fetched all the 10 MB. If you SELECT
+                        and display 25 records each with a 10 MB object in it this will mean about 250 MB of I/O.
+                    </li>
+                    <li>
+                        When storing or fetching such a row you need to make sure your fetch buffer is sized appropriately.
+                    </li>
+                </ol>
+                <p>In practice this cannot be efficient. It might work as long as you stay in the KB range, but you will most likely run into trouble as soon as it gets into the MBs
+                    per record. Additionally, there are more limitations to the concept of LONG datatypes such as limiting the number of them you can have in one row and how you can
+                    index them. This is probably why Oracle decided to deprecate LONG datatypes in favor
+                    of LOB columns.
+                </p>
+
+                <p>
+                    A lot of non-Oracle-DBA people believe that LOB means "large OBject" because some other vendors have used the term BLOB for "Binary Large OBject" in their products.
+                    This is not only wrong but - even worse - misleading, because people are asking:
+                    "What's the difference between large and long?" (Bear with all non native English
+                    speakers here, please!)
+                </p>
+
+                <p>
+                    Instead, LOB stands for Locator OBject which exactly describes what is is. It is a pointer to the place where the actual data itself is stored. This locator
+                    will need only occupy some bytes in the row thus not harming row size at all. So all the issues discussed above vanish immediatelly. For the sake of simplicity
+                    think of a LOB as a pointer to a file on the databases internal file system that stores the actual content of that field. (Oracle might use plain files or
+                    different mechanisms in their implementation, we don't have to care.)
+                </p>
+
+                <p>
+                    But as there is always a trade-off while LOBs are exstremely handy inside a row, they are more complex to store and retrieve. As opposed to all other column types
+                    their actual content stays where it is even if you transfer the row from the database to the client. All that goes over the wire in that case will be a token
+                    representing the actual LOB column content.
+                </p>
+
+                <p>In order to read the content or to write LOB content it needs to open a separate stream connection over the network that can be read from or written to similar
+                    to a file on a network file system. JDBC (starting at version *fixme*) comes with special objects such as java.sql.Blob and java.sql.Clob to access the content of
+                    LOBs that do not represent character arrays or strings but streams!
+                </p>
+            </section>
+        </section>
+
+
+        <section>
+            <title>Large Objects in OJB</title>
+
+            <p>After having skipped the above Backgrounder (in case you do Oracle administration for a living)
+                of having read and understood it (hopefully applies to the
+                rest of us) now that you've most likely decided to go for LOBs and forget about LONGs how
+                is this handled with OJB?
+            </p>
+
+            <section>
+                <title>Strategy 1: Using streams for LOB I/O</title>
+                <p>
+                    ########## to be written #########
+                </p>
+
+            </section>
+
+            <section>
+                <title>Strategy 2: Embedding OJB content in Java objects</title>
+                <p>
+                    ########## to be written #########
+                </p>
+            </section>
+
+            <section>
+                <title>Querying CLOB content</title>
+
+                <p>
+                    ########## to be written #########
+                </p>
+            </section>
+        </section>
+    </body>
+</document>
+
+

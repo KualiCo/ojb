@@ -1,0 +1,55 @@
+<!-- ojb test pathClass classes -->
+	<class-descriptor class="org.apache.ojb.broker.PathTest$A" table="P_A_TABLE">
+	<field-descriptor name="id" column="ID" jdbc-type="BIGINT" primarykey="true" autoincrement="true"/>
+	<field-descriptor name="aAttrib" column="A_ATTRIB" jdbc-type="INTEGER"/>
+      <collection-descriptor
+         name="bSet"
+         element-class-ref="org.apache.ojb.broker.PathTest$B"
+         auto-retrieve="true"
+         auto-update="false"
+      >
+      <inverse-foreignkey field-ref="aId"/>
+      </collection-descriptor>
+	</class-descriptor>
+
+	<class-descriptor class="org.apache.ojb.broker.PathTest$B" table="P_B_TABLE">
+	<field-descriptor name="id" column="ID" jdbc-type="BIGINT" primarykey="true" autoincrement="true"/>
+	<field-descriptor name="bAttrib" column="B_ATTRIB" jdbc-type="INTEGER"/>
+	<field-descriptor name="aId" column="A_ID" jdbc-type="BIGINT"/>
+	<reference-descriptor name="a" class-ref="org.apache.ojb.broker.PathTest$A"><foreignkey field-ref="aId"/></reference-descriptor>
+      <collection-descriptor
+         name="cSet"
+         element-class-ref="org.apache.ojb.broker.PathTest$C"
+         auto-retrieve="true"
+         auto-update="false"
+      >
+      <inverse-foreignkey field-ref="bId"/>
+      </collection-descriptor>
+	</class-descriptor>
+
+	<class-descriptor class="org.apache.ojb.broker.PathTest$C" table="P_C_TABLE">
+	<extent-class class-ref="org.apache.ojb.broker.PathTest$C1" />
+	<field-descriptor name="id" column="ID" jdbc-type="BIGINT" primarykey="true" autoincrement="true"/>
+	<field-descriptor name="cAttrib" column="C_ATTRIB" jdbc-type="INTEGER"/>
+	<field-descriptor name="bId" column="B_ID" jdbc-type="BIGINT"/>
+	<reference-descriptor name="b" class-ref="org.apache.ojb.broker.PathTest$B"><foreignkey field-ref="bId"/></reference-descriptor>
+	<field-descriptor name="dId" column="D_ID" jdbc-type="BIGINT"/>
+	<reference-descriptor name="d" class-ref="org.apache.ojb.broker.PathTest$D"><foreignkey field-ref="dId"/></reference-descriptor>
+	</class-descriptor>
+
+	<class-descriptor class="org.apache.ojb.broker.PathTest$C1" table="P_C_TABLE">
+	<field-descriptor name="id" column="ID" jdbc-type="BIGINT" primarykey="true" autoincrement="true"/>
+	<field-descriptor name="cAttrib" column="C_ATTRIB" jdbc-type="INTEGER"/>
+	<field-descriptor name="c1Attrib" column="C1_ATTRIB" jdbc-type="INTEGER"/>
+	<field-descriptor name="bId" column="B_ID" jdbc-type="BIGINT"/>
+	<reference-descriptor name="b" class-ref="org.apache.ojb.broker.PathTest$B"><foreignkey field-ref="bId"/></reference-descriptor>
+	<field-descriptor name="dId" column="D_ID" jdbc-type="BIGINT"/>
+	<reference-descriptor name="d" class-ref="org.apache.ojb.broker.PathTest$D"><foreignkey field-ref="dId"/></reference-descriptor>
+	</class-descriptor>
+
+	<class-descriptor class="org.apache.ojb.broker.PathTest$D" table="P_D_TABLE">
+	<field-descriptor name="id" column="ID" jdbc-type="BIGINT" primarykey="true" autoincrement="true"/>
+	<field-descriptor name="dAttrib" column="D_ATTRIB" jdbc-type="INTEGER"/>
+	</class-descriptor>
+
+<!-- ojb test pathClass classes -->

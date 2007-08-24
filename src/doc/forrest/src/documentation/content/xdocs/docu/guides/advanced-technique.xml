@@ -1,0 +1,2028 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: advanced-technique.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Advanced O/R Mapping Technique</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Jakob Braeuchli" email="brj@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <anchor id="polymorphism"/>
+        <section>
+            <title>Extents and Polymorphism</title>
+            <p>
+                Working with inheritance hierarchies is a common task in object
+                oriented design and programming. Of course, any serious Java O/R tool
+                must support inheritance and interfaces for persistent classes.
+                There are many example classes for polymorphism in
+                <a href="site:test-suite">OJB's JUnit TestSuite</a>.
+            </p>
+            <p>
+                To demonstrate/explain <em>Extents</em> and <em>Polymorphism</em> we will look at
+                a simple class hierarchy:
+                <br/>
+                There is a primary interface <code>InterfaceArticle</code>. This
+                interface is implemented by <code>Article</code> and <code>CdArticle</code>.
+                There is also a class <code>BookArticle</code> derived from <code>Article</code>.
+                (See the following class diagram for details)
+            </p>
+            <anchor id="example-hierarchy"/>
+            <p>
+                <img src="images/polymorphism.gif" alt="polymorphism.gif"/>
+            </p>
+            <section>
+                <title>Polymorphism</title>
+                <p>
+                    OJB allows us to use interfaces, abstract or concrete base classes in
+                    queries, or in <a href="site:basic-technique"> type definitions of reference attributes</a>.
+                    A Query against the interface <code>InterfaceArticle</code> must not only return objects of type
+                    <code>Article</code> but also of <code>CdArticle</code> and <code>BookArticle</code>!
+                    <br/>
+                    The following <a href="#example-hierarchy">example</a> method searches for all objects implementing
+                    <code>InterfaceArticle</code> with an <em>articleName</em> equal to
+                    <em>Hamlet</em> (provided that the object mapping is correct, details will described later).
+                    The Collection is e.g filled with one matching
+                    <code>BookArticle</code> object.
+                </p>
+                <source><![CDATA[
+public void testCollectionByQuery() throws Exception
+{
+    Criteria crit = new Criteria();
+    crit.addEqualTo("articleName", "Hamlet");
+    Query q = QueryFactory.newQuery(InterfaceArticle.class, crit);
+
+    Collection result = broker.getCollectionByQuery(q);
+}]]></source>
+                <p>
+                    Of course it is also possible to define
+                    <a href="site:basic-technique">reference attributes</a> of an
+                    interface or baseclass type. The <a href="#example-hierarchy">example</a> class
+                    <code>Article</code> has a reference attribute
+                    (<a href="site:basic-technique/one-to-one">1:1 reference</a>) of type
+                    <code>ProductGroup</code> and this can be a concrete/abstract class or interface.
+                </p>
+            </section>
+
+            <anchor id="extents"/>
+            <section>
+                <title>Extents</title>
+                <p>
+                    The query in the last example returned just one object. Now,
+                    imagine a query against the <code>InterfaceArticle</code> interface with no selecting criteria.
+                    OJB returns all the objects implementing <code>InterfaceArticle</code>. E.g. all
+                    <code>Article</code>, <code>BookArticle</code> and <code>CdArticles</code> objects.
+                    <br/>
+                    In the following <a href="#example-hierarchy">example</a> the method prints out the
+                    collection of all <code>InterfaceArticle</code> objects:
+                </p>
+                <source><![CDATA[
+public void testExtentByQuery() throws Exception
+{
+    // no criteria signals to omit a WHERE clause
+    Query q = QueryFactory.newQuery(InterfaceArticle.class, null);
+    Collection result = broker.getCollectionByQuery(q);
+
+    System.out.println(
+        "The InterfaceArticle Extent objects: " +result);
+}]]></source>
+                <note>
+                    The set of all instances of a class (whether living in memory or stored in a
+                    persistent medium) is called an <strong>Extent</strong> in ODMG and JDO terminology.
+                    <br/>
+                    OJB extends this notion slightly, as all objects which are subclasses of a concrete/abstract
+                    base class or implementing a given interface can be regarded as members of the base class or
+                    interface extent.
+                </note>
+                <p>In our class diagram we find:</p>
+                <ol>
+                    <li>two simple <em>one-class-only</em> extents, BookArticle and CdArticle.
+                    </li>
+                    <li>A compound extent Article containing all Article and BookArticle instances.</li>
+                    <li>An interface extent containing all Article, BookArticle and CdArticle instances.</li>
+                </ol>
+                <p>
+                    There is no extra coding necessary to define <em>extents</em>, but they
+                    have to be declared in the <a href="site:repository">metadata mapping file</a>.
+                    The classes from the above <a href="#example-hierarchy">example</a> require
+                    the following declarations:
+                </p>
+                <ol>
+                    <li><em>one-class-only</em> extents require no declaration</li>
+                    <li>A declaration for the base class <code>Article</code>, defining
+                        which classes are subclasses of Article:
+                <source><![CDATA[
+<!-- Definitions for org.apache.ojb.ojb.broker.Article -->
+<class-descriptor
+    class="org.apache.ojb.broker.Article"
+    proxy="false"
+    table="Artikel"
+    ...
+>
+    <extent-class class-ref="org.apache.ojb.broker.BookArticle" />
+...
+</class-descriptor>]]></source>
+                    </li>
+                    <li>A declaration for <code>InterfaceArticle</code>, defining which classes
+                        implement this interface:
+                <source><![CDATA[
+<!-- Definitions for org.apache.ojb.broker.InterfaceArticle -->
+<class-descriptor class="org.apache.ojb.broker.InterfaceArticle">
+    <extent-class class-ref="org.apache.ojb.broker.Article" />
+    <extent-class class-ref="org.apache.ojb.broker.CdArticle" />
+    <!-- not needed to declare -->
+    <!--<extent-class class-ref="org.apache.ojb.broker.BookArticle" />-->
+</class-descriptor>]]></source>
+                        <p>
+                            No need to declare <code>BookArticle</code> here, because it's a declared sub
+                            class of <code>Article</code>, so it's implicit declared by <code>Article</code>
+                            extent.
+                        </p>
+                </li>
+                </ol>
+                <p>
+                    Why is it necessary to explicitely declare which classes implement an
+                    interface and which classes are derived from a base class?
+                    <br/>
+                    Of course it is quite simple in Java to check whether a class implements a
+                    given interface or extends some other class. But sometimes it may not
+                    be appropiate to treat special implementors (e.g. proxies) as proper
+                    implementors.
+                </p>
+                <p>
+                    Other problems might arise because a class may
+                    implement multiple interfaces, but is only allowed to be regarded as
+                    member of one extent.
+                </p>
+                <p>
+                    In other cases it may be neccessary to treat
+                    certain classes as implementors of an interface or as derived from a
+                    base even if they are not (we don't recommend to use this feature it's bad design, but if
+                    you don't have an alternative...).
+                    <br/>
+                    As an example, you will find that the
+                    <a href="site:repository/class-descriptor">ClassDescriptor</a> of abstract test class
+                    <code>org.apache.ojb.broker.CollectionTest$BookShelfItem</code> in the
+                    <a href="site:test-suite">OJB's Test Suite</a> contains an
+                    entry declaring class <code>org.apache.ojb.broker.CollectionTest$Candie</code> as a derived class:
+                </p>
+                <source><![CDATA[
+<class-descriptor class="org.apache.ojb.broker.CollectionTest$BookShelfItem">
+   <extent-class class-ref="org.apache.ojb.broker.CollectionTest$Book"/>
+   <extent-class class-ref="org.apache.ojb.broker.CollectionTest$DVD"/>
+    <!-- This class isn't a subclass of Book or DVD or a implementation of
+    BookShelfItem, anyway it's possible to declare it as extent (but not recommended) -->
+   <extent-class class-ref="org.apache.ojb.broker.CollectionTest$Candie"/>
+</class-descriptor>]]></source>
+            </section>
+
+            <anchor id="performance-tip"/>
+            <section>
+                <title>Performance Tip</title>
+                <p>
+                    When using <em>extents</em> OJB will produce some overhead for each declared
+                    extent (e.g. execute a separate select-query for each extent or using complex table joins).
+                    <br/>
+                    Thus it's important to avoid unnecessary <em>extent</em> declarations. If in the above
+                    <a href="#example-hierarchy">example</a> class <code>InterfaceArticle</code> is never
+                    used in queries, don't declare the extents for the implementing classes
+                    (<code>Article</code>, <code>CdArticle</code>). It's always possible to add additional
+                    <em>extents</em> in <a href="site:repository">mapping files</a>.
+                </p>
+            </section>
+        </section>
+
+
+
+        <section>
+            <title>Mapping Inheritance Hierarchies</title>
+            <p>
+                In the literature on object/relational mapping the
+                problem of mapping inheritance hierarchies to RDBMS has been
+                widely covered. In the following sections we will use a simple inheritance
+                example to show the different inheritance mapping strategies.
+            </p>
+            <anchor id="mapping-inheritance-example"/>
+            <p>
+                Assume we have a base class <code>Employee</code> and class <code>Executive</code>
+                extends <code>Employee</code>. Further on class <code>Manager</code> extends
+                <code>Executive</code>.
+            </p>
+            <p>
+                <img src="images/mapping_inheritance_example.png" alt="mapping-inheritance.png"/>
+            </p>
+            <p>
+                If we have to define database tables that have to contain these classes
+                we have to choose one of the following solutions:
+            </p>
+            <ol>
+                <li>
+                    <p>
+                        <a href="#table-per-class">Map each class of a hierarchy to a distinct table</a> and have all
+                        attributes from the base class in the derived class.
+                    </p>
+                </li>
+                <li>
+                    <p>
+                        <a href="#table-per-hierarchy">Map class hierarchy onto one table</a>.
+                    </p>
+                </li>
+                <li>
+                    <p>
+                        <a href="#table-per-subclass">Map subclass fields of a hierarchy to a distinct table</a>,
+                        but do not map super class fields to derived classes. Use joins to materialize over
+                        all tables to materialize objects.
+                    </p>
+                </li>
+            </ol>
+            <p>
+                OJB provides direct support for all three approaches.
+            </p>
+            <note>But it's currently not recommended to mix mapping strategies
+                within the same hierarchy !</note>
+            <p>
+                In the following we demonstrate how these mapping
+                approaches can be implemented by using OJB.
+            </p>
+
+
+            <anchor id="table-per-class"/>
+            <section>
+                <title>Mapping Each Class of a Hierarchy to a Distinct Table (table per class)</title>
+                <p>
+                    This is the most simple solution. Just write a complete
+                    <a href="site:repository/class-descriptor">ClassDescriptor</a> with
+                    <a href="site:repository/field-descriptor">FieldDescriptors</a> for all
+                    of the attributes, including inherited attributes.
+                </p>
+                <anchor id="classes-inheritance-example"/>
+                <p>
+                    The classes of our <a href="#mapping-inheritance-example">mapping example</a>
+                    would look like:
+                </p>
+                <source><![CDATA[
+public class Employee implements Serializable
+{
+    private Integer id;
+    private String name;
+
+    public Employee()
+    {
+    }
+....
+// getter/setter for id and ojbConcreteClass
+}
+
+public class Executive extends Employee
+{
+    private String department;
+....
+// getter/setter
+}
+
+public class Manager extends Executive
+{
+    private int consortiumKey;
+....
+// getter/setter
+}]]></source>
+                <p>
+                    The <a href="site:repository/class-descriptor">ClassDescriptors</a> include all fields
+                    of the representing java-class and each descriptor points to a different table:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Employee"
+    table="EMPLOYEE"
+>
+    <extent-class class-ref="Executive" />
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="Executive"
+    table="EXECUTIVE"
+>
+    <extent-class class-ref="Manager" />
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="Manager"
+    table="MANAGER"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="consortiumKey"
+        column="CONSORTIUM_KEY"
+        jdbc-type="INTEGER"
+    />
+</class-descriptor>
+                ]]></source>
+                <p>
+                    The <a href="site:repository/extent-class"><em>extent-class</em> element</a> is
+                    needed to declare the inheritance between the classes.
+                </p>
+                <p>
+                    The DDL for the tables would look like:
+                </p>
+            <source><![CDATA[
+CREATE TABLE EMPLOYEE
+(
+    ID      INT NOT NULL PRIMARY KEY,
+    NAME    VARCHAR(150)
+)
+CREATE TABLE EXECUTIVE
+(
+    ID      INT NOT NULL PRIMARY KEY,
+    NAME    VARCHAR(150),
+    DEPARTMENT    VARCHAR(150)
+)
+CREATE TABLE MANAGER
+(
+    ID              INT NOT NULL PRIMARY KEY,
+    NAME            VARCHAR(150),
+    DEPARTMENT      VARCHAR(150),
+    CONSORTIUM_KEY  INT
+)]]></source>
+            </section>
+
+
+
+            <anchor id="table-per-hierarchy"/>
+            <section>
+                <title>Mapping Class Hierarchy on the Same Table (table per hierarchy)</title>
+                <p>
+                    Mapping several classes on one table works well under OJB. There is
+                    only one special situation that needs some attention:
+                </p>
+                <p>
+                    Storing <code>Employee, Executive</code> and <code>Manager</code> objects to this table
+                    works fine. But now consider a Query against the baseclass <code>Employee</code>.
+                    How can the correct type of the stored objects be determined?
+                </p>
+                <p>
+                    OJB needs a <em>discriminator column</em> of type CHAR or VARCHAR that contains the
+                    class name to be used for instantiation. This column must be mapped on a special
+                    attribute <code>ojbConcreteClass</code>. On loading objects from the table, OJB
+                    checks this attribute and instantiates objects of this type.
+                </p>
+                <note>
+                    The criterion for <code>ojbConcreteClass</code> is statically added to the
+                    query in class <a href="ext:api/query-factory"><code>QueryFactory</code></a> and it
+                    therefore appears in the select-statement for each extent. This means that
+                    mixing mapping strategies should be avoided.
+                </note>
+                <p>
+                    The classes of our <a href="#mapping-inheritance-example">mapping example</a>
+                    would look like:
+                </p>
+                <source><![CDATA[
+public class Employee implements Serializable
+{
+    private Integer id;
+    /**
+     * This special attribute telling OJB which concrete class
+     * this Object has.
+     * NOTE: this attribute MUST be called ojbConcreteClass
+     */
+    private String ojbConcreteClass;
+    private String name;
+
+    public Employee()
+    {
+        // this guarantee that always the correct class name will be set
+        this.ojbConcreteClass = this.getClass().getName();
+    }
+....
+// getter/setter for id and ojbConcreteClass
+}
+
+public class Executive extends Employee
+{
+    private String department;
+
+    public Executive()
+    {
+        super();
+    }
+....
+// getter/setter
+}
+
+public class Manager extends Executive
+{
+    private int consortiumKey;
+
+    public Manager()
+    {
+        super();
+    }
+....
+// getter/setter
+}]]></source>
+                <note>
+                    Getter/setter for attribute <code>ojbConcreteClass</code> in base class <code>Employee</code>
+                    are only needed if OJB is forced to use
+                    <a href="site:advanced-technique/persistent-field">getter/setter for field access</a>.
+                </note>
+                <p>
+                    Here are the metadata mappings of our
+                    <a href="#mapping-inheritance-example">mapping example</a>:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Employee"
+    table="MANPOWER"
+>
+    <extent-class class-ref="Executive" />
+
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="ojbConcreteClass"
+        column="CLASS_NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="Executive"
+    table="MANPOWER"
+>
+    <extent-class class-ref="Manager" />
+
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="ojbConcreteClass"
+        column="CLASS_NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="Manager"
+    table="MANPOWER"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="ojbConcreteClass"
+        column="CLASS_NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="consortiumKey"
+        column="CONSORTIUM_KEY"
+        jdbc-type="INTEGER"
+    />
+</class-descriptor>
+]]></source>
+                <p>
+                    The column <code>CLASS_NAME</code> is used to store the concrete type of each
+                    object.
+                </p>
+                <p>
+                    The <a href="site:repository/extent-class"><em>extent-class</em> element</a> is
+                    needed to declare the inheritance between the classes.
+                </p>
+                <p>
+                    The DDL for the table would look like:
+                </p>
+            <source><![CDATA[
+CREATE TABLE MANPOWER
+(
+    ID      INT NOT NULL PRIMARY KEY,
+    CLASS_NAME      VARCHAR(150)
+    NAME    VARCHAR(150),
+    DEPARTMENT      VARCHAR(150),
+    CONSORTIUM_KEY  INT
+)]]></source>
+
+
+                <anchor id="own-discriminator"/>
+                <section>
+                    <title>Implement your own Discriminator Handling</title>
+                <p>
+                    If you cannot provide such an additional column, but need to
+                    use some other means of indicating the type of each object you will require
+                    some additional programming:
+                </p>
+                <p>
+                    You have to derive a Class from
+                    <code>org.apache.ojb.broker.accesslayer.RowReaderDefaultImpl</code> and override
+                    the method <code>RowReaderDefaultImpl.selectClassDescriptor()</code> to implement
+                    your specific type selection mechanism. The code of the default implementation
+                    looks like follows:
+                </p>
+                <source><![CDATA[
+protected ClassDescriptor selectClassDescriptor(Map row)
+                                        throws PersistenceBrokerException
+{
+    // check if there is an attribute which tells us
+    // which concrete class is to be instantiated
+    ClassDescriptor result = m_cld;
+    Class ojbConcreteClass = (Class) row.get(OJB_CONCRETE_CLASS_KEY);
+    if(ojbConcreteClass != null)
+    {
+        result = m_cld.getRepository().getDescriptorFor(ojbConcreteClass);
+        // if we can't find class-descriptor for concrete
+        // class, something wrong with mapping
+        if (result == null)
+        {
+            throw new PersistenceBrokerException(
+                "Can't find class-descriptor for ojbConcreteClass '"
+                 + ojbConcreteClass + "', the main class was "
+                 + m_cld.getClassNameOfObject());
+        }
+    }
+    return result;
+}]]></source>
+                <p>
+                    After implementing your own <a href="#using-rowreader"><code>RowReader</code></a>
+                    you must edit the ClassDescriptor for
+                    the respective class in the XML repository to specify the usage of
+                    your RowReader Implementation:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+      class="my.Object"
+      table="MY_OBJECT"
+      ...
+      row-reader="my.own.RowReaderImpl"
+      ...
+>
+...]]></source>
+                <p>
+                    You will learn more about RowReaders in <a href="#using-rowreader">this section.</a>
+                </p>
+                </section>
+            </section>
+
+
+
+            <anchor id="table-per-subclass"/>
+            <section>
+                <title>Mapping Each Subclass to a Distinct Table (table per subclass)</title>
+                <p>
+                    This mapping strategy maps all subclass fields of a hierarchy to a distinct table
+                    (but do not map super class fields to derived class tables - except the
+                    <a href="site:repository/primary-key">primary key</a> fields) and use joins to
+                    materialize over all tables to materialize the objects.
+                </p>
+                <p>
+                    The classes of the inheritance hierarchy don't need any specific fields or
+                    settings, thus our <a href="#mapping-inheritance-example">mapping example</a>
+                    java-classes look would look like the classes for the
+                    <a href="#classes-inheritance-example">table-per-class mapping</a>.
+                </p>
+                <p>
+                    The next code block contains the <a href="site:repository/class-descriptor">class-descriptors</a> of our
+                    <a href="#mapping-inheritance-example">mapping example</a>.
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Employee"
+    table="EMPLOYEE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="Executive"
+    table="EXECUTIVE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+
+    <reference-descriptor name="super"
+        class-ref="Employee"
+    >
+        <foreignkey field-ref="id"/>
+    </reference-descriptor>
+</class-descriptor>
+
+<class-descriptor
+    class="Manager"
+    table="MANAGER"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    />
+    <field-descriptor
+        name="consortiumKey"
+        column="CONSORTIUM_KEY"
+        jdbc-type="INTEGER"
+    />
+
+    <reference-descriptor name="super"
+        class-ref="Executive"
+    >
+        <foreignkey field-ref="id"/>
+    </reference-descriptor>
+</class-descriptor>]]></source>
+                <p>
+                    The mapping for base class <code>Employee</code> is ordinary and we using
+                    a <a href="site:repository/autoincrement"><em>autoincrement</em></a> primary key field.
+                    <br/>
+                    In the subclasses <code>Executive</code> and <code>Manager</code> it's not allowed
+                    to use <em>autoincrement</em> primary keys, because OJB will automatically copy the
+                    primary keys of the base class to all subclasses.
+                </p>
+                <p>
+                    As you can see this mapping needs a special
+                    <a href="site:repository/reference-descriptor">reference-descriptor</a>
+                    in the subclasses <code>Executive</code> and <code>Manager</code> that advises OJB to load
+                    the values for the inherited attributes from the super-class by a <em>JOIN</em> using the
+                    foreign key reference.
+               <br/>
+                    The <code>name="super"</code> attribute is not used to address an actual
+                    attribute of the super-class but as a marker keyword defining the <em>JOIN</em>
+                    to the super-class.
+                </p>
+                <note>
+                    1. The <a href="site:basic-technique/cascading"><em>auto-xxx</em> attributes</a> and the
+                    <a href="site:basic-technique/reference-proxy"><em>proxy</em> attribute</a>
+                    will be ignored when using the <em>super</em> keyword.
+                    <br/>
+                    <br/>
+                    2. Be aware that this sample does not declare <code>Executive</code> or <code>Manager</code>
+                    to be an extent of <code>Employee</code>. Using <em>extents</em> here will
+                    lead to problems (instatiating the wrong class) because the primary key is not
+                    unique within the hierarchy defined in the <a href="site:repository">repository</a>.
+                </note>
+                <p>
+                    The DDL for the tables would look like:
+                </p>
+            <source><![CDATA[
+CREATE TABLE EMPLOYEE
+(
+    ID      INT NOT NULL PRIMARY KEY,
+    NAME    VARCHAR(150)
+)
+CREATE TABLE EXECUTIVE
+(
+    ID      INT NOT NULL PRIMARY KEY,
+    DEPARTMENT    VARCHAR(150)
+)
+CREATE TABLE MANAGER
+(
+    ID              INT NOT NULL PRIMARY KEY,
+    CONSORTIUM_KEY  INT
+)]]></source>
+                <p>
+                    Attributes from the base- or superclasses can be used the same way as attributes
+                    of the target class when querying - e.g. for <code>Executive</code> or <code>Manager</code>.
+                    No <a href="site:query/joins">path-expression</a> is needed in this case. The following
+                    examples returns all <code>Executive</code> and <code>Manager</code> matching the criteria:
+                </p>
+                <source><![CDATA[
+Criteria c = new Criteria();
+// attribute defined in base class Employee
+c.addEqualTo("name", "Kent");
+// attribute defined in Executive
+c.addEqualTo("department", "press");
+Query q = QueryFactory.newQuery(Executive.class, c);
+// returns all matching Executive and Manager instances
+Collection result = broker.getCollectionByQuery(q);]]></source>
+
+                <anchor id="per-subclass-using-fk"/>
+                <section>
+                    <title>Table Per Subclass via Foreign Key</title>
+                <p>
+                    The above example is based on the assumption that the
+                    <a href="site:repository/primary-key">primary key</a> attribute
+                    <code>Employee.id</code> and its underlying column
+                    <code>EMPLOYEE.ID</code> is also used as the foreign key attribute in the
+                    the subclasses.
+                </p>
+                <p>
+                    Now let us consider a case where this is not possible, then it's possible
+                    to use an additional foreign key field/column in the subclass referencing
+                    the base-/superclass.
+                </p>
+                <p>
+                    In this case the layout for class <code>Executive</code> would need an
+                    additional field <code>employeeFk</code> to store the foreign key reference
+                    to <code>Employee</code>.
+                    <br/>
+                    To avoid the additional field in the subclass (if desired) we can use OJB's
+                    <a href="site:advanced-technique/anonymous-keys">anonymous field feature</a>
+                    to get everything working without the <code>employeeFk</code> attribute in subclass
+                    <code>Employee</code> (thus the <a href="#classes-inheritance-example">java classes</a> of our
+                    <a href="#mapping-inheritance-example">mapping example</a>). We keep the
+                    <a href="site:repository/field-descriptor">field-descriptor</a> for <code>employeeFk</code>,
+                    but declare it as an <em>anonymous field</em>.
+                    We just have to add an attribute
+                    <code>access="anonymous"</code> to the new field-descriptor <code>employeeFk</code>:.
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Employee"
+    table="EMPLOYEE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="Executive"
+    table="EXECUTIVE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="employeeFk"
+        column="EMPLOYEE_FK"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+    <reference-descriptor name="super"
+        class-ref="Employee"
+    >
+        <foreignkey field-ref="employeeFk"/>
+    </reference-descriptor>
+</class-descriptor>
+
+<class-descriptor
+    class="Manager"
+    table="MANAGER"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="consortiumKey"
+        column="CONSORTIUM_KEY"
+        jdbc-type="INTEGER"
+    />
+
+    <field-descriptor
+        name="executiveFk"
+        column="EXECUTIVE_FK"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+
+    <reference-descriptor name="super"
+        class-ref="Executive"
+    >
+        <foreignkey field-ref="executiveFk"/>
+    </reference-descriptor>
+</class-descriptor>]]></source>
+                <p>
+                    Now it's possible to use <em>autoincrement</em> primary key fields in all classes
+                    of the hierarchy (because they are decoupled from the inheritance references).
+                    <br/>
+                    The <em>foreignkey</em>-element have to refer the new (anomymous)
+                    foreign-key field.
+                </p>
+                    <warning>
+                        The used primary keys (compound or single) have to unique over the mapped class
+                        hierarchy to avoid object identity conflicts. Else it could happen e.g. when
+                        searching for a <code>Employee</code> with id="42" OJB maybe find a
+                        <code>Employee</code> and a <code>Executive</code> object with id="42"!.
+                        <br/>
+                        Thus it's problematic to use a
+                        <a href="site:sequence-manager/identity-columns">database idenity columns</a> based
+                        <a href="site:sequence-manager">sequence-manager</a>. In this case it's mandatory to use
+                        a different value scope (start index of identity column) for each class in hierarchy
+                        (e.g. 1 for Employee, 1000000000 for Executive, ...).
+                    </warning>
+                    </section>
+            </section>
+        </section>
+
+
+
+
+        <anchor id="interfaces"/>
+        <section>
+            <title>Using interfaces with OJB</title>
+            <p>
+                Sometimes you may want to declare class descriptors for interfaces rather
+                than for concrete classes. With OJB this is no problem, but there are a
+                couple of things to be aware of, which are detailed in this section.
+            </p>
+            <p>
+                Consider this example hierarchy :
+            </p>
+                <source><![CDATA[
+public interface A
+{
+    String getDesc();
+}
+
+public class B implements A
+{
+    /** primary key */
+    private Integer id;
+    /** sample attribute */
+    private String desc;
+
+    public String getDesc()
+    {
+        return desc;
+    }
+    public void setDesc(String desc)
+    {
+        this.desc = desc;
+    }
+}
+
+public class C
+{
+    /** primary key */
+    private Integer id;
+    /** foreign key */
+    private Integer aId;
+    /** reference */
+    private A obj;
+
+    public void test()
+    {
+        String desc = obj.getDesc();
+    }
+}]]></source>
+            <p>
+                Here, class <code>C</code> references the interface <code>A</code> rather than <code>B</code>.
+                In order to make this work with OJB, four things must be done:
+            </p>
+            <ul>
+                <li>All features common to all implementations of <code>A</code> are declared in the
+                    class descriptor of <code>A</code>. This includes references (with their foreignkeys)
+                    and collections.</li>
+                <li>Since interfaces cannot have instance fields, it is necessary to use bean properties instead.
+                    This means that for every field (including collection fields), there must be accessors
+                    (a get method and, if the field is not marked as <code>access="readonly"</code>, a set
+                    method) declared in the interface.</li>
+                <li>Since we're using bean properties, the appropriate
+                    <code>org.apache.ojb.broker.metadata.fieldaccess.PersistentField</code>
+                    implementation must be used (see <a href="#persistent-field">below</a>).
+                    This class is used by OJB to access the fields when storing/loading objects. Per default,
+                    OJB uses a direct access implementation
+                    (<code>org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldDirectImpl</code>) which
+                    requires actual fields to be present.<br/>
+                    In our case, we need an implementation that rather uses the accessor methods. Since the
+                    <code>PersistentField</code> setting is (currently) global, you have to check whether
+                    there are accessors defined for every field in the metadata. If yes, then you can use the
+                    <code>org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldIntrospectorImpl</code>,
+                    otherwise you'll have to resort to the
+                    <code>org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldAutoProxyImpl</code>, which
+                    determines for every field what type of field it is and then uses the appropriate
+                    strategy.</li>
+                <li>If at some place OJB has to create an object of the interface, say as the result type of
+                    a query, then you have to specify <code>factory-class</code> and <code>factory-method</code>
+                    for the interface. OJB then uses the specified class and (static) method to create an
+                    uninitialized instance of the interface.</li>
+            </ul>
+            <p>
+                In our example, this would result in:
+            </p>
+                <source><![CDATA[
+public interface A
+{
+    void setId(Integer id);
+    Integer getId();
+    void setDesc(String desc);
+    String getDesc();
+}
+
+public class B implements A
+{
+    /** primary key */
+    private Integer id;
+    /** sample attribute */
+    private String desc;
+
+    public String getId()
+    {
+        return id;
+    }
+    public void setId(Integer id)
+    {
+        this.id = id;
+    }
+    public String getDesc()
+    {
+        return desc;
+    }
+    public void setDesc(String desc)
+    {
+        this.desc = desc;
+    }
+}
+
+public class C
+{
+    /** primary key */
+    private Integer id;
+    /** foreign key */
+    private Integer aId;
+    /** reference */
+    private A obj;
+
+    public void test()
+    {
+        String desc = obj.getDesc();
+    }
+}
+
+public class AFactory
+{
+    public static A createA()
+    {
+        return new B();
+    }
+}]]></source>
+            <p>
+                The class descriptors would look like:
+            </p>
+                <source><![CDATA[
+<class-descriptor
+    class="A"
+    table="A_TABLE"
+    factory-class="AFactory"
+    factory-method="createA"
+>
+    <extent-class class-ref="B"/>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="desc"
+        column="DESC"
+        jdbc-type="VARCHAR"
+        length="100"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="B"
+    table="B_TABLE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="desc"
+        column="DESC"
+        jdbc-type="VARCHAR"
+        length="100"
+    />
+</class-descriptor>
+
+<class-descriptor
+    class="C"
+    table="C_TABLE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="aId"
+        column="A_ID"
+        jdbc-type="INTEGER"
+    />
+    <reference-descriptor name="obj"
+        class-ref="A">
+        <foreignkey field-ref="aId" />
+    </reference-descriptor>
+</class-descriptor>
+]]></source>
+            <p>
+                One scenario where you might run into problems is the use of interfaces for
+                <a href="#nested-objects">nested objects</a>. In the above example, we could
+                construct such a scenario if we remove the descriptors for <code>A</code> and
+                <code>B</code>, as well as the foreign key field <code>aId</code> from
+                class <code>C</code> and change its class descriptor to:
+            </p>
+                <source><![CDATA[
+<class-descriptor
+    class="C"
+    table="C_TABLE"
+>
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="obj::desc"
+        column="DESC"
+        jdbc-type="VARCHAR"
+        length="100"
+    />
+</class-descriptor>
+]]></source>
+            <p>
+                The access to <code>desc</code> will work because of the usage of bean properties,
+                but you will get into trouble when using 
+                <a href="site:basic-technique/dynamic-proxy">dynamic proxies</a> for <code>C</code>.
+                Upon materializing an object of type <code>C</code>, OJB will try to create
+                the instance for the field <code>obj</code> which is of type <code>A</code>.
+                Of course, this is an interface but OJB won't check whether there is class
+                descriptor for the type of <code>obj</code> (in fact there does not have to
+                be one, and usually there isn't) because <code>obj</code> is not defined as
+                a reference. As a result, OJB tries to instantiate an interface, which of
+                course fails.<br/>
+                Currently, the only way to handle this is to write a 
+                <a href="site:basic-technique/proxy-customization">custom invocation handler</a>
+                that knows how to create an object of type <code>A</code>.
+            </p>
+        </section>
+
+
+        <anchor id="persistent-field"/>
+        <section>
+            <title>Change PersistentField Class</title>
+            <p>
+                OJB supports a pluggable strategy to read and set the persistent
+                attributes in the persistence capable classes. All strategy implementation
+                classes have to implement the interface
+                <code>org.apache.ojb.broker.metadata.fieldaccess.PersistentField</code>. OJB provide
+                a few implementation classes which can be set in
+                <a href="ext:ojb/ojb.properties">OJB.properties</a> file:
+            </p>
+            <source><![CDATA[
+# The PersistentFieldClass property defines the implementation class
+# for PersistentField attributes used in the OJB MetaData layer.
+# By default the best performing attribute/refection based implementation
+# is selected (PersistentFieldDirectAccessImpl).
+#
+# - PersistentFieldDirectAccessImpl
+#   is a high-speed version of the access strategies.
+#   It does not cooperate with an AccessController,
+#   but accesses the fields directly. Persistent
+#   attributes don't need getters and setters
+#   and don't have to be declared public or protected
+# - PersistentFieldPrivilegedImpl
+#   Same as above, but does cooperate with AccessController and do not
+#   suppress the java language access check (but is slow compared with direct access).
+# - PersistentFieldIntrospectorImpl
+#   uses JavaBeans compliant calls only to access persistent attributes.
+#   No Reflection is needed. But for each attribute xxx there must be
+#   public getXxx() and setXxx() methods.
+# - PersistentFieldDynaBeanAccessImpl
+#   implementation used to access a property from a
+#   org.apache.commons.beanutils.DynaBean.
+# - PersistentFieldAutoProxyImpl
+#   for each field determines upon first access how to access this particular field
+#   (directly, as a bean, as a dyna bean) and then uses that strategy
+#
+#PersistentFieldClass=org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldDirectImpl
+#PersistentFieldClass=org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldPrivilegedImpl
+#PersistentFieldClass=org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldIntrospectorImpl
+#PersistentFieldClass=org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldDynaBeanImpl
+#PersistentFieldClass=org.apache.ojb.broker.metadata.fieldaccess.PersistentFieldAutoProxyImpl
+#(DynaBean implementation does not support nested fields)
+#]]></source>
+            <p>
+                E.g. if the PersistentFieldDirectImpl is used there must be an attribute in the
+                persistent class with this name, if the PersistentFieldIntrospectorImpl is used there must
+                be a JavaBeans compliant property of this name.
+                More info about the individual implementation can be found in <a href="ext:javadoc">javadoc</a>.
+            </p>
+        </section>
+
+
+        <anchor id="anonymous-keys"/>
+        <section>
+            <title>How do <em>anonymous keys</em> work?</title>
+            <p>
+                To play for safety it is mandatory to understand how this feature is working. In the HOWTO
+                section is detailed described <a href="site:howto/anonymous-keys">how to use anoymous keys</a>.
+            </p>
+            <p>
+                All involved classes can be found in <code>org.apache.ojb.broker.metadata.fieldaccess</code> package. The
+                classes used for <em>anonymous keys</em> start with a <code>AnonymousXYZ.java</code> prefix.
+                <br/>
+                Main class used for provide anonymous keys is
+                <code>org.apache.ojb.broker.metadata.fieldaccess.AnonymousPersistentField</code>. Current implementation
+                use an object identity based weak HashMap. The persistent object identity is used as key for the
+                anonymous key value. The (Anonymous)PersistentField instance is associated with the <em>FieldDescriptor</em>
+                declared in the repository.
+            </p>
+            <p>
+                This means that all anonymous key information will be lost when the object identity change, e.g. the
+                persistent object will be de-/serialized or copied. In conjuction with 1:1 references this will be
+                no problem, because OJB can use the referenced object to re-create the anonymous key information
+                (FK to referenced object).
+            </p>
+            <warning>
+                The use of anonymous keys in 1:n references (FK to main object) or for PK fields is only
+                valid when object identity does not change, e.g. use in single JVM without persistent
+                object serialization and without persistent object copying.
+            </warning>
+        </section>
+
+
+        <anchor id="using-rowreader"/>
+        <section>
+            <title>Using Rowreader</title>
+            <p>
+                RowReaders provide a callback mechanism that allows to interact
+                with the OJB load mechanism. All implementation classes have to implement
+                <a href="ext:api/row-reader">interface <code>RowReader</code></a>.
+            </p>
+            <p>
+                You can specify the <code>RowReader</code> implementation in
+            </p>
+            <ul>
+                <li>
+                    the <a href="ext:ojb.properties"><code>OJB.properties</code></a> file to set
+                    the standard used <code>RowReader</code> implementation
+                </li>
+            </ul>
+            <source><![CDATA[
+#-------------------------------------------------------------------------------
+# RowReader
+#-------------------------------------------------------------------------------
+# Set the standard RowReader implementation. It is also possible to specify the
+# RowReader on class-descriptor level.
+RowReaderDefaultClass=org.apache.ojb.broker.accesslayer.RowReaderDefaultImpl]]></source>
+            <ul>
+                <li>
+                    within the <a href="site:repository/class-descriptor">class-descriptor</a>
+                    to set the <code>RowReader</code> for a specific class.
+                </li>
+            </ul>
+            <p>
+                RowReader setting on <em>class-descriptor</em> level will override the standard
+                reader set in <code>OJB.properties</code> file. If neither a RowReader was set in
+                OJB.properties file nor in class-descriptor was set, OJB use an default implementation.
+            </p>
+            <p>
+                To understand how to use them we must know some of the details of the load mechanism.
+                To materialize objects from a rdbms OJB uses RsIterators, that are
+                essentially wrappers to JDBC ResultSets. RsIterators are constructed
+                from queries against the Database.
+            </p>
+            <p>
+                The method
+                <code>RsIterator.next()</code> is used to materialize the next object from
+                the underlying ResultSet. This method first checks if the underlying
+                ResultSet is not yet exhausted and then delegates the construction of
+                an Object from the current ResultSet row to the method
+                <code>getObjectFromResultSet()</code>:
+            </p>
+            <source><![CDATA[
+protected Object getObjectFromResultSet() throws PersistenceBrokerException
+{
+    if (getItemProxyClass() != null)
+    {
+        // provide m_row with primary key data of current row
+        getQueryObject().getClassDescriptor().getRowReader()
+                    .readPkValuesFrom(getRsAndStmt().m_rs, getRow());
+        // assert: m_row is filled with primary key values from db
+        return getProxyFromResultSet();
+    }
+    else
+    {
+        // 0. provide m_row with data of current row
+        getQueryObject().getClassDescriptor().getRowReader()
+                    .readObjectArrayFrom(getRsAndStmt().m_rs, getRow());
+        // assert: m_row is filled from db
+
+        // 1.read Identity
+        Identity oid = getIdentityFromResultSet();
+        Object result = null;
+
+        // 2. check if Object is in cache. if so return cached version.
+        result = getCache().lookup(oid);
+        if (result == null)
+        {
+            // 3. If Object is not in cache
+            // materialize Object with primitive attributes filled from
+            // current row
+            result = getQueryObject().getClassDescriptor()
+                                        .getRowReader().readObjectFrom(getRow());
+            // result may still be null!
+            if (result != null)
+            {
+                synchronized (result)
+                {
+                    getCache().enableMaterializationCache();
+                    getCache().cache(oid, result);
+                    // fill reference and collection attributes
+                    ClassDescriptor cld = getQueryObject().getClassDescriptor()
+                            .getRepository().getDescriptorFor(result.getClass());
+                    // don't force loading of reference
+                    final boolean unforced = false;
+                    // Maps ReferenceDescriptors to HashSets of owners
+                    getBroker().getReferenceBroker().retrieveReferences(result, cld, unforced);
+                    getBroker().getReferenceBroker().retrieveCollections(result, cld, unforced);
+                    getCache().disableMaterializationCache();
+                }
+            }
+        }
+        else // Object is in cache
+        {
+            ClassDescriptor cld = getQueryObject().getClassDescriptor()
+                        .getRepository().getDescriptorFor(result.getClass());
+            // if refresh is required, update the cache instance from the db
+            if (cld.isAlwaysRefresh())
+            {
+                getQueryObject().getClassDescriptor()
+                                    .getRowReader().refreshObject(result, getRow());
+            }
+            getBroker().refreshRelationships(result, cld);
+        }
+        return result;
+    }
+}]]></source>
+            <p>
+                This method first uses a RowReader to instantiate a new object array
+                and to fill it with primitive attributes from the
+                current ResultSet row.
+                <br/>
+                The RowReader to be used for a Class can be configured in the XML
+                repository with the attribute
+                <a href="site:repository/class-descriptor"><code>row-reader</code></a>.
+                If no RowReader is specified, the standard <code>RowReader</code> is used. The
+                method
+                <code>readObjectArrayFrom(...)</code> of this class looks like follows:
+            </p>
+            <source><![CDATA[
+public void readObjectArrayFrom(ResultSet rs, ClassDescriptor cld, Map row)
+{
+    try
+    {
+        Collection fields = cld.getRepository().
+                        getFieldDescriptorsForMultiMappedTable(cld);
+        Iterator it = fields.iterator();
+        while (it.hasNext())
+        {
+            FieldDescriptor fmd = (FieldDescriptor) it.next();
+            FieldConversion conversion = fmd.getFieldConversion();
+            Object val = JdbcAccess.getObjectFromColumn(rs, fmd);
+            row.put(fmd.getColumnName() , conversion.sqlToJava(val));
+        }
+    }
+    catch (SQLException t)
+    {
+        throw new PersistenceBrokerException("Error reading from result set",t);
+    }
+}]]></source>
+            <p>
+                In the second step OJB checks if there is
+                already a cached version of the object to materialize.
+                If so the cached instance is
+                returned. If not, the object is fully materialized by
+                first reading in primary attributes with the RowReader
+                method
+                <code>readObjectFrom(Map row, ClassDescriptor descriptor)</code>
+                and in a second step by retrieving
+                reference- and collection-attributes.
+                The fully materilized Object is then returned.
+            </p>
+            <source><![CDATA[
+public Object readObjectFrom(Map row, ClassDescriptor descriptor)
+                    throws PersistenceBrokerException
+{
+    // allow to select a specific classdescriptor
+    ClassDescriptor cld = selectClassDescriptor(row, descriptor);
+    return buildWithReflection(cld, row);
+}]]></source>
+            <p>
+                By implementing your own RowReader you can hook into the OJB
+                materialization process and	provide additional features.
+            </p>
+
+            <anchor id="rowreader-example"/>
+            <section>
+                <title>Rowreader Example</title>
+                <p>
+                    Assume that for some reason we do not want to map a 1:1 association
+                    with a foreign key relationship to a different database table but
+                    read the associated object 'inline' from some columns of the master
+                    object's table. This approach is also called 'nested objects'.
+                    The section
+                    <a href="#nested-objects">nested objects</a> contains a
+                    different and much simpler approach to implement nested fields.
+                </p>
+                <p>
+                    The class
+                    <code>org.apache.ojb.broker.ArticleWithStockDetail</code>
+                    has a
+                    <code>stockDetail</code>
+                    attribute, holding a reference to a
+                    <code>StockDetail</code>
+                    object. The class StockDetail is not declared in the XML repository.
+                    Thus OJB is not able to fill this attribute by ordinary mapping
+                    techniques.
+                </p>
+                <p>
+                    We have to define a RowReader that does the proper initialization.
+                    The Class
+                    <code>org.apache.ojb.broker.RowReaderTestImpl</code> extends the
+                    RowReaderDefaultImpl and overrides the
+                    <code>readObjectFrom(...)</code> method as
+                    follows:
+                </p>
+                <source><![CDATA[
+public Object readObjectFrom(Map row, ClassDescriptor cld)
+{
+    Object result = super.readObjectFrom(row, cld);
+    if (result instanceof ArticleWithStockDetail)
+    {
+        ArticleWithStockDetail art = (ArticleWithStockDetail) result;
+        boolean sellout = art.isSelloutArticle;
+        int minimum = art.minimumStock;
+        int ordered = art.orderedUnits;
+        int stock = art.stock;
+        String unit = art.unit;
+        StockDetail detail = new StockDetail(sellout, minimum,
+                                    ordered, stock, unit, art);
+        art.stockDetail = detail;
+        return art;
+    }
+    else
+    {
+        return result;
+    }
+}]]></source>
+                <p>
+                    To activate this RowReader the ClassDescriptor for the class
+                    ArticleWithStockDetail contains the following entry:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+  class="org.apache.ojb.broker.ArticleWithStockDetail"
+  table="Artikel"
+  row-reader="org.apache.ojb.broker.RowReaderTestImpl"
+>]]></source>
+            </section>
+        </section>
+
+
+        <anchor id="nested-objects"/>
+        <section>
+            <title>Nested Objects</title>
+            <p>
+                In the last section we discussed the usage of a user written RowReader
+                to implement nested objects. This approach has several disadvantages.
+            </p>
+            <ol>
+                <li>
+                    It is necessary to write code and to have some understanding of OJB
+                    internals.
+                </li>
+                <li>
+                    The user must take care that all nested fields are written back
+                    to the database on store.
+                </li>
+            </ol>
+            <p>
+                This section shows that nested objects can be implemented without
+                writing code, and without any further trouble just by a few settings
+                in the repository.xml file.
+            </p>
+            <p>
+                The class
+                <code>org.apache.ojb.broker.ArticleWithNestedStockDetail</code>
+                has a
+                <code>stockDetail</code>
+                attribute, holding a reference to a
+                <code>StockDetail</code>
+                object. The class StockDetail is not declared in the XML repository as
+                a first class entity class.
+            </p>
+
+            <source><![CDATA[
+public class ArticleWithNestedStockDetail implements java.io.Serializable
+{
+    /**
+     * this attribute is not filled through a reference lookup
+     * but with the nested fields feature
+     */
+    protected StockDetail stockDetail;
+
+    ...
+}]]></source>
+            <p>
+                The
+                <em>StockDetail</em> class has the following layout:
+            </p>
+            <source><![CDATA[
+public class StockDetail implements java.io.Serializable
+{
+    protected boolean isSelloutArticle;
+
+    protected int minimumStock;
+
+    protected int orderedUnits;
+
+    protected int stock;
+
+    protected String unit;
+
+    ...
+}]]></source>
+            <p>
+                Only precondition to make things work is that
+                <em>StockDetail</em> needs
+                a default constructor.
+                <br/>
+                The nested fields semantics can simply declared by the following class-
+                descriptor:
+            </p>
+            <source><![CDATA[
+<class-descriptor
+  class="org.apache.ojb.broker.ArticleWithNestedStockDetail"
+  table="Artikel"
+>
+  <field-descriptor
+     name="articleId"
+     column="Artikel_Nr"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="articleName"
+     column="Artikelname"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="supplierId"
+     column="Lieferanten_Nr"
+     jdbc-type="INTEGER"
+  />
+  <field-descriptor
+     name="productGroupId"
+     column="Kategorie_Nr"
+     jdbc-type="INTEGER"
+  />
+  <field-descriptor
+     name="stockDetail::unit"
+     column="Liefereinheit"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="price"
+     column="Einzelpreis"
+     jdbc-type="FLOAT"
+  />
+  <field-descriptor
+     name="stockDetail::stock"
+     column="Lagerbestand"
+     jdbc-type="INTEGER"
+  />
+  <field-descriptor
+     name="stockDetail::orderedUnits"
+     column="BestellteEinheiten"
+     jdbc-type="INTEGER"
+  />
+  <field-descriptor
+     name="stockDetail::minimumStock"
+     column="MindestBestand"
+     jdbc-type="INTEGER"
+  />
+  <field-descriptor
+     name="stockDetail::isSelloutArticle"
+     column="Auslaufartikel"
+     jdbc-type="INTEGER"
+     conversion="org.apache.ojb.broker.accesslayer.conversions.Boolean2IntFieldConversion"
+  />
+</class-descriptor>]]></source>
+            <p>
+                That's all!
+                Just add nested fields by using
+                <code>::</code> to specify attributes of the
+                nested object.
+                All aspects of storing and retrieving the nested object are managed by OJB.
+            </p>
+        </section>
+
+        <anchor id="callback"/>
+        <section>
+            <title>Instance Callbacks</title>
+            <p>
+                OJB does provide transparent persistence. That is, persistent classes do not
+                need to implement an interface or extent a persistent baseclass.
+            </p>
+            <p>
+                For certain situations it may be neccesary to allow persistent instances to
+                interact with OJB. This is supported by a simple instance callback mechanism.
+            </p>
+            <p>
+                The interface
+                <a href="ext:pb-aware"><code>org.apache.ojb.PersistenceBrokerAware</code></a>
+                provides a set of methods that are invoked from the PersistenceBroker
+                during operations on persistent instances:
+            </p>
+            <p>
+                <strong>Example</strong>
+            </p>
+            <p>
+                If you want that all persistent objects take care of CRUD operations
+                performed by the PersistenceBroker you have to do the following steps:
+            </p>
+            <ol>
+                <li>
+                    let your persistent entity class implement the interface
+                    <code>PersistenceBrokerAware</code>.
+                </li>
+                <li>
+                    provide empty implementations for all required mthods.
+                </li>
+                <li>
+                    implement the method
+                    <code>afterUpdate(PersistenceBroker broker)</code>,
+                    <code>afterInsert(PersistenceBroker broker)</code> and
+                    <code>afterDelete(PersistenceBroker broker)</code> to perform
+                    your intended logic.
+                </li>
+            </ol>
+            <p>
+                In the following "for demonstration only code" you see a class
+                <code>BaseObject</code> (all persistent objects extend this class)
+                that does send a notification using a messenger object after object state change.
+            </p>
+
+            <source><![CDATA[
+public abstract class BaseObject implements PersistenceBrokerAware
+{
+    private Messenger messenger;
+
+    public void afterInsert(PersistenceBroker broker)
+    {
+        if(messenger != null)
+        {
+            messenger.send(this.getClass + " Object insert");
+        }
+    }
+    public void afterUpdate(PersistenceBroker broker)
+    {
+        if(messenger != null)
+        {
+            messenger.send(this.getClass + " Object update");
+        }
+    }
+    public void afterDelete(PersistenceBroker broker)
+    {
+        if(messenger != null)
+        {
+            messenger.send(this.getClass + " Object deleted");
+        }
+    }
+
+    public void afterLookup(PersistenceBroker broker){}
+    public void beforeDelete(PersistenceBroker broker){}
+    public void beforeStore(PersistenceBroker broker){}
+
+    public void setMessenger(Messenger messenger)
+    {
+        this.messenger = messenger;
+    }
+}]]></source>
+        </section>
+
+
+        <anchor id="manageable-collection"/>
+        <section>
+            <title>Manageable Collection</title>
+            <p>
+                In <a href="site:basic-technique/one-to-n">1:n</a> or
+                <a href="site:basic-technique/m-to-n">m:n</a> relations, OJB can handle
+                <code>java.util.Collection</code> as well as user defined collection classes as
+                collection attributes in persistent classes.
+                See <a href="site:repository/collection-descriptor">collection-descriptor.collection-class</a>
+                attribute for more information.
+            </p>
+            <p>
+                In order to collaborate with the OJB mechanisms
+                these collection must provide a minimum protocol as defined by this interface
+                <code>org.apache.ojb.broker.ManageableCollection</code>.
+             </p>
+                <source><![CDATA[
+public interface ManageableCollection extends java.io.Serializable
+{
+    /**
+     * add a single Object to the Collection. This method is used during reading
+     * Collection elements from the database. Thus it is is save to cast anObject
+     * to the underlying element type of the collection.
+     */
+    void ojbAdd(Object anObject);
+
+    /**
+     * adds a Collection to this collection. Used in reading Extents from the
+     * Database. Thus it is save to cast otherCollection to this.getClass().
+     */
+    void ojbAddAll(ManageableCollection otherCollection);
+
+    /**
+     * returns an Iterator over all elements in the collection. Used during store and
+     * delete Operations.
+     * If the implementor does not return an iterator over ALL elements, OJB cannot
+     * store and delete all elements properly.
+     */
+    Iterator ojbIterator();
+
+    /**
+     * A callback method to implement 'removal-aware' (track removed objects and delete
+     * them by its own) collection implementations.
+     */
+    public void afterStore(PersistenceBroker broker) throws PersistenceBrokerException;
+}]]></source>
+            <p>
+                The methods have a prefix "ojb" that indicates that these methods are "technical" methods, required
+                by OJB and not to be used in business code.
+            </p>
+            <p>
+                In package <strong><code>org.apache.ojb.broker.util.collections</code></strong>
+                can be found a bunch of pre-defined implementations of
+                <code>org.apache.ojb.broker.ManageableCollection</code>.
+            </p>
+            <p>
+                More info about <a href="#which-collection-type"> which collection class to used here</a>.
+            </p>
+
+
+            <anchor id="types-for-associations"/>
+            <section>
+                <title>Types Allowed for Implementing 1:n and m:n Associations</title>
+                <p>
+                    OJB supports different Collection types to implement 1:n and m:n associations. OJB
+                    detects the used type automatically, so there is no need to declare
+                    it in the repository file. There is also no additional programming
+                    required. The following types are supported:</p>
+                <ol>
+                    <li>
+                        <code>java.util.Collection, java.util.List, java.util.Vector</code>
+                        as in the example above. Internally OJB uses
+                        <code>java.util.Vector</code>
+                        to implement collections.
+                    </li>
+
+                    <li>
+                        Arrays (see the file
+                        <code>ProductGroupWithArray</code>).
+                    </li>
+
+                    <li>
+                        User-defined collections (see the file
+                        <code>ProductGroupWithTypedCollection</code>).
+                        A typical application for this approach are typed Collections.
+                        <br/>Here
+                        is some sample code from the Collection class
+                        <code>ArticleCollection</code>.
+                        This Collection is typed, i.e. it accepts only InterfaceArticle
+                        objects for adding and will return InterfaceArticle objects with
+                        <code>get(int index)</code>. To let OJB
+                        handle such a user-defined Collection it
+                        <strong>must</strong> implement the callback
+                        interface
+                        <code>ManageableCollection</code> and the typed collection class must be
+                        declared in the
+                        <em>collection-descriptor</em> using the
+                        <em>collection-class</em> attribute.
+                        <code>ManageableCollection</code> provides hooks that are called by OJB during object
+                        materialization, updating and deletion.
+                    </li>
+                </ol>
+                <source><![CDATA[
+public class ArticleCollection implements ManageableCollection,
+                                      java.io.Serializable
+{
+    private Vector elements;
+
+    public ArticleCollection()
+    {
+        super();
+        elements = new Vector();
+    }
+
+    public void add(InterfaceArticle article)
+    {
+        elements.add(article);
+    }
+
+    public InterfaceArticle get(int index)
+    {
+        return (InterfaceArticle) elements.get(index);
+    }
+
+    /**
+     * add a single Object to the Collection. This method is
+     * used during reading Collection elements from the
+     * database. Thus it is is save to cast anObject
+     * to the underlying element type of the collection.
+     */
+    public void ojbAdd(java.lang.Object anObject)
+    {
+        elements.add((InterfaceArticle) anObject);
+    }
+
+    /**
+     * adds a Collection to this collection. Used in reading
+     * Extents from the Database.
+     * Thus it is save to cast otherCollection to this.getClass().
+     */
+    public void ojbAddAll(
+          ojb.broker.ManageableCollection otherCollection)
+    {
+        elements.addAll(
+          ((ArticleCollection) otherCollection).elements);
+    }
+
+    /**
+     * returns an Iterator over all elements in the collection.
+     * Used during store and delete Operations.
+     */
+    public java.util.Iterator ojbIterator()
+    {
+        return elements.iterator();
+    }
+}]]></source>
+                <p>
+                    And the collection-descriptor have to declare this class:
+                </p>
+                <source><![CDATA[
+<collection-descriptor
+name="allArticlesInGroup"
+element-class-ref="org.apache.ojb.broker.Article"
+collection-class="org.apache.ojb.broker.ArticleCollection"
+auto-retrieve="true"
+auto-update="false"
+auto-delete="true"
+>
+<inverse-foreignkey field-ref="productGroupId"/>
+</collection-descriptor>]]></source>
+            </section>
+
+
+            <anchor id="which-collection-type"/>
+            <section>
+                <title>Which <em>collection-class</em> type should be used?</title>
+                <p>
+                    <a href="#manageable-collection">Earlier in this section</a> the
+                    <code>org.apache.ojb.broker.ManageableCollection</code>
+                    was introduced. Now we talk about which type to use.
+                </p>
+                <p>
+                    By default OJB use a <em>removal-aware</em> collection implementation.
+                    These implementations (classes prefixed with <em>Removal...</em>) track
+                    removal and addition of elements.
+                    <br/>
+                    This tracking allow the PersistenceBroker
+                    to <strong>delete elements</strong> from the database that have been
+                    removed from the collection before a PB.store() operation occurs.
+                </p>
+                <p>
+                    This default behaviour is <strong>undesired</strong> in some cases:
+                </p>
+                    <ul>
+                        <li>
+                            In <a href="site:basic-technique/m-to-n">m:n relations</a>, e.g. between <em>Movie</em> and <em>Actor</em>
+                            class. If an Actor was removed from the Actor collection of a Movie object
+                            expected behaviour was that the Actor be removed from the
+                            <a href="site:basic-technique/m-to-n">indirection table</a>, but not
+                            the Actor itself. Using a removal aware collection will remove the Actor
+                            too. In that case a simple manageable collection is recommended by set e.g.
+                            <code>collection-class="org.apache.ojb.broker.util.collections.ManageableArrayList"</code>
+                            in collection-descriptor.
+                        </li>
+                        <li>
+                            In <a href="site:basic-technique/one-to-n">1:n relations</a> when the
+                            n-side objects be removed from the collection of the main object, but we don't
+                            want to remove them itself (be careful with this, because the FK entry of the main
+                            object still exists - more info about
+                            <a href="site:basic-technique/linking">linking here</a>).
+                        </li>
+                    </ul>
+            </section>
+        </section>
+
+
+
+        <anchor id="query-customizer"/>
+        <section>
+            <title>Customizing collection queries</title>
+            <p>
+                Customizing the query used for collection retrieval allows a
+                <strong>developer</strong> to take
+                full control of collection mechanism. For example only children having a certain attribute
+                should be loaded. This is achieved by a QueryCustomizer defined in the collection-descriptor
+                of a relationship:
+            </p>
+
+            <source><![CDATA[
+<collection-descriptor
+    name="allArticlesInGroup"
+    ...
+>
+    <inverse-foreignkey field-ref="productGroupId"/>
+
+    <query-customizer
+    class="org.apache.ojb.broker.accesslayer.QueryCustomizerDefaultImpl">
+        <attribute
+            attribute-name="attr1"
+            attribute-value="value1"
+        />
+    </query-customizer>
+
+</collection-descriptor>]]></source>
+            <p>
+                The query customizer must implement the interface
+                <code>org.apache.ojb.broker.accesslayer.QueryCustomizer</code>.
+                This interface defines the single method below which is used to customize (or completely rebuild) the query
+                passed as argument. The interpretation of  attribute-name and attribute-value read from the
+                collection-descriptor is up to your implementation.
+            </p>
+
+            <source><![CDATA[
+/**
+* Return a new Query based on the original Query, the
+* originator object and the additional Attributes
+*
+* @param anObject the originator object
+* @param aBroker the PersistenceBroker
+* @param aCod the CollectionDescriptor
+* @param aQuery the original 1:n-Query
+* @return Query the customized 1:n-Query
+*/
+public Query customizeQuery(Object anObject,
+                PersistenceBroker aBroker,
+                CollectionDescriptor aCod, Query aQuery);]]></source>
+            <p>
+                The class
+                <code>org.apache.ojb.broker.accesslayer.QueryCustomizerDefaultImpl</code>
+                provides a default implentation without any functionality, it simply returns the query.
+            </p>
+        </section>
+
+        <section>
+            <title>Metadata runtime changes</title>
+            <p>
+                This was described in <a href="site:metadata">metadata section</a>.
+            </p>
+        </section>
+    </body>
+</document>

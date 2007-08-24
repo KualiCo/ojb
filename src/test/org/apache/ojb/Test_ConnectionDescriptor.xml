@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+#/* Copyright 2003-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!--
+This is a test repository used in junit test org.apache.ojb.broker.metadata.MetadataTest
+Runtime reading of repository files.
+DO NOT CHANGE!
+-->
+<!DOCTYPE descriptor-repository SYSTEM "repository.dtd">
+
+
+<descriptor-repository version="1.0" isolation-level="read-uncommitted">
+
+    <!--
+        NOTE: This is a test descriptor used within
+        the junit test suite, DO NOT change any value.
+    -->
+
+    <jdbc-connection-descriptor
+        jcd-alias="runtime"
+        platform="Hsqldb"
+        jdbc-level="2.0"
+        driver="org.hsqldb.jdbcDriver"
+        protocol="jdbc"
+        subprotocol="hsqldb"
+        dbalias="../OJB_FarAway"
+        username="sa"
+        password=""
+        batch-mode="false"
+    >
+        <connection-pool
+            maxActive="5"
+            whenExhaustedAction="0"
+            validationQuery="select count(*) from OJB_HL_SEQ"
+        />
+
+        <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+            <attribute attribute-name="grabSize" attribute-value="5"/>
+        </sequence-manager>
+
+        <!-- add some custom attributes -->
+        <attribute
+            attribute-name="attribute-connection-1"
+            attribute-value="attribute-connection-test-value-1">
+        </attribute>
+
+        <attribute
+            attribute-name="attribute-connection-2"
+            attribute-value="attribute-connection-test-value-2">
+        </attribute>
+    </jdbc-connection-descriptor>
+
+    <!--
+        NOTE: This is a test descriptor used within
+        the junit test suite, do not change any value.
+        A test db connections used for junit tests.
+        This connection match a hsql database called 'OJB_FarAway'
+        If you do not use the test suite, you could delete
+        this descriptor.
+        This descriptor was used to check multiple database
+        use.
+    -->
+    <jdbc-connection-descriptor
+        jcd-alias="farAway"
+        platform="Hsqldb"
+        jdbc-level="2.0"
+        driver="org.hsqldb.jdbcDriver"
+        protocol="jdbc"
+        subprotocol="hsqldb"
+        dbalias="../OJB_FarAway"
+        username="sa"
+        password=""
+        batch-mode="false"
+    >
+
+        <connection-pool
+            maxActive="6"
+            whenExhaustedAction="0"
+            validationQuery="select count(*) from OJB_HL_SEQ"
+        />
+
+        <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+            <attribute attribute-name="grabSize" attribute-value="5"/>
+        </sequence-manager>
+    </jdbc-connection-descriptor>
+
+    <!--
+        NOTE: This is a test descriptor used within
+        the junit test suite, do not change any value.
+        If you do not use the test suite, you could
+        delete this descriptor.
+        In the the test directory under
+        org.apache.ojb.broker.metadata.MetadataTest#testReadConnectionDescriptor
+        this descriptor will be evaluated.
+    -->
+    <jdbc-connection-descriptor
+        jcd-alias="testConnection"
+        default-connection="false"
+        platform="Oracle"
+        jdbc-level="1.0"
+        driver="a driver"
+        protocol="a protocol"
+        subprotocol="a subprotocol"
+        dbalias="myDbalias"
+        username="a user"
+        password="a password"
+        eager-release="true"
+        batch-mode="true"
+        useAutoCommit="0"
+        ignoreAutoCommitExceptions="true"
+    >
+
+        <object-cache class="org.apache.ojb.broker.cache.ObjectCacheEmptyImpl">
+            <attribute attribute-name="cacheKey1" attribute-value="cacheValue1"/>
+            <attribute attribute-name="cacheKey2" attribute-value="cacheValue2"/>
+        </object-cache>
+
+        <connection-pool
+            maxActive="1"
+            maxIdle="2"
+            maxWait="3"
+            minEvictableIdleTimeMillis="4"
+            numTestsPerEvictionRun="5"
+            testOnBorrow="true"
+            testOnReturn="true"
+            testWhileIdle="true"
+            timeBetweenEvictionRunsMillis="6"
+            whenExhaustedAction="2"
+            validationQuery="a query"
+            logAbandoned="true"
+            removeAbandoned="true"
+            removeAbandonedTimeout="8"
+        />
+
+        <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+            <attribute attribute-name="key1" attribute-value="value1"/>
+            <attribute attribute-name="key2" attribute-value="value2"/>
+        </sequence-manager>
+    </jdbc-connection-descriptor>
+
+</descriptor-repository>

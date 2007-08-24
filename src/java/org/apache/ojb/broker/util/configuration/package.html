@@ -1,0 +1,40 @@
+<html>
+<head>
+<title>OJB Configuration package</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF">
+This package contains classes that provide the OJB configuration API. 
+
+<P>
+The <code>Configuration</code> interface defines lookup-methods to lookup
+typed configuration-values.
+For example <code>boolean getBoolean(String key, boolean defaultValue)</code> 
+looks up a boolean value associated with <code>key</code>.
+
+
+<P>
+The <code>Configurable</code> interface defines a callback
+method <code>configure(Configuration pConfig)</code>.
+Implementors of this method may use configuration value from the <code>pConfig</code>
+parameter to configure the current instance.
+
+<P>
+The <code>Configurator</code> interface defines methods for looking up Configurations
+and for configuring <code>Configurable</code> instances.
+
+<P>
+The Exception <code>ConfigurationException</code> is used to signal exceptions 
+in the configuration process.
+
+
+<P>
+Patterns applied:
+Callback
+
+<P>
+Todo:
+merge with jakarta commons-configuration API
+</body>
+</html>

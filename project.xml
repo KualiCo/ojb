@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+#/* Copyright 2002-2005 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<project>
+  <pomVersion>3</pomVersion>
+  <name>ObJectRelationalBridge</name>
+  <id>ojb</id>
+  <currentVersion>1.0.3</currentVersion>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://db.apache.org/</url>
+    <logo>/images/db-logo-blue.png</logo>
+  </organization>
+  <logo>/images/ojb-400.png</logo>
+  <inceptionYear>2000</inceptionYear>
+  <package>org.apache.ojb</package>
+  <gumpRepositoryId></gumpRepositoryId>
+  <shortDescription>Bridging Objects and Relational Databases</shortDescription>
+  <description>
+    ObJectRelationalBridge (OJB) is an Object/Relational mapping tool that
+    allows transparent persistence for Java Objects against relational
+    databases.
+  </description>
+
+  <url>http://db.apache.org/ojb/</url>
+  <issueTrackingUrl>http://issues.apache.org/jira/browse/OJB</issueTrackingUrl>
+  <siteAddress>db.apache.org</siteAddress>
+  <siteDirectory>/www/db.apache.org/ojb/</siteDirectory>
+  <distributionDirectory>/www/db.apache.org/builds/ojb/</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:db-ojb</connection>
+    <developerConnection>scm:cvs:ext:${maven.username}@cvs.apache.org:/home/cvs:db-ojb</developerConnection>
+    <url>http://cvs.apache.org/viewcvs/db-ojb/</url>
+  </repository>
+
+  <mailingLists>
+    <mailingList>
+      <name>OJB User List</name>
+      <subscribe>ojb-user-subscribe@db.apache.org</subscribe>
+      <unsubscribe>ojb-user-unsubscribe@db.apache.org</unsubscribe>
+      <archive>http://nagoya.apache.org/eyebrowse/SummarizeList?listName=ojb-user@db.apache.org</archive>
+    </mailingList>
+    <mailingList>
+      <name>OJB Developer List</name>
+      <subscribe>ojb-dev-subscribe@db.apache.org</subscribe>
+      <unsubscribe>ojb-dev-unsubscribe@db.apache.org</unsubscribe>
+      <archive>http://nagoya.apache.org/eyebrowse/SummarizeList?listName=ojb-dev@db.apache.org</archive>
+    </mailingList>
+  </mailingLists>
+
+  <developers>
+
+    <developer>
+      <name>Thomas Mahler</name>
+      <id>thma</id>
+      <email>thma@apache.org</email>
+      <organization>ITellium Systems and Services GmbH</organization>
+    </developer>
+
+    <developer>
+      <name>Armin Waibel</name>
+      <id>arminw</id>
+      <email>arminw@apache.org</email>
+      <organization/>
+    </developer>
+
+    <developer>
+      <name>Leandro Rodrigo Saad Cruz</name>
+      <id>baserose</id>
+      <email>leandro@ibnetwork.com.br</email>
+      <organization>Inter Business Tecnologia e Servicos</organization>
+    </developer>
+
+    <developer>
+      <name>Jakob Braeuchi</name>
+      <id>brj</id>
+      <email>jbraeuchi@gmx.ch</email>
+      <organization/>
+    </developer>
+
+    <developer>
+      <name>Jason van Zyl</name>
+      <id>jvanzyl</id>
+      <email>jason@zenplex.com</email>
+      <organization>Zenplex</organization>
+    </developer>
+
+    <developer>
+      <name>Matthew Baird</name>
+      <id>mattbaird</id>
+      <email>mattbaird@yahoo.com</email>
+      <organization>Motiva</organization>
+    </developer>
+
+    <developer>
+      <name>Oleg Nitz</name>
+      <id>olegnitz</id>
+      <email>on@ukr.net</email>
+      <organization>IBIS.ua</organization>
+    </developer>
+
+    <developer>
+      <name>Raghuram Rajah</name>
+      <id>raghu</id>
+      <email>raghuram.rajah@s1.com</email>
+      <organization/>
+    </developer>
+
+    <developer>
+      <name>Brian McCallister</name>
+      <id>brianm</id>
+      <email>brianm@apache.org</email>
+      <organization/>
+    </developer>
+
+    <developer>
+      <name>Martin Kalén</name>
+      <id>mkalen</id>
+      <email>mkalen@apache.org</email>
+      <organization/>
+    </developer>
+  </developers>
+
+  <dependencies>
+
+    <dependency>
+      <id>ant</id>
+      <version>1.6</version>
+      <url>http://ant.apache.org/</url>
+      <!-- also needed: ant-swing.jar, ant-junit.jar, ant-launcher.jar -->
+    </dependency>
+
+    <dependency>
+      <id>antlr</id>
+      <version>2.7.2</version>
+      <url>http://www.antlr.org/</url>
+      <!-- License: public domain, no license at all-->
+    </dependency>
+
+    <dependency>
+      <id>commons-beanutils</id>
+      <version>1.7.0</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-collections</id>
+      <version>2.1.1</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-dbcp</id>
+      <version>1.2.1</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-lang</id>
+      <version>2.0</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-logging</id>
+      <version>1.0.4</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-pool</id>
+      <version>1.2</version>
+      <url>http://jakarta.apache.org/commons/pool/</url>
+    </dependency>
+
+    <dependency>
+      <id>ejb</id>
+      <version>1.0</version>
+      <jar>ejb.jar</jar>
+      <url>http://java.sun.com/j2ee/</url>
+      <!--License: SUN License -->
+    </dependency>
+
+    <dependency>
+      <id>hsqldb</id>
+      <version>1.7.1</version>
+      <url>http://hsqldb.sf.net</url>
+      <!-- License: BSD license-->
+    </dependency>
+
+    <dependency>
+      <id>jdo</id>
+      <version>1.0.1</version>
+      <url>http://java.sun.com/products/jdo/</url>
+      <!--License: SUN License -->
+    </dependency>
+    <dependency>
+      <groupId>jdo</groupId>
+      <artifactId>jdori</artifactId>
+      <version>1.0.1</version>
+      <url>http://java.sun.com/products/jdo/</url>
+      <!--License: SUN License -->
+    </dependency>
+
+    <dependency>
+      <id>regexp</id>
+      <version>1.3</version>
+      <url>http://jakarta.apache.org/regexp/</url>
+    </dependency>
+
+    <dependency>
+      <id>jcs</id>
+      <version>1.0-dev</version>
+      <url>http://jakarta.apache.org/turbine/jcs/</url>
+    </dependency>
+
+    <dependency>
+      <id>J2EE</id>
+      <version>2.x</version>
+      <url>http://java.sun.com/products/j2ee/</url>
+      <!-- SUN binary code license -->
+    </dependency>
+
+    <dependency>
+      <id>junit</id>
+      <version>3.8.1</version>
+      <url>http://www.junit.org/</url>
+      <!-- License: Common Public License -->
+    </dependency>
+
+    <dependency>
+      <id>log4j</id>
+      <version>1.2.8</version>
+      <url>http://jakarta.apache.org/log4j/</url>
+    </dependency>
+
+    <dependency>
+      <id>p6spy</id>
+      <version>1.0</version>
+      <url>http://www.p6spy.com/</url>
+      <!-- License: Apache Software License -->
+    </dependency>
+
+    <dependency>
+      <id>servletapi</id>
+      <version>2.2</version>
+      <url>http://java.sun.com/products/servlet/</url>
+      <!-- License: SUN -->
+    </dependency>
+
+    <dependency>
+      <id>torque</id>
+      <version>3.0.2</version>
+      <url>http://db.apache.org/torque/</url>
+    </dependency>
+
+    <dependency>
+      <id>velocity</id>
+      <version>1.3.1</version>
+      <url>http://jakarta.apache.org/velocity/</url>
+    </dependency>
+
+    <dependency>
+      <id>xalan</id>
+      <version>2.4</version>
+      <url>http://xml.apache.org/xalan-j/</url>
+    </dependency>
+
+    <dependency>
+      <id>xerces</id>
+      <version>2.0.2</version>
+      <url>http://xml.apache.org/xerces2-j/</url>
+    </dependency>
+
+    <dependency>
+      <id>xml-apis</id>
+      <version>2.0.2</version>
+      <url>http://xml.apache.org/xerces2-j/</url>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <sourceDirectory>target/src/java</sourceDirectory>
+    <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+    <aspectSourceDirectories></aspectSourceDirectories>
+
+    <unitTest>
+      <!--
+      <includes>
+        <include>**/AllTests.java</include>
+      </includes>
+      -->
+      <excludes>
+        <exclude>**/*.java</exclude>
+      </excludes>
+    </unitTest>
+
+    <resources/>
+
+    <jars></jars>
+  </build>
+
+  <reports>
+    <report>maven-jdepend-plugin</report>
+    <report>maven-checkstyle-plugin</report>
+    <report>maven-changes-plugin</report>
+    <report>maven-changelog-plugin</report>
+    <report>maven-file-activity-plugin</report>
+    <report>maven-developer-activity-plugin</report>
+    <report>maven-javadoc-plugin</report>
+    <report>maven-jxr-plugin</report>
+    <report>maven-junit-report-plugin</report>
+    <report>maven-tasklist-plugin</report>
+    <report>maven-pmd-plugin</report>
+    <report>maven-simian-plugin</report>
+  </reports>
+
+</project>

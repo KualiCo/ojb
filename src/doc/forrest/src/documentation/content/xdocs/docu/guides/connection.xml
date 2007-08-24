@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: connection.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Connection Handling</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Martin Kalén" email="mkalen@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                In this section the connection handling within OJB is described.
+                The connection management is implemented through two OJB interfaces:
+            </p>
+            <ul>
+                <li><code>org.apache.ojb.broker.accesslayer.ConnectionFactory</code></li>
+                <li><code>org.apache.ojb.broker.accesslayer.ConnectionManagerIF</code></li>
+            </ul>
+        </section>
+
+        <anchor id="connection-factory"/>
+        <section><title>ConnectionFactory</title>
+            <p>
+                The <code>org.apache.ojb.broker.accesslayer.ConnectionFactory</code> interface implementation
+                is a pluggable component (via the <a href="ext:ojb.properties">OJB.properties</a> file
+                - more about <a href="site:ojb-properties">the OJB.properties file here</a>) responsible
+                for creation/lookup and release of connections.
+            </p>
+            <source><![CDATA[
+public interface ConnectionFactory
+{
+    Connection lookupConnection(JdbcConnectionDescriptor jcd) throws LookupException;
+
+    void releaseConnection(JdbcConnectionDescriptor jcd, Connection con);
+
+    void releaseAllResources();
+}]]></source>
+            <p>
+                To enable a specific <em>ConnectionFactory</em> implementation class in the
+                <em>OJB.properties</em> file, set property <em>ConnectionFactoryClass</em>. Default:
+            </p>
+            <source><![CDATA[
+ConnectionFactoryClass=org.apache.ojb.broker.accesslayer.ConnectionFactoryPooledImpl]]></source>
+            <p>
+                OJB is shipped with several different implementation classes for use in
+                different situations. The default implementation for example, will pool
+                created Connection instances for increased performance (since instance creation
+                normally makes a database server roundtrip and thus is costly).
+            </p>
+            <p>
+                To make it more easier to implement your own <em>ConnectionFactory</em> class,
+                an abstract base class called
+                <code>org.apache.ojb.broker.accesslayer.ConnectionFactoryAbstractImpl</code> exists,
+                most shipped implementation classes inherit from this class.
+            </p>
+            <note>
+                All shipped implementations of <em>ConnectionFactory</em> with support for
+                connection pooling will only use object pools for connections obtained directly
+                from the JDBC DriverManager. If you are using a <em>DataSource</em> configuration,
+                the JNDI DataSource is responsible for pooling.
+            </note>
+            <section>
+                <title>ConnectionFactoryPooledImpl</title>
+                <p>
+                    A <em>ConnectionFactory</em> implementation using
+                    <a href="ext:commons-pool">commons-pool</a> to pool the Connection
+                    instances. On lookupConnection a Connection instance is borrowed from the
+                    object pool, and returned on the releaseConnection call.
+                    This implementation is used as <em>default</em> setting in the
+                    <a href="ext:ojb.properties">OJB.properties</a> file.
+                </p>
+                <p>
+                    This implementation allows a wide range of different settings,
+                    more info about the configuration properties can be found in the metadata
+                    repository
+                    <a href="site:repository/connection-pool"><em>connection-pool</em></a>
+                    section.
+                </p>
+            </section>
+
+            <section>
+                <title>ConnectionFactoryNotPooledImpl</title>
+                <p>
+                    Implementation that creates a new Connection instance on each lookupConnection
+                    call and closes (destroys) it on releaseConnection. All
+                    <a href="site:repository/connection-pool"><em>connection-pool</em></a>
+                    settings are ignored by this implementation.
+                </p>
+            </section>
+
+            <section>
+                <title>ConnectionFactoryManagedImpl</title>
+                <p>
+                    [@deprecated since OJB 1.0.4, now OJB automatic detect the
+                    running JTA-transaction and suppress critical method calls on the
+                    used connection]
+                    <br/>
+                    Implementation specifically for use in <em>managed environments</em> like J2EE
+                    conformant application servers. In managed environments it is
+                    <strong>mandatory</strong> to use <em>DataSource</em> configuration, with
+                    Connection objects provided by the application server. OJB will not control
+                    Connection properties or transaction handling when using this implementation.
+                </p>
+                <p>
+                    All
+                    <a href="site:repository/connection-pool"><em>connection-pool</em></a>
+                    settings are ignored by this implementation.
+                </p>
+            </section>
+
+            <section>
+                <title>ConnectionFactoryDBCPImpl</title>
+                <p>
+                    Implementation using <a href="ext:commons-dbcp">commons-dbcp</a> to pool
+                    the Connection instances. Since DBCP is using
+                    <a href="ext:commons-pool">commons-pool</a> internally, this
+                    implementation is very similar to <em>ConnectionFactoryPooledImpl</em>, but
+                    permits additional configuration for logging abandoned Connection instances
+                    (usable under development for detecting bad programming patterns).
+                </p>
+                <p>
+                    This implementation allows a wide range of different settings,
+                    more info about the configuration properties can be found in the metadata
+                    repository
+                    <a href="site:repository/connection-pool"><em>connection-pool</em></a>
+                    section.
+                </p>
+            </section>
+
+        </section>
+
+        <section><title>ConnectionManager</title>
+            <p>
+                The <code>org.apache.ojb.broker.accesslayer.ConnectionManagerIF</code> interface implementation
+                is a pluggable component (via the <a href="ext:ojb.properties">OJB.properties</a> file
+                - more about <a href="site:ojb-properties">the OJB.properties file here</a>) responsible
+                for managing the connection usage lifecycle and connection status (commit/rollback of connections).
+            </p>
+            <source><![CDATA[
+public interface ConnectionManagerIF
+{
+    JdbcConnectionDescriptor getConnectionDescriptor();
+
+    Platform getSupportedPlatform();
+
+    boolean isAlive(Connection conn);
+
+    Connection getConnection() throws LookupException;
+
+    boolean isInLocalTransaction();
+
+    void localBegin();
+
+    void localCommit();
+
+    void localRollback();
+
+    void releaseConnection();
+
+    void setBatchMode(boolean mode);
+
+    boolean isBatchMode();
+
+    void executeBatch();
+
+    void executeBatchIfNecessary();
+
+    void clearBatch();
+}]]></source>
+            <p>
+                The <em>ConnectionManager</em> is used by the <em>PersistenceBroker</em> to handle
+                connection usage lifecycle.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Questions and Answers</title>
+
+            <anchor id="connection-pooling"/>
+            <section>
+                <title>How does OJB handle connection pooling?</title>
+                <p>
+                    OJB does connection pooling per default, except for datasources that are
+                    never pooled internally by OJB.
+                    Pooling of Connection instances when configuring OJB with DataSource
+                    lookup must be configured and performed in the DataSource provider.
+                </p>
+                <p>
+                    The implementations of the
+                    <code>org.apache.ojb.broker.accesslayer.ConnectionFactory.java</code>
+                    interface are responsible for managing the connections in OJB.
+                    There are several implementations shipped with OJB called
+                    <code>org.apache.ojb.broker.accesslayer.ConnectionFactoryImpl.java</code>.
+                    There is, among others, a non-pooling implementation and an implementation
+                    using Commons DBCP API.
+                </p>
+                <p>
+                    Configuration of the connection pooling is specified using the
+                    <a href="site:repository/connection-pool"><em>connection-pool</em></a>
+                    element for each
+                    <a href="site:repository/jdbc-connection-descriptor"><em>jdbc-connection-descriptor</em></a>.
+                    The <em>connection-pool</em> element can be configured with properties for
+                    the specific <em>ConnectionFactory</em> implementation or JDBC driver used.
+                    For general information about the configuration, see the
+                    <a href="site:repository">repository section</a> or read the comments in
+                    <a href="ext:ojb/repository.dtd">repository.dtd</a>.
+                </p>
+            </section>
+
+            <anchor id="obtain-connection"/>
+            <section>
+                <title>Can I directly obtain a <code>java.sql.Connection</code> within OJB?</title>
+                <p>
+                    It is possible to obtain a Connection using the PB API and a
+                    <code>PersistenceBroker</code> instance. Example:
+                </p>
+                <source><![CDATA[
+PersistenceBroker broker = PersistenceBrokerFactory.createPersistenceBroker(myKey);
+broker.beginTransaction();
+// do something
+
+Connection con = broker.serviceConnectionManager().getConnection();
+// perform your connection action and do more
+// close the created statement and result set
+
+broker.commitTransaction();
+broker.close();]]></source>
+                <p>
+                    After obtaining a Connection with
+                    <code>broker.serviceConnectionManager().getConnection()</code>,
+                    the connection can be used for any JDBC operations (except for transaction
+                    handling, more on this below).
+                    The user is responsible for cleanup of created Statement and ResultSet
+                    instances, so be sure to guard your call with a finally clause and close
+                    resources after use.
+                </p>
+                <p>
+                    For read-only operations there is no need to start a PB transaction
+                    as in the example.
+                </p>
+                <note>
+                    Do not commit any transactions on the Connection level, this should be left to
+                    OJB's PB API and will be performed automatically by calling PersistenceBroker
+                    commit-/abortTransaction methods.
+                </note>
+                <note>
+                    Do not call <code>Connection.close()</code> on the obtained Connection,
+                    this should be left to OJB's
+                    <a href="#connection-factory"><em>ConnectionFactory</em></a> and will be
+                    performed automatically when calling <code>broker.close()</code>.
+                </note>
+                <p>
+                    If <strong>no</strong> transaction is running, it is possible to release a
+                    connection "by hand" after use by calling:
+                </p>
+                <source><![CDATA[
+broker.serviceConnectionManager().releaseConnection();]]></source>
+                <p>
+                    This call performs cleanup operations on the used connection and pass the
+                    instance to the release method of
+                    <a href="#connection-factory"><em>ConnectionFactory</em></a> (this will
+                    e.g. return the connection to pool or close it).
+                </p>
+                <p>
+                    If you do not do any connection cleanup, the connection will at the latest be
+                    released when calling <code>broker.close()</code>.
+                </p>
+                <p>
+                    Users who are interested in this section might also be interested in
+                    <a href="site:faq/performSQL">'Is it possible to perform my own sql-queries in OJB?'</a>.
+                </p>
+            </section>
+
+            <anchor id="open-close-connection"/>
+            <section>
+                <title>When does OJB open/close a connection</title>
+                <p>
+                    This is dependent on the used OJB api. Generally OJB try to obtain a connection as late as
+                    possible and close (if a connection pool was used, OJB return the connection to the pool)
+                    the connection as soon as possible.
+                </p>
+                <p>
+                    Using the <a href="site:pb-guide">PB-api</a> the connection is obtained when
+                    <a href="ext:persistence-broker"><code>PersistenceBroker.beginTransaction()</code></a>
+                    was called or a query is executed.
+                    <br/>
+                    On <code>PersistenceBroker.commitTransaction()</code> or
+                    <code>PersistenceBroker.abortTransaction()</code> call the connection was released. If no PB-tx is
+                    running, the connection will be released on <code>PersistenceBroker.close()</code> call.
+                </p>
+                <p>
+                    Using the <a href="site:odmg-guide">ODMG-api</a> the connection is obtained when a query is
+                    executed or when the transaction commit. On leaving the commit method, the connection will be released.
+                    <br/>
+                    All other top-level API should behave similar.
+                </p>
+            </section>
+
+        </section>
+    </body>
+</document>

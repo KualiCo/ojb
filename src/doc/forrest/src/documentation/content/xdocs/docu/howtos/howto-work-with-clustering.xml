@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-work-with-clustering.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - Use OJB in clustered environments</title>
+        <authors>
+            <person name="Jason McKerr" email="jason@osuosl.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>How to use OJB in clustered environments</title>
+            <p>
+                Object/Relational Bridge will work fine in environments that require robustness features such
+                as load-balancing, failover, and clustering.  However, there are some important steps that
+                you need to take in order for your data to be secure, and to prevent isolation failures.
+                These steps are outlined below.
+            </p>
+            <p>
+                I have tested this in a number of environments, and with Servlet engines and J2EE environments.
+                If you run into problems, please post questions to the OJB users mail list.
+            </p>
+            <p>
+                This outline for clustering is based on an email from the OJB Users Mail List:
+                <a href="ext:ojb/archives/mail-archive/user/clustering-link">This is that mail.</a>
+            </p>
+        </section>
+
+
+        <section>
+            <title>Three steps to clustering your OJB application</title>
+            <p>
+                A lot of people keep asking for robust ways to run their OJB engines
+                in multi-VM or clustered environments.  This email covers how to do that
+                safely and securely using Open Symphony's OSCache caching product.
+            </p>
+            <p>
+                OSCache is a high-performance, robust caching product that supports clustering.
+                I've been using it for a while in production and it is excellent.
+            </p>
+            <p>
+                Back to the Topic:  There are three main things that you should do in order
+                to make your OJB application ready for using a cache in a multi-VM or distributed environment.
+            </p>
+
+            <section>
+                <title>First: Take care of the sequence manager</title>
+                <p>
+                    that you define within
+                    <a href="site:repository/jdbc-connection-descriptor">
+                        <em>jdbc-connection-descriptor</em>
+                    </a>
+                    element in your repository.xml file. If none was set OJB use per default the
+                    <code>SequenceManagerHighLowImpl</code> sequence manager implementation.
+                </p>
+                <note>
+                    As of Release Candidate 5 (rc5), you can use SequenceManagerHighLowImpl in distributed
+                    (non-managed) environments. The SequenceManagerHighLowImpl now supports its own optimistic locking
+                    that makes the implementation cluster aware by versioning an entry in
+                    the OJB_HL_SEQ table.
+                </note>
+                <p>
+                    However, the SequenceManagerHighLowImpl has not
+                    been heavily tested in clustered environments, so if you want absolute security use
+                    an sequence manager implementation which delegates key generation to database.
+                </p>
+                <p>
+                    If your database supports database based sequence key generation (like PostgreSQL, Oracle, ...)
+                    it's recommended to use
+                    <code>SequenceManagerNextValImpl</code> (supports database based sequence keys).
+                    Using this sequence manager will prevent conflicts in multi-vm or clustered environments.
+                    More about
+                    <a href="site:sequence-manager">sequence manager here</a>.
+                </p>
+
+
+                <section>
+                    <title>Handling sequence names</title>
+                    <p>
+                        If you are using
+                        <code>SequenceManagerNextValImpl</code> you have two possibilities:
+                    </p>
+                    <ul>
+                        <li>Do it by your own:
+                            <ul>
+                                <li>Create a sequence object in your database.
+                                    <ul>
+                                        <li>An Oracle sequence lookslike: "create sequence ackSequence increment by 1 start with 1;"</li>
+                                        <li>A Postgres sequence looks like: "CREATE SEQUENCE ackSequence START 1";</li>
+                                    </ul>
+                                </li>
+                                <li>For other databases you're on your own.</li>
+                                <li>
+                                    To tell OJB to use that sequence for your table add in your
+                                    repository.xml the sequence name to the field-descriptor for your table's
+                                    primary key field:
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <source><![CDATA[
+<field-descriptor
+name="ackID"
+column="ACKID"
+jdbc-type="INTEGER"
+primarykey="true"
+autoincrement="true"
+sequence-name="ackSequence"
+/>]]></source>
+                    <ul>
+                        <li>
+                            Let OJB do that job for you:
+                            <br/>
+                            The
+                            <code>SequenceManagerNextValImpl</code> implementation
+                            create the sequence in database automatic if none was found. If you don't want to
+                            declare a
+                            <code>sequence-name</code> attribute in your
+                            <em>field-descriptor</em>, you can enable
+                            an automatic sequence name building by setting a specific
+                            <a href="site:repository/custom-attribute">
+                                <em>custom-attribute</em>
+                            </a>, then
+                            <code>SequenceManagerNextValImpl</code> build an internal sequence name if none was
+                            found.
+                        </li>
+                    </ul>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl">
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+</sequence-manager>]]></source>
+                    <p>
+                        More about
+                        <a href="site:sequence-manager">sequence manager here</a>.
+                    </p>
+                </section>
+            </section>
+
+
+            <section>
+                <title>Second: Enable optimistic locking</title>
+                <p>
+                    You need to secure the data at the database. Thomas Mahler (lead OJB developer and
+                    considerable ORM guru) recommended in one email that you use the Optimistic Locking
+                    feature that is provided by OJB when using the
+                    <strong>PB API</strong> in a clustered
+                    environment. Sounds good to me. To do this you need to do three small steps:
+                </p>
+                <note>
+                    When using one of the top-level API in most cases Pessimistic (Object) Locking is
+                    supported. In that case it is recommended to use a
+                    <em>distributed lock management</em>
+                    instead of optimistic locking. More information about
+                    <a href="site:lock-manager">ODMG API and Locking here</a>.
+                </note>
+                <ul>
+                    <li>Add a database column to your table that is either an INTEGER or a TIMESTAMP</li>
+                    <li>Add the field to your java class, and getter/setter methods (depends on the used
+                        <a href="site:advanced-technique/persistent-field">PersistentField implementation</a>):
+                    </li>
+                </ul>
+                <source><![CDATA[
+private Integer ackOptLock;
+
+public Integer getAckOptLock()
+{
+return ackOptLock;
+}
+
+public void setAckOptLock(Integer ackOptLock)
+{
+this.ackOptLock = ackOptLock;
+}]]></source>
+                <ul>
+                    <li>
+                        Add the column to your table in your repository:
+                    </li>
+                </ul>
+                <source><![CDATA[
+<field-descriptor
+    name="ackOptLock"
+    column="ACKOPTLOCK"
+    jdbc-type="INTEGER"
+    locking="true"/>]]></source>
+                <p>
+                    Now OJB will handle the locking for you.  No explicit transactional code necessary!
+                </p>
+            </section>
+
+            <section>
+                <title>Do The Cache</title>
+                <p>
+                    The detailed steps to setup the <em>OSCache</em> can be found in
+                    <a href="site:object-cache/oscache">caching document</a>
+                </p>
+
+                <p>
+                    <strong>You're ready to go!</strong> Now just create two instances of your application and see
+                    how they communicate at the cache level.  Very cool.
+                </p>
+            </section>
+        </section>
+
+        <section>
+            <title>Notes</title>
+            <ul>
+                <li>
+                    For J2EE/Servlet users: I have tested this on a number of different application servers.
+                    If you're having problems with your engine, post an email to the OJB Users mail list.
+                </li>
+                <li>
+                    OSCache also supports JMS for clustering here, which I haven't covered.  If you either don't
+                    have access to a multicast network, or just plain like JMS, please refer to the OSCache
+                    documentation for help with that, see
+                    <a href="ext:oscache/os-clustering">OSCache Clustering with JMS</a>).
+                </li>
+                <li>
+                    I have also tested this with Tangosol Coherence.  Please refer to this Blog entry for that setup:
+                    <a href="ext:tangosol-blog">Coherence Setup</a>
+                </li>
+                <li>OJB also has ships with JCS.  Feel free to try that one out on your own.</li>
+            </ul>
+        </section>
+    </body>
+</document>

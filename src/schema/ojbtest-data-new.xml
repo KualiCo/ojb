@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE database SYSTEM "http://db.apache.org/torque/dtd/database.dtd">
+<!--
+#/* Copyright 2002-2004 The Apache Software Foundation
+# *
+# * Licensed under the Apache License, Version 2.0 (the "License");
+# * you may not use this file except in compliance with the License.
+# * You may obtain a copy of the License at
+# *
+# *     http://www.apache.org/licenses/LICENSE-2.0
+# *
+# * Unless required by applicable law or agreed to in writing, software
+# * distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
+# * limitations under the License.
+# */
+-->
+<dataset name="all">
+
+    <ProductGroup groupId="1" groupName="Beverages" description="Alles leckere zum Süffeln"/>
+    <ProductGroup groupId="2" groupName="Spices" description="Gewürze, Dressings etc."/>
+    <ProductGroup groupId="3" groupName="Meat" description=""/>
+    <ProductGroup groupId="4" groupName="Liquors" description=""/>
+    <ProductGroup groupId="5" groupName="Books" description="Strange Books..."/>
+    <ProductGroup groupId="6" groupName="bread" description=""/>
+    <ProductGroup groupId="7" groupName="Fruits" description="Früchte etc."/>
+    <ProductGroup groupId="8" groupName="Dairy Products" description="Kat 8"/>
+    <ProductGroup groupId="4711" groupName="Random Articles" description="Used for MetadataMultithreadedTest"/>
+
+    <Article articleId="1" articleName="Chai" supplierId="1" productGroupId="1" unit="10 boxes x 20 bags" price="18.53" stock="39" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="2" articleName="Chang" supplierId="1" productGroupId="1" unit="24 - 12 oz bottles" price="19.89" stock="17" orderedUnits="40" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="3" articleName="Aniseed Syrup" supplierId="1" productGroupId="2" unit="12 - 550 ml bottles" price="10.2" stock="13" orderedUnits="70" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="4" articleName="Chef Antons Cajun Seasoning" supplierId="2" productGroupId="2" unit="48 - 6 oz jars" price="22.0" stock="53" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="5" articleName="Chef Anton´s Gumbo Mix" supplierId="2" productGroupId="2" unit="36 boxes" price="21.35" stock="0" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="6" articleName="Grandma´s Boysenberry Spread" supplierId="3" productGroupId="2" unit="12 - 8 oz jars" price="25.0" stock="120" orderedUnits="0" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="7" articleName="Uncle Bob´s Organic Dried Pears" supplierId="3" productGroupId="7" unit="12 - 1 lb pkgs." price="30.0" stock="15" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="8" articleName="Northwoods Cranberry Sauce" supplierId="3" productGroupId="2" unit="12 - 12 oz jars" price="40.0" stock="6" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="9" articleName="Mishi Kobe Niku" supplierId="4" productGroupId="6" unit="18 - 500 g pkgs." price="97.0" stock="29" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="10" articleName="Ikura" supplierId="4" productGroupId="8" unit="12 - 200 ml jars" price="31.0" stock="31" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="11" articleName="Queso Cabrales" supplierId="5" productGroupId="4" unit="1 kg pkg." price="21.0" stock="22" orderedUnits="30" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="12" articleName="Queso Manchego La Pastora" supplierId="5" productGroupId="4" unit="10 - 500 g pkgs." price="38.0" stock="86" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="13" articleName="Konbu" supplierId="6" productGroupId="8" unit="2 kg box" price="6.0" stock="24" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="14" articleName="Tofu" supplierId="6" productGroupId="7" unit="40 - 100 g pkgs." price="23.25" stock="35" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="15" articleName="Genen Shouyu" supplierId="6" productGroupId="2" unit="24 - 250 ml bottles" price="15.5" stock="39" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="16" articleName="Pavlova" supplierId="7" productGroupId="3" unit="32 - 500 g boxes" price="17.45" stock="29" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="17" articleName="Alice Mutton" supplierId="7" productGroupId="6" unit="20 - 1 kg tins" price="39.0" stock="0" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="18" articleName="Carnarvon Tigers" supplierId="7" productGroupId="8" unit="16 kg pkg." price="62.5" stock="42" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="19" articleName="Teatime Chocolate Biscuits" supplierId="8" productGroupId="3" unit="10 boxes x 12 pieces" price="9.2" stock="25" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="20" articleName="Sir Rodney´s Marmalade" supplierId="8" productGroupId="3" unit="30 gift boxes" price="81.0" stock="40" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="21" articleName="Sir Rodney´s Scones" supplierId="8" productGroupId="3" unit="24 pkgs. x 4 pieces" price="10.0" stock="3" orderedUnits="40" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="22" articleName="Gustaf´s Knäckebröd" supplierId="9" productGroupId="5" unit="24 - 500 g pkgs." price="21.0" stock="104" orderedUnits="0" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="23" articleName="Tunnbröd" supplierId="9" productGroupId="5" unit="12 - 250 g pkgs." price="9.0" stock="61" orderedUnits="0" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="24" articleName="Guaraná Fantástica" supplierId="10" productGroupId="1" unit="12 - 355 ml cans" price="4.5" stock="20" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="25" articleName="NuNuCa Nuß-Nougat-Creme" supplierId="11" productGroupId="3" unit="20 - 450 g glasses" price="14.0" stock="76" orderedUnits="0" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="26" articleName="Gumbär Gummibärchen" supplierId="11" productGroupId="3" unit="100 - 250 g bags" price="31.23" stock="15" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="27" articleName="Schoggi Schokolade" supplierId="11" productGroupId="3" unit="100 - 100 g pieces" price="43.9" stock="49" orderedUnits="0" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="28" articleName="Rössle Sauerkraut" supplierId="12" productGroupId="7" unit="25 - 825 g cans" price="45.6" stock="26" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="29" articleName="Thüringer Rostbratwurst" supplierId="12" productGroupId="6" unit="50 bags x 30 sausgs." price="123.79" stock="0" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="30" articleName="Nord-Ost Matjeshering" supplierId="13" productGroupId="8" unit="10 - 200 g glasses" price="25.89" stock="10" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="31" articleName="Gorgonzola Telino" supplierId="14" productGroupId="4" unit="12 - 100 g pkgs" price="12.5" stock="0" orderedUnits="70" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="32" articleName="Mascarpone Fabioli" supplierId="14" productGroupId="4" unit="24 - 200 g pkgs." price="32.0" stock="9" orderedUnits="40" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="33" articleName="Geitost" supplierId="15" productGroupId="4" unit="500 g" price="2.5" stock="112" orderedUnits="0" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="34" articleName="Sasquatch Ale" supplierId="16" productGroupId="1" unit="24 - 12 oz bottles" price="14.0" stock="111" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="35" articleName="Steeleye Stout" supplierId="16" productGroupId="1" unit="24 - 12 oz bottles" price="18.0" stock="20" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="36" articleName="Inlagd Sill" supplierId="17" productGroupId="8" unit="24 - 250 g  jars" price="19.0" stock="112" orderedUnits="0" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="37" articleName="Gravad lax" supplierId="17" productGroupId="8" unit="12 - 500 g pkgs." price="26.0" stock="11" orderedUnits="50" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="38" articleName="Côte de Blaye" supplierId="18" productGroupId="1" unit="12 - 75 cl bottles" price="263.5" stock="17" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="39" articleName="Chartreuse verte" supplierId="18" productGroupId="1" unit="750 cc per bottle" price="18.0" stock="69" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="40" articleName="Boston Crab Meat" supplierId="19" productGroupId="8" unit="24 - 4 oz tins" price="18.4" stock="123" orderedUnits="0" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="41" articleName="Jack´s New England Clam Chowder" supplierId="19" productGroupId="8" unit="12 - 12 oz cans" price="9.65" stock="85" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="42" articleName="Singaporean Hokkien Fried Mee" supplierId="20" productGroupId="5" unit="32 - 1 kg pkgs." price="14.0" stock="26" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="43" articleName="Ipoh Coffee" supplierId="20" productGroupId="1" unit="16 - 500 g tins" price="46.0" stock="17" orderedUnits="10" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="44" articleName="Gula Malacca" supplierId="20" productGroupId="2" unit="20 - 2 kg bags" price="19.45" stock="27" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="45" articleName="Røgede sild" supplierId="21" productGroupId="8" unit="1k pkg." price="9.5" stock="5" orderedUnits="70" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="46" articleName="Spegesild" supplierId="21" productGroupId="8" unit="4 - 450 g glasses" price="12.0" stock="95" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="47" articleName="Zaanse koeken" supplierId="22" productGroupId="3" unit="10 - 4 oz boxes" price="9.5" stock="36" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="48" articleName="Chocolade" supplierId="22" productGroupId="3" unit="10 pkgs." price="12.75" stock="15" orderedUnits="70" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="49" articleName="Maxilaku" supplierId="23" productGroupId="3" unit="24 - 50 g pkgs." price="20.0" stock="10" orderedUnits="60" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="50" articleName="Valkoinen suklaa" supplierId="23" productGroupId="3" unit="12 - 100 g bars" price="16.25" stock="65" orderedUnits="0" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="51" articleName="Manjimup Dried Apples" supplierId="24" productGroupId="7" unit="50 - 300 g pkgs." price="53.0" stock="20" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="52" articleName="Filo Mix" supplierId="24" productGroupId="5" unit="16 - 2 kg boxes" price="7.0" stock="38" orderedUnits="0" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="53" articleName="Perth Pasties" supplierId="24" productGroupId="6" unit="48 pieces" price="32.8" stock="0" orderedUnits="0" minimumStock="0" isSelloutArticle="1"/>
+    <Article articleId="54" articleName="Tourtière" supplierId="25" productGroupId="6" unit="16 pies" price="7.45" stock="21" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="55" articleName="Pâté chinois" supplierId="25" productGroupId="6" unit="24 boxes x 2 pies" price="24.0" stock="115" orderedUnits="0" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="56" articleName="Gnocchi di nonna Alice" supplierId="26" productGroupId="5" unit="24 - 250 g pkgs." price="38.0" stock="21" orderedUnits="10" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="57" articleName="Ravioli Angelo" supplierId="26" productGroupId="5" unit="24 - 250 g pkgs." price="19.5" stock="36" orderedUnits="0" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="58" articleName="Escargots de Bourgogne" supplierId="27" productGroupId="8" unit="24 pieces" price="13.25" stock="62" orderedUnits="0" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="59" articleName="Raclette Courdavault" supplierId="28" productGroupId="4" unit="5 kg pkg." price="55.0" stock="79" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="60" articleName="Camembert Pierrot" supplierId="28" productGroupId="4" unit="15 - 300 g rounds" price="34.0" stock="19" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="61" articleName="Sirop d´érable" supplierId="29" productGroupId="2" unit="24 - 500 ml bottles" price="28.5" stock="113" orderedUnits="0" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="62" articleName="Tarte au sucre" supplierId="29" productGroupId="3" unit="48 pies" price="49.3" stock="17" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="63" articleName="Vegie-spread" supplierId="7" productGroupId="2" unit="15 - 625 g jars" price="43.9" stock="24" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="64" articleName="Wimmers gute Semmelknödel" supplierId="12" productGroupId="5" unit="20 bags x 4 pieces" price="33.25" stock="22" orderedUnits="80" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="65" articleName="Louisiana Fiery Hot Pepper Sauce" supplierId="2" productGroupId="2" unit="32 - 8 oz bottles" price="21.05" stock="76" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="66" articleName="Louisiana Hot Spiced Okra" supplierId="2" productGroupId="2" unit="24 - 8 oz jars" price="17.0" stock="4" orderedUnits="100" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="67" articleName="Laughing Lumberjack Lager" supplierId="16" productGroupId="1" unit="24 - 12 oz bottles" price="14.0" stock="52" orderedUnits="0" minimumStock="10" isSelloutArticle="0"/>
+    <Article articleId="68" articleName="Scottish Longbreads" supplierId="8" productGroupId="3" unit="10 boxes x 8 pieces" price="12.5" stock="6" orderedUnits="10" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="69" articleName="Gudbrandsdalsost" supplierId="15" productGroupId="4" unit="10 kg pkg." price="36.0" stock="26" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="70" articleName="Outback Lager" supplierId="7" productGroupId="1" unit="24 - 355 ml bottles" price="15.0" stock="15" orderedUnits="10" minimumStock="30" isSelloutArticle="0"/>
+    <Article articleId="71" articleName="Fløtemysost" supplierId="15" productGroupId="4" unit="10 - 500 g pkgs." price="21.5" stock="26" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="72" articleName="Mozzarella di Giovanni" supplierId="14" productGroupId="4" unit="24 - 200 g pkgs." price="34.8" stock="14" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="73" articleName="Röd Kaviar" supplierId="17" productGroupId="8" unit="24 - 150 g jars" price="15.0" stock="101" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="74" articleName="Longlife Tofu" supplierId="4" productGroupId="7" unit="5 kg pkg." price="10.0" stock="4" orderedUnits="20" minimumStock="5" isSelloutArticle="0"/>
+    <Article articleId="75" articleName="Rhönbräu Klosterbier" supplierId="12" productGroupId="1" unit="24 - 0.5 l bottles" price="7.75" stock="125" orderedUnits="0" minimumStock="25" isSelloutArticle="0"/>
+    <Article articleId="76" articleName="Lakkalikööri" supplierId="23" productGroupId="1" unit="500 ml" price="18.0" stock="57" orderedUnits="0" minimumStock="20" isSelloutArticle="0"/>
+    <Article articleId="77" articleName="Original Frankfurter grüne Soße" supplierId="12" productGroupId="2" unit="12 boxes" price="13.0" stock="32" orderedUnits="0" minimumStock="15" isSelloutArticle="0"/>
+    <Article articleId="4711" articleName="Proxied Article 1" supplierId="12" productGroupId="4711" unit="1 Java class" price="1.3" stock="5" orderedUnits="0" minimumStock="1" isSelloutArticle="0"/>
+    <Article articleId="4712" articleName="Proxied Article 2" supplierId="12" productGroupId="4711" unit="1 Java class" price="1.5" stock="2" orderedUnits="0" minimumStock="0" isSelloutArticle="0"/>
+    <Article articleId="4713" articleName="Proxied Article 3" supplierId="12" productGroupId="4711" unit="1 Java class" price="1.9" stock="7" orderedUnits="0" minimumStock="5" isSelloutArticle="0"/>
+
+    <BookArticle articleId="100" articleName="Hamlet" supplierId="12" productGroupId="5" unit="12 boxes" price="34.0" stock="32" orderedUnits="0" minimumStock="15" isSelloutArticle="0" isbn="1234567890" author="W. Shakespeare"/>
+    <BookArticle articleId="101" articleName="Faust" supplierId="12" productGroupId="5" unit="12 boxes" price="56.0" stock="32" orderedUnits="0" minimumStock="15" isSelloutArticle="0" isbn="1234567890" author="J.W. v. Goethe"/>
+
+    <CdArticle articleId="200" articleName="Mama´s Gun" supplierId="12" productGroupId="5" unit="12 boxes" price="23.0" stock="32" orderedUnits="0" minimumStock="15" isSelloutArticle="0" labelname="Motown Records" musicians="Erykah Badu"/>
+    <CdArticle articleId="201" articleName="STREETSOUL" supplierId="12" productGroupId="5" unit="12 boxes" price="25.0" stock="32" orderedUnits="0" minimumStock="15" isSelloutArticle="0" labelname="Virgin Records" musicians="Guru´s Jazzmatazz"/>
+    <CdArticle articleId="202" articleName="Beyond Skin" supplierId="12" productGroupId="5" unit="12 boxes" price="25.0" stock="32" orderedUnits="0" minimumStock="15" isSelloutArticle="0" labelname="Outcaste Records" musicians="Nitin Sawhney"/>
+
+    <OrderPosition id="1" order_id="1" article_id="5"/>
+    <OrderPosition id="2" order_id="1" article_id="100"/>
+    <OrderPosition id="3" order_id="1" article_id="200"/>
+
+    <Person-1 id="1" firstname="tom" lastname="tom"/>
+    <Person-1 id="2" firstname="bob" lastname="bob"/>
+    <Person-1 id="3" firstname="albert" lastname="albert"/>
+    <Person-1 id="4" firstname="bertrand" lastname="bertrand"/>
+    <Person-1 id="5" firstname="cindy" lastname="cindy"/>
+    <Person-1 id="6" firstname="dorothy" lastname="dorothy"/>
+    <Person-1 id="7" firstname="eugen" lastname="eugen"/>
+    <Person-1 id="8" firstname="frido" lastname="frido"/>
+    <Person-1 id="9" firstname="guido" lastname="guido"/>
+    <Person-1 id="10" firstname="hank%" lastname="hank"/>
+
+    <Project id="1" title="OJB" description="OJB" />
+    <Project id="2" title="SODA" description="SODA" />
+    <Project id="3" title="HSQLDB" description="HSQLDB" />
+    <Project id="4" title="XERCES" description="XERCES" />
+    <Project id="5" title="Linux" description="Linux" />
+    <Project id="6" title="mySQL" description="mySQL" />
+
+    <Role member_id="1" project_id="1" roleName="founder"/>
+    <Role member_id="1" project_id="2" roleName="friend"/>
+    <Role member_id="2" project_id="1" roleName="developer"/>
+    <Role member_id="2" project_id="2" roleName="lead"/>
+    <Role member_id="2" project_id="3" roleName="developer"/>
+    <Role member_id="3" project_id="2" roleName="tester"/>
+    <Role member_id="3" project_id="4" roleName="user"/>
+    <Role member_id="3" project_id="5" roleName="developer"/>
+    <Role member_id="4" project_id="1" roleName="developer"/>
+    <Role member_id="5" project_id="2" roleName="tester"/>
+    <Role member_id="5" project_id="4" roleName="lead"/>
+    <Role member_id="7" project_id="4" roleName="lead"/>
+    <Role member_id="7" project_id="5" roleName="founder"/>
+    <Role member_id="7" project_id="6" roleName="tester"/>
+
+    <Task task_id="1" person_id="2" project_id="1" taskName="Initial Layout"/>
+    <Task task_id="2" person_id="2" project_id="1" taskName="Initial Spec"/>
+    <Task task_id="3" person_id="2" project_id="2" taskName="Project Cleanup"/>
+    <Task task_id="4" person_id="2" project_id="3" taskName="Testing Scripts"/>
+
+    <FieldConversionTest_2_ConversionReferrer pk1="1" ref1="50" testId="10"/>
+    <FieldConversionTest_2_ConversionReferrer pk1="2" ref1="51" testId="11"/>
+    <FieldConversionTest_2_ConversionReferrer pk1="3" ref1="52" testId="12"/>
+    <FieldConversionTest_2_ConversionReferred pk1="50" testId="60"/>
+    <FieldConversionTest_2_ConversionReferred pk1="51" testId="61"/>
+    <FieldConversionTest_2_ConversionReferred pk1="52" testId="62"/>
+
+    <Repository_SMMaxA id="120" name="A"/>
+    <Repository_SMMaxA id="121" name="A"/>
+    <Repository_SMMaxAA id="101" name="AA"/>
+    <Repository_SMMaxAA id="102" name="AA"/>
+    <Repository_SMMaxAB id="99" name="AB"/>
+    <Repository_SMMaxAAA id="123" name="AAA"/>
+    <Repository_SMMaxB id="115" name="B"/>
+    <Repository_SMMaxB id="116" name="B"/>
+    <Repository_SMMaxBB id="130" name="BB"/>
+    <Repository_SMMaxBB id="131" name="BB"/>
+
+    <News id="1" headline="Healf Care News (NONE)"/>
+    <News id="2" headline="Ferrai for sale (CARS - BUYERS)"/>
+    <News id="3" headline="Brazil World Cup Champion ! (SPORTS)"/>
+
+    <Paper id="10" date="today" author="NONE"/>
+    <Paper id="11" date="yesterday" author="SALES MAN"/>
+
+    <Topic id="10" name="Buyers" importance="important"/>
+    <Topic id="11" name="Sellers" importance="unimportant"/>
+
+    <TopicExt id="30" name="Buyers_Ext" importance="important" description="The buyer"/>
+    <TopicExt id="31" name="Sellers_Ext" importance="unimportant" description="The seller"/>
+
+    <Category id="1" name="Cars" description="The cars category"/>
+    <Category id="2" name="Sports"/>
+
+    <Area id="20" name="Human"/>
+    <Area id="21" name="NotHuman"/>
+
+    <CONTENT_QUALIFIER CONTENT_ID="2" QUALIFIER_ID="1"/>
+    <CONTENT_QUALIFIER CONTENT_ID="2" QUALIFIER_ID="10"/>
+    <CONTENT_QUALIFIER CONTENT_ID="2" QUALIFIER_ID="30"/>
+    <CONTENT_QUALIFIER CONTENT_ID="3" QUALIFIER_ID="2"/>
+    <CONTENT_QUALIFIER CONTENT_ID="10" QUALIFIER_ID="20"/>
+    <CONTENT_QUALIFIER CONTENT_ID="11" QUALIFIER_ID="11"/>
+    <CONTENT_QUALIFIER CONTENT_ID="11" QUALIFIER_ID="31"/>
+</dataset>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: mapping-tutorial.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Mapping Tutorial</title>
+        <authors>
+            <person name="Brian McCallister" email="brian@skife.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section><title>What is the Object-Relational Mapping Metadata?</title>
+              <p>
+                  The O/R mapping metadata is the specific configuration information that specifies
+                  how to map classes to relational tables. In OJB this is primarily accomplished
+                  through an xml document, the <a href="site:repository"><code>repository.xml</code></a>
+                  file, which contains all of the initial mapping information.
+              </p>
+              <section><title>The Product Class</title>
+                  <p>
+                     This tutorial looks at mapping a simple class with no relations:
+                  </p>
+                  <source><![CDATA[
+package org.apache.ojb.tutorials;
+
+public class Product
+{
+    /** product name */
+    private String name;
+
+    /** price per item */
+    private Double price;
+
+    /** stock of currently available items */
+    private int stock;
+
+    ...
+}]]></source>
+                  <p>
+                      This class has three fields, <code>price, stock,</code> and <code>name</code>,
+                      that need to be mapped to the database. Additionally, we will introduce one
+                      artificial field used by the database that has no real meaning to the class, an
+                      artificial key primary id:
+                  </p>
+                  <source><![CDATA[
+/** Artificial primary-key */
+private Integer id;]]></source>
+                  <p>
+                      Including the primary-key attribute in the class definition is mandatory,
+                      but under certain conditions <a href="site:howto/anonymous-keys">anonymous keys</a>
+                      can also be used to keep this database artifact hidden in the database. However,
+                      as access to an artifical unique identifier for a particular object instance can be
+                      useful, particularly in web-based applications, this tutorial will expose it
+                  </p>
+              </section>
+              <section><title>The Database</title>
+                  <p>
+                      OJB is very flexible in terms of how it can map classes to database tables, however
+                      the simplest technique for mapping a single class to a relational database is to
+                      map the class to a single table, and each attribute on the class to a single
+                      column. Each row will then represent a unique instance of that class.
+                  </p>
+                  <p>
+                      The DDL for such a table, for the <code>Product</code> class might look like:
+                  </p>
+                  <source><![CDATA[
+CREATE TABLE Product
+(
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100),
+    price DOUBLE,
+    stock INTEGER
+)]]></source>
+                  <p>
+                      The individual field names in the database and class definition match here,
+                      but this is no requirement. They may vary independently of each other as the
+                      metadata will specify what maps to what.
+                  </p>
+              </section>
+
+            <anchor id="metadata"/>
+              <section><title>The Metadata</title>
+                  <p>
+                      The <code>repository.xml</code> document is split into several physical documents.
+                      The <code>repository_user.xml</code> xml file is used to contain user-defined
+                      mappings. OJB uses the other ones for managing other metadata, such as database
+                      information.
+                  </p>
+                  <p>
+                      In general each class will be defined within a <code>class-descriptor</code> element
+                      with <code>field-descriptoy</code> child elements for each field. In addition
+                      the mapping of references and collections is described in the
+                      <a href="site:basic-technique">basic technique section</a>. This tutorial sticks
+                      to mapping a single, simplistic, class.
+                  </p>
+                  <p>
+                      The complete mapping for the <code>Product</code> class is as follows:
+                  </p>
+                  <source><![CDATA[
+<class-descriptor
+       class="org.apache.ojb.tutorials.Product"
+       table="Product"
+>
+    <field-descriptor
+       name="id"
+       column="id"
+       primarykey="true"
+       autoincrement="true"
+    />
+    <field-descriptor
+       name="name"
+       column="name"
+    />
+    <field-descriptor
+       name="price"
+       column="price"
+    />
+    <field-descriptor
+       name="stock"
+       column="stock"
+    />
+</class-descriptor>]]></source>
+                  <p>
+                      Examine the <code>class-descriptor</code> element. It has two attributes:
+                  </p>
+                  <ul>
+                      <li>
+                          class - This attribute is used to specify the fully-qualified Java
+                          class name for this mapping.
+                      </li>
+                      <li>
+                          table - This attribute specifies which table is used to store instances
+                          of this class.
+                      </li>
+                  </ul>
+                  <p>
+                      Other information can be specified here, such as proxies
+                      and custom row-readers as specified in the <a href="site:repository/class-descriptor">
+                      repository.xml documentation</a>.
+                  </p>
+                  <p>
+                      Examine now the first <code>field-descriptor</code> element. This is used to
+                      describe the <code>id</code> field of the <code>Product</code> class. Two
+                      required attributes are specified:
+                  </p>
+                  <ul>
+                      <li>
+                          name - This specifies the name of the instance variable in the
+                          Java class.
+                      </li>
+                      <li>
+                          column - This specifies the column in the table specified for this
+                          class used to store the value.
+                      </li>
+                  </ul>
+                  <p>
+                      In addition to those required attributes, notice that the first element
+                      specifies two optional attributes:
+                  </p>
+                  <ul>
+                      <li>
+                          primary-key - This attribute specifies that this field is the primary key
+                          for this class.
+                      </li>
+                      <li>
+                          autoincrement - The <code>autoincrement</code> attribute specifies that the
+                          value will be automatically assigned by OJB <a href="site:sequence-manager">
+                          sequence manager</a>. This might use a database supplied sequence, or, by
+                          default, an OJB generated value.
+                      </li>
+                  </ul>
+              </section>
+
+            <anchor id="xdoclet"/>
+              <section><title>Using the XDoclet module</title>
+                  <p>
+                      OJB provides an XDoclet module to make generating the repository descriptor
+                      and the corresponding table schema easier. An XDoclet module basically
+                      processes custom JavaDoc tags in the source code, and generates files from
+                      them. In the case of OJB, two types of files can be generated: the
+                      repository descriptor (<code>repository_user.xml</code>) and a Torque
+                      schema which can be used to create the tables in the database. This provides
+                      one important benefit: the descriptor and the database schema are much more
+                      likely in sync with the code thus avoiding errors that are usually hard to find.
+                      Furthermore, the XDoclet module contains some checks that find common mapping
+                      errors.
+                  </p>
+                  <p>
+                      In the above example, the source code for Product class with JavaDoc tags would
+                      look like:
+                  </p>
+                  <source><![CDATA[
+package org.apache.ojb.tutorials;
+
+/**
+ * @ojb.class
+ */
+public class Product
+{
+    /**
+     * Artificial primary-key
+     *
+     * @ojb.field primarykey="true"
+     *            autoincrement="ojb"
+     */
+    private Integer id;
+
+    /**
+     * product name
+     *
+     * @ojb.field length="100"
+     */
+    private String name;
+
+    /**
+     * price per item
+     *
+     * @ojb.field
+     */
+    private Double price;
+
+    /**
+     * stock of currently available items
+     *
+     * @ojb.field
+     */
+    private int stock;
+}]]></source>
+                  <p>
+                      As you can see, much of the stuff that is present in the descriptor (and the DDL)
+                      is generated automatically by the XDoclet module, e.g. the table/column names and
+                      the jdbc-types. Of course, you can also specify them in the JavaDoc tags, e.g. if
+                      they differ from the java names.
+                  </p>
+                  <p>
+                      For details on OJB's JavaDoc tags and how to generate and use the mapping files
+                      please see the <a href="site:xdoclet-module">OJB XDoclet Module documentation</a>.
+                  </p>
+              </section>
+
+          </section>
+
+          <section><title>Advanced Topics</title>
+              <section><title>Relations</title>
+                  <p>
+                      As most object models have relationships between objects, mapping specific
+                      types of relationships (1:1, 1:Many, Many:Many) is important in mapping
+                      objects into a relational database. The
+                      <a href="site:basic-technique">basic technique tutorial</a>
+                      discusses this in great detail.
+                  </p>
+                  <p>
+                      It is important to note that this metadata mapping can be
+                      <a href="site:metadata">modified at runtime</a>
+                      through the <a href="ext:api/metadata-manager">
+                      <code>org.apache.ojb.metadata.MetadataManager</code></a> class.
+                  </p>
+              </section>
+              <section><title>Inheritence</title>
+                  <p>
+                      OJB can map inheritence hierarchies using a variety of techniques discussed in the
+                      <a href="site:advanced-technique/polymorphism">Extents and Polymorphism</a>
+                      section of the <a href="site:advanced-technique">Advanced O/R Documentation</a>
+                  </p>
+              </section>
+              <section><title>Anonymous Keys</title>
+                  <p>
+                      This tutorial uses explicit keys mapped into the Java class. It is also
+                      possible to keep artificial keys completely hidden within the database.
+                      The <a href="site:howto/anonymous-keys">Anonymous Keys HOWTO</a>
+                      explains how this is accomplished.
+                  </p>
+              </section>
+              <section><title>Large Projects</title>
+                  <p>
+                      Projects with small numbers of persistent classes can be mapped by hand,
+                      however, many projects can have hundreds, or even thousands, of
+                      distinct classes which must be mapped. In these circumstances managing
+                      the class-database mapping by hand is not viable. The
+                      <a href="site:howto/large-metadata">How To Build Mappings HOWTO</a>
+                      explores different tools which can be used for managing large-scale
+                      mapping.
+                  </p>
+              </section>
+              <section><title>Custom JDBC Mapping</title>
+                  <p>
+                      OJB maps Java types to JDBC types according to the
+                      <a href="site:jdbc-types">JDBC Types</a> table. You can,
+                      however, define custom JDBC -> Java type mappings via
+                      custom <a href="site:jdbc-types/field-conversion">field conversions</a>.
+                  </p>
+              </section>
+          </section>
+
+    </body>
+</document>
+
+

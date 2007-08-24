@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-use-db-sequences.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - Use DB Sequences</title>
+        <authors>
+            <person name="Brian McCallister" email="brian@skife.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                It is easy to use OJB with with database generated sequences. Typically a table
+                using database generated sequences will autogenerate a unique id for a field
+                as the default value for that field. This can be particularly useful if multiple
+                applications access the same database. Not every application will be using OJB
+                and find it convenient to pull unique values from a high/low table. Using a
+                database managed sequence can help to enforce unique id's across applications
+                all adding to the same database. All of that said, care needs to be taken
+                as using database generated sequences imposes some portability problems.
+            </p>
+            <p>
+                OJB includes a sequence manager implementation that is aware of database
+                sequences and how to use them. It is known to work against Oracle, SAP DB,
+                and PostgreSQL. MySQL has its own sequence manager implementation because it
+                is special. This tutorial will build against PostgreSQL, but working against
+                Oracle or SAP will work the same way.
+            </p>
+            <p>
+                Additional information on sequence managers is available in the
+                <a href="site:sequence-manager">Sequence Manager documentation.</a>
+            </p>
+        </section>
+        <section>
+            <title>The Sample Database</title>
+            <p>
+                Before we can work with OJB against a database with a sequence, we need the
+                database. We will create a simple table that pulls its primary key from a
+                sequence named 'UniqueIdentifier'.
+            </p>
+            <source><![CDATA[
+CREATE TABLE thingie
+(
+    name VARCHAR(50),
+    id INTEGER DEFAULT NEXTVAL('UniqueIdentifier')
+)
+    ]]></source>
+            <p>
+                We must also define the sequence from which it is drawing values:
+            </p>
+            <source><![CDATA[
+CREATE SEQUENCE UniqueIdentifier;]]></source>
+            <p>
+                So that we have the following table:
+            </p>
+            <source><![CDATA[
+                       Table "public.thingie"
+Column |         Type          |                 Modifiers
+--------+-----------------------+-------------------------------------------
+name   | character varying(50) |
+id     | integer               | default nextval('UniqueIdentifier'::text)]]></source>
+            <p>
+                If we manually insert some entries into this table they will have
+                their
+                <code>id</code> field set automagically.
+            </p>
+            <source><![CDATA[
+INSERT INTO thingie (name) VALUES ('Fred');
+INSERT INTO thingie (name) VALUES ('Wilma');
+SELECT name, id FROM thingie;
+
+ name  | id
+-------+----
+ Fred  |  0
+ Wilma |  1
+(2 rows)]]></source>
+        </section>
+
+
+        <section>
+            <title>Using OJB</title>
+            <section>
+                <title>The Database Repository Descriptor</title>
+                <p>
+                    The next step is to configure OJB to access our
+                    <code>thingie</code> table. We need
+                    to configure the corrct sequence manager in the
+                    <code>repository-database.xml</code>.
+                </p>
+                <p>
+                    The default
+                    <code>repository-database.xml</code> uses the High/Low Sequence manager.
+                    We will delete or comment out that entry, and replace it with the
+                    <code>org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl</code> manager.
+                    This manager will pull the next value from a named sequence and use it.
+                    The entry for our sequence manager in the repository is:
+                </p>
+                <source><![CDATA[
+<sequence-manager
+    className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl" />]]></source>
+                <p>
+                    This needs to be declared within the JDBC Connection descriptor, so an entire
+                    <code>repository-database.xml</code> might look like:
+                </p>
+                <source><![CDATA[
+<jdbc-connection-descriptor
+    jcd-alias="default"
+    default-connection="true"
+    platform="PostgreSQL"
+    jdbc-level="2.0"
+    driver="org.postgresql.Driver"
+    protocol="jdbc"
+    subprotocol="postgresql"
+    dbalias="test"
+    username="tester"
+    password=""
+    eager-release="false"
+    batch-mode="false"
+    useAutoCommit="1"
+    ignoreAutoCommitExceptions="false"
+    >
+
+    <connection-pool
+        maxActive="21"
+        validationQuery=""/>
+
+    <sequence-manager
+        className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl" />
+</jdbc-connection-descriptor>]]></source>
+            </section>
+
+
+            <section>
+                <title>Defining a Thingie Class</title>
+                <p>
+                    For the sake of simplicity we will make a very basic Java Thingie:
+                </p>
+                <source><![CDATA[
+public class Thingie
+{
+     /** thingie(name) */
+    private String name;
+
+    /** thingie(id) */
+    private int id;
+
+    public String getName()           { return this.name; }
+    public void setName(String name)  { this.name = name; }
+
+    public int getId()                { return this.id; }
+}]]></source>
+                <p>
+                    We also need a class descriptor in
+                    <code>repository-user.xml</code> that appears as follows:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Thingie"
+    table="THINGIE"
+    >
+    <field-descriptor
+        name="id"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        sequence-name="UniqueIdentifier"
+        />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+        />
+</class-descriptor>]]></source>
+                <p>
+                    Look over the
+                    <code>id</code> field descriptor carefully. The
+                    <code>autoincrement</code>
+                    and
+                    <code>sequence-name</code> attributes are important for getting our desired behavior.
+                    These tell OJB to use the sequence manager we defined to auto-increment the the value in
+                    <code>id</code>, and they also tell the sequence manager which database sequence to
+                    use - in this case
+                    <code>UniqueIdentifier</code>
+                </p>
+                <p>
+                    We could allow OJB to create an extent-aware sequence and use it, however as we are working
+                    against a table that defaults to a specific named sequence, we want to make sure to pull
+                    values from that same sequence. Information on allowing OJB to create its own sequences is
+                    available in the
+                    <a href="site:sequence-manager">Sequence Manager</a> documentation.
+                </p>
+            </section>
+            <section>
+                <title>Using Thingie</title>
+                <p>
+                    Just to demonstrate that this all works, here is a simple application that uses our Thingie.
+                </p>
+                <source><![CDATA[
+import org.apache.ojb.broker.PersistenceBroker;
+import org.apache.ojb.broker.PersistenceBrokerFactory;
+
+public class ThingieDriver
+{
+    public static void main(String [] args)
+    {
+        PersistenceBroker broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+
+        Thingie thing = new Thingie();
+        Thingie otherThing = new Thingie();
+
+        thing.setName("Mabob");
+        otherThing.setName("Majig");
+
+        broker.beginTransaction();
+        broker.store(thing);
+        broker.store(otherThing);
+        broker.commitTransaction();
+
+        System.out.println(thing.getName() + " : " + thing.getId());
+        System.out.println(otherThing.getName() + " : " + otherThing.getId());
+        broker.close();
+    }
+}]]></source>
+                <p>
+                    When it is run, it will create two Thingie instances, store them in the database,
+                    and report on their assigned
+                    <code>id</code> values.
+                </p>
+                <source><![CDATA[
+java -cp [...] ThingieDriver
+
+Mabob : 2
+Majig : 3]]></source>
+            </section>
+        </section>
+    </body>
+</document>

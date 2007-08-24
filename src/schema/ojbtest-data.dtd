@@ -1,0 +1,347 @@
+<!--
+#/* Copyright 2004 Apache Software Foundation
+# *
+# * Licensed under the Apache License, Version 2.0 (the "License");
+# * you may not use this file except in compliance with the License.
+# * You may obtain a copy of the License at
+# *
+# *     http://www.apache.org/licenses/LICENSE-2.0
+# *
+# * Unless required by applicable law or agreed to in writing, software
+# * distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
+# * limitations under the License.
+# */
+-->
+<!ELEMENT dataset (
+    ProductGroup|
+    Article|
+    Books|
+    Cds|
+    OrderPosition|
+    Tree|
+    Treegroup|
+    AbTable|
+    Product|
+    Person|
+    Project|
+    PersonProject|
+    Task|
+    FamilyMember|
+    LockedByVersion|
+    LockedByTimestamp|
+    BlobTest|
+    MdtestMaster|
+    MdtestDetailFkinpk|
+    MdtestDetailFknopk|
+    Point|
+    GraphNode|
+    GraphEdge|
+    ConversionReferrer|
+    ConversionReferred|
+    News|
+    Paper|
+    Topic|
+    TopicExt|
+    Category|
+    Area|
+    ContentQualifier|
+    SMMaxA|
+    SMMaxAA|
+    SMMaxAB|
+    SMMaxAAA|
+    SMMaxB|
+    SMMaxBB
+    )*>
+<!ATTLIST dataset
+    name CDATA #REQUIRED
+>
+
+<!ELEMENT ProductGroup EMPTY>
+<!ATTLIST ProductGroup
+    GroupId CDATA #REQUIRED
+    GroupName CDATA #IMPLIED
+    Description CDATA #IMPLIED
+>
+
+<!ELEMENT Article EMPTY>
+<!ATTLIST Article
+    ArticleId CDATA #REQUIRED
+    ArticleName CDATA #IMPLIED
+    SupplierId CDATA #IMPLIED
+    ProductGroupId CDATA #IMPLIED
+    Unit CDATA #IMPLIED
+    Price CDATA #IMPLIED
+    Stock CDATA #IMPLIED
+    OrderedUnits CDATA #IMPLIED
+    MinimumStock CDATA #IMPLIED
+    InSelloutArticle CDATA #IMPLIED
+>
+
+<!ELEMENT Books EMPTY>
+<!ATTLIST Books
+    ArtikelNr CDATA #REQUIRED
+    Artikelname CDATA #IMPLIED
+    LieferantenNr CDATA #IMPLIED
+    KategorieNr CDATA #IMPLIED
+    Liefereinheit CDATA #IMPLIED
+    Einzelpreis CDATA #IMPLIED
+    Lagerbestand CDATA #IMPLIED
+    Bestellteeinheiten CDATA #IMPLIED
+    Mindestbestand CDATA #IMPLIED
+    Auslaufartikel CDATA #IMPLIED
+    Isbn CDATA #IMPLIED
+    Author CDATA #IMPLIED
+>
+
+<!ELEMENT Cds EMPTY>
+<!ATTLIST Cds
+    ArtikelNr CDATA #REQUIRED
+    Artikelname CDATA #IMPLIED
+    LieferantenNr CDATA #IMPLIED
+    KategorieNr CDATA #IMPLIED
+    Liefereinheit CDATA #IMPLIED
+    Einzelpreis CDATA #IMPLIED
+    Lagerbestand CDATA #IMPLIED
+    Bestellteeinheiten CDATA #IMPLIED
+    Mindestbestand CDATA #IMPLIED
+    Auslaufartikel CDATA #IMPLIED
+    Label CDATA #IMPLIED
+    Musicians CDATA #IMPLIED
+>
+
+<!ELEMENT OrderPosition EMPTY>
+<!ATTLIST OrderPosition
+    Id CDATA #REQUIRED
+    OrderId CDATA #IMPLIED
+    ArticleId CDATA #IMPLIED
+>
+
+<!ELEMENT Tree EMPTY>
+<!ATTLIST Tree
+    Id CDATA #REQUIRED
+    Data CDATA #IMPLIED
+    ParentId CDATA #IMPLIED
+>
+
+<!ELEMENT Treegroup EMPTY>
+<!ATTLIST Treegroup
+    Id CDATA #REQUIRED
+    Data CDATA #IMPLIED
+    ParentId CDATA #IMPLIED
+    GroupId CDATA #IMPLIED
+>
+
+<!ELEMENT AbTable EMPTY>
+<!ATTLIST AbTable
+    Id CDATA #REQUIRED
+    ClassName CDATA #IMPLIED
+    Value CDATA #IMPLIED
+>
+
+<!ELEMENT Product EMPTY>
+<!ATTLIST Product
+    _id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+    Price CDATA #IMPLIED
+    Stock CDATA #IMPLIED
+>
+
+<!ELEMENT Person EMPTY>
+<!ATTLIST Person
+    Id CDATA #REQUIRED
+    Firstname CDATA #IMPLIED
+    Lastname CDATA #IMPLIED
+>
+
+<!ELEMENT Project EMPTY>
+<!ATTLIST Project
+    Id CDATA #REQUIRED
+    Title CDATA #IMPLIED
+    Description CDATA #IMPLIED
+>
+
+<!ELEMENT PersonProject EMPTY>
+<!ATTLIST PersonProject
+    PersonId CDATA #REQUIRED
+    ProjectId CDATA #REQUIRED
+    Rolename CDATA #IMPLIED
+>
+
+<!ELEMENT Task EMPTY>
+<!ATTLIST Task
+  TaskId CDATA #REQUIRED
+  PersonId CDATA #REQUIRED
+  ProjectId CDATA #REQUIRED
+  Taskname CDATA #IMPLIED
+>
+
+<!ELEMENT FamilyMember EMPTY>
+<!ATTLIST FamilyMember
+    Id CDATA #REQUIRED
+    Firstname CDATA #IMPLIED
+    Lastname CDATA #IMPLIED
+    MotherId CDATA #IMPLIED
+    FatherId CDATA #IMPLIED
+>
+
+<!ELEMENT LockedByVersion EMPTY>
+<!ATTLIST LockedByVersion
+    Id CDATA #REQUIRED
+    Value CDATA #IMPLIED
+    Version CDATA #IMPLIED
+>
+
+<!ELEMENT LockedByTimestamp EMPTY>
+<!ATTLIST LockedByTimestamp
+    Id CDATA #REQUIRED
+    Value CDATA #IMPLIED
+    Timestamp CDATA #IMPLIED
+>
+
+<!ELEMENT BlobTest EMPTY>
+<!ATTLIST BlobTest
+    Id CDATA #REQUIRED
+    BlobValue CDATA #IMPLIED
+    ClobValue CDATA #IMPLIED
+>
+
+<!ELEMENT MdtestMaster EMPTY>
+<!ATTLIST MdtestMaster
+    Masterid CDATA #REQUIRED
+    MasterText CDATA #IMPLIED
+>
+
+<!ELEMENT MdtestDetailFkinpk EMPTY>
+<!ATTLIST MdtestDetailFkinpk
+    Masterid CDATA #REQUIRED
+    Detailid CDATA #REQUIRED
+    DetailText CDATA #IMPLIED
+>
+
+<!ELEMENT MdtestDetailFknopk EMPTY>
+<!ATTLIST MdtestDetailFknopk
+    Detailid CDATA #REQUIRED
+    Masterid CDATA #REQUIRED
+    DetailText CDATA #IMPLIED
+>
+
+<!ELEMENT Point EMPTY>
+<!ATTLIST Point
+    Id CDATA #REQUIRED
+    X CDATA #REQUIRED
+    Y CDATA #REQUIRED
+>
+
+<!ELEMENT GraphNode EMPTY>
+<!ATTLIST GraphNode
+    Id CDATA #REQUIRED
+    Name CDATA #REQUIRED
+    Location CDATA #IMPLIED
+>
+
+<!ELEMENT GraphEdge EMPTY>
+<!ATTLIST GraphEdge
+    Id CDATA #REQUIRED
+    Source CDATA #REQUIRED
+    Sink CDATA #REQUIRED
+>
+
+<!ELEMENT ConversionReferrer EMPTY>
+<!ATTLIST ConversionReferrer
+  Pk1 CDATA #REQUIRED
+    Ref1 CDATA #IMPLIED
+    TestId CDATA #IMPLIED
+>
+
+<!ELEMENT ConversionReferred EMPTY>
+<!ATTLIST ConversionReferred
+  Pk1 CDATA #REQUIRED
+    TestId CDATA #IMPLIED
+>
+
+<!ELEMENT News EMPTY>
+<!ATTLIST News
+  Id CDATA #REQUIRED
+  Headline CDATA #IMPLIED
+>
+
+<!ELEMENT Paper EMPTY>
+<!ATTLIST Paper
+  Id CDATA #REQUIRED
+  Headline CDATA #IMPLIED
+  Issuedate CDATA #IMPLIED
+  Author CDATA #IMPLIED
+>
+
+<!ELEMENT Topic EMPTY>
+<!ATTLIST Topic
+  Id CDATA #REQUIRED
+  Name CDATA #IMPLIED
+  Importance CDATA #IMPLIED
+>
+
+<!ELEMENT TopicExt EMPTY>
+<!ATTLIST TopicExt
+  Id CDATA #REQUIRED
+  Name CDATA #IMPLIED
+  Importance CDATA #IMPLIED
+  Description CDATA #IMPLIED
+>
+
+<!ELEMENT Category EMPTY>
+<!ATTLIST Category
+  Id CDATA #REQUIRED
+  Name CDATA #IMPLIED
+  Description CDATA #IMPLIED
+>
+
+<!ELEMENT Area EMPTY>
+<!ATTLIST Area
+  Id CDATA #REQUIRED
+  Name CDATA #IMPLIED
+>
+
+<!ELEMENT ContentQualifier EMPTY>
+<!ATTLIST ContentQualifier
+    ContentId CDATA #REQUIRED
+    QualifierId CDATA #REQUIRED
+>
+
+<!ELEMENT SMMaxA EMPTY>
+<!ATTLIST SMMaxA
+    Id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+>
+
+<!ELEMENT SMMaxAA EMPTY>
+<!ATTLIST SMMaxAA
+    Id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+>
+
+<!ELEMENT SMMaxAB EMPTY>
+<!ATTLIST SMMaxAB
+    Id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+>
+
+<!ELEMENT SMMaxAAA EMPTY>
+<!ATTLIST SMMaxAAA
+    Id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+>
+
+<!ELEMENT SMMaxB EMPTY>
+<!ATTLIST SMMaxB
+    Id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+>
+
+<!ELEMENT SMMaxBB EMPTY>
+<!ATTLIST SMMaxBB
+    Id CDATA #REQUIRED
+    Name CDATA #IMPLIED
+>
+

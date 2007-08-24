@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+#/* Copyright 2003-2005 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+
+<!-- =================================================== -->
+<!-- Mapping Classes on Multiple Joined Tables test using
+     "super" references -->
+<!-- =================================================== -->
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Entity"
+	table="INHERITANCE_ENTITY"
+ >
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Company"
+	table="INHERITANCE_COMPANY"
+ >
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="BIGINT"
+        primarykey="true"
+        autoincrement="true"
+    />
+
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+
+    <collection-descriptor
+        name="employees"
+        element-class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Employee"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <!-- only for testing we use the second PK in base class Employee as FK  -->
+        <inverse-foreignkey field-ref="id_2"/>
+    </collection-descriptor>
+
+    <collection-descriptor
+        name="executives"
+        element-class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Executive"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <!-- only for testing we use the second PK in base class Manager as FK  -->
+        <inverse-foreignkey field-ref="id_2"/>
+    </collection-descriptor>
+
+</class-descriptor>
+
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Employee"
+	table="INHERITANCE_EMPLOYEE"
+ >
+    <!-- This is the base class of the object hierarchy,
+    so we use autoincrement for one PK field. The other
+    PK field use manually PK setting -->
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="id_2"
+        column="OBJ_ID_2"
+        jdbc-type="BIGINT"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="fkAddress"
+        column="FK_ADDRESS"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+
+    <reference-descriptor name="address"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Address"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <foreignkey field-ref="fkAddress" />
+    </reference-descriptor>
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Executive"
+	table="INHERITANCE_EXECUTIVE"
+ >
+    <!-- auto-increment of PK field is handled by base class -->
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="id_2"
+        column="OBJ_ID_2"
+        jdbc-type="BIGINT"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="department"
+        column="DEPARTMENT"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="managerId"
+        column="MANAGER_ID"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+    <field-descriptor
+        name="managerId_2"
+        column="MANAGER_ID_2"
+        jdbc-type="BIGINT"
+        access="anonymous"
+    />
+
+    <!-- use multiple joined table inheritance -->
+    <reference-descriptor name="super"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Employee"
+    >
+        <foreignkey field-ref="id" />
+        <foreignkey field-ref="id_2" />
+    </reference-descriptor>
+
+    <reference-descriptor name="manager"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Manager"
+        auto-retrieve="false"
+        auto-update="none"
+        auto-delete="none"
+    >
+        <foreignkey field-ref="managerId" />
+        <foreignkey field-ref="managerId_2" />
+    </reference-descriptor>
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Manager"
+	table="INHERITANCE_MANAGER"
+ >
+    <!-- auto-increment of PK field is handled by base class -->
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="id_2"
+        column="OBJ_ID_2"
+        jdbc-type="BIGINT"
+        primarykey="true"
+        autoincrement="false"
+    />
+
+    <field-descriptor
+        name="consortiumKey"
+        column="FK_CONSORTIUM"
+        jdbc-type="INTEGER"
+    />
+
+    <!-- use multiple joined table inheritance -->
+    <reference-descriptor name="super"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Executive"
+    >
+        <foreignkey field-ref="id" />
+        <foreignkey field-ref="id_2" />
+    </reference-descriptor>
+
+    <collection-descriptor
+        name="executives"
+        element-class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Executive"
+        proxy="true"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+            <inverse-foreignkey field-ref="managerId"/>
+            <inverse-foreignkey field-ref="managerId_2"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Shareholder"
+	table="INHERITANCE_SHAREHOLDER"
+ >
+    <!-- auto-increment of PK field is handled by base class -->
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="id_2"
+        column="OBJ_ID_2"
+        jdbc-type="BIGINT"
+        primarykey="true"
+        autoincrement="false"
+    />
+
+    <field-descriptor
+        name="share"
+        column="SHARE_"
+        jdbc-type="INTEGER"
+    />
+
+    <!-- use multiple joined table inheritance -->
+    <reference-descriptor name="super"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Manager"
+    >
+        <foreignkey field-ref="id" />
+        <foreignkey field-ref="id_2" />
+    </reference-descriptor>
+</class-descriptor>
+
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Consortium"
+	table="INHERITANCE_CONSORTIUM"
+ >
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+
+    <collection-descriptor
+        name="shareholders"
+        element-class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Shareholder"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <inverse-foreignkey field-ref="consortiumKey"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Address"
+	table="INHERITANCE_ADDRESS"
+ >
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+
+    <field-descriptor
+        name="street"
+        column="STREET"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Animal"
+	table="INHERITANCE_ANIMAL"
+ >
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+    />
+    <field-descriptor
+        name="weight"
+        column="WEIGHT"
+        jdbc-type="INTEGER"
+    />
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+        name="fkParent"
+        column="FK_PARENT"
+        jdbc-type="INTEGER"
+        access="anonymous"
+    />
+    <reference-descriptor name="parent"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Animal"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <foreignkey field-ref="fkParent" />
+    </reference-descriptor>
+    <collection-descriptor
+        name="foods"
+        element-class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Food"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="object"
+        auto-delete="object"
+    >
+        <inverse-foreignkey field-ref="fkAnimal"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Dog"
+	table="INHERITANCE_DOG"
+ >
+    <!-- auto-increment of PK field is handled by base class -->
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="legs"
+        column="LEGS"
+        jdbc-type="INTEGER"
+    />
+
+    <!-- use multiple joined table inheritance -->
+    <reference-descriptor name="super"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Animal"
+    >
+        <foreignkey field-ref="id" />
+    </reference-descriptor>
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.InheritanceMultipleTableTest$Food"
+	table="INHERITANCE_FOOD"
+ >
+    <!-- auto-increment of PK field is handled by base class -->
+    <field-descriptor
+        name="id"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="false"
+    />
+    <field-descriptor
+        name="fkAnimal"
+        column="FK_ANIMAL"
+        jdbc-type="INTEGER"
+    />
+
+    <!-- use multiple joined table inheritance -->
+    <reference-descriptor name="super"
+        class-ref="org.apache.ojb.broker.InheritanceMultipleTableTest$Entity"
+    >
+        <foreignkey field-ref="id" />
+    </reference-descriptor>
+</class-descriptor>
+
+
+
+
+<!-- ********************************************************** -->
+<!-- testing for complex mapping of many objects to one table  -->
+<!-- ********************************************************** -->
+ <class-descriptor
+	class="org.apache.ojb.broker.ComplexMultiMapped$PersistentA"
+	table="MultiMappedTable"
+ >
+     <field-descriptor
+        name="ID"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="value1"
+       column="value1"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value2"
+        column="value2"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value3"
+       column="value3"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="ojbConcreteClass"
+       column="ojbConcreteClass"
+       jdbc-type="VARCHAR"
+     />
+ </class-descriptor>
+
+ <class-descriptor
+	class="org.apache.ojb.broker.ComplexMultiMapped$PersistentB"
+	table="MultiMappedTable"
+ >
+     <extent-class class-ref="org.apache.ojb.broker.ComplexMultiMapped$PersistentD" />
+     <extent-class class-ref="org.apache.ojb.broker.ComplexMultiMapped$PersistentE" />
+     <field-descriptor
+        name="ID"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="value4"
+       column="value4"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value5"
+        column="value5"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value6"
+       column="value6"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="ojbConcreteClass"
+       column="ojbConcreteClass"
+       jdbc-type="VARCHAR"
+     />
+ </class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.ComplexMultiMapped$PersistentC"
+	table="MultiMappedTable"
+ >
+     <field-descriptor
+        name="ID"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="value1"
+       column="value1"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value2"
+        column="value2"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value3"
+       column="value3"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="value4"
+       column="value4"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value5"
+        column="value5"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value6"
+       column="value6"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="ojbConcreteClass"
+       column="ojbConcreteClass"
+       jdbc-type="VARCHAR"
+     />
+ </class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.ComplexMultiMapped$PersistentD"
+	table="MultiMappedTable"
+ >
+     <field-descriptor
+        name="ID"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="value1"
+       column="value1"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value2"
+        column="value2"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value3"
+       column="value3"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="value4"
+       column="value4"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value5"
+        column="value5"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value6"
+       column="value6"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="ojbConcreteClass"
+       column="ojbConcreteClass"
+       jdbc-type="VARCHAR"
+     />
+ </class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.ComplexMultiMapped$PersistentE"
+	table="MultiMappedTable"
+ >
+     <extent-class class-ref="org.apache.ojb.broker.ComplexMultiMapped$PersistentF" />
+     <field-descriptor
+        name="ID"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="value1"
+       column="value1"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value2"
+        column="value2"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value3"
+       column="value3"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="value4"
+       column="value4"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value5"
+        column="value5"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value6"
+       column="value6"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="ojbConcreteClass"
+       column="ojbConcreteClass"
+       jdbc-type="VARCHAR"
+     />
+ </class-descriptor>
+
+
+<class-descriptor
+	class="org.apache.ojb.broker.ComplexMultiMapped$PersistentF"
+	table="MultiMappedTable"
+ >
+     <field-descriptor
+        name="ID"
+        column="ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="value1"
+       column="value1"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value2"
+        column="value2"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value3"
+       column="value3"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="value4"
+       column="value4"
+       jdbc-type="VARCHAR"
+     />
+     <field-descriptor
+        name="value5"
+        column="value5"
+        jdbc-type="INTEGER"
+     />
+     <field-descriptor
+       name="value6"
+       column="value6"
+       jdbc-type="TIMESTAMP"
+     />
+     <field-descriptor
+       name="ojbConcreteClass"
+       column="ojbConcreteClass"
+       jdbc-type="VARCHAR"
+     />
+ </class-descriptor>
+
+
+
+<!-- ********************************************************** -->
+<!-- testing for many extents to different tables with same base class -->
+<!-- ********************************************************** -->
+<class-descriptor class="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$BaseClass">
+    <extent-class class-ref="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentA" />
+    <extent-class class-ref="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentB" />
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentA"
+	table="EXTENT_TEST_A"
+ >
+     <field-descriptor
+        name="objId"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="name"
+       column="NAME"
+       jdbc-type="VARCHAR"
+     />
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentB"
+	table="EXTENT_TEST_B"
+ >
+    <extent-class class-ref="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentC" />
+
+    <field-descriptor
+        name="objId"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="name"
+       column="NAME"
+       jdbc-type="VARCHAR"
+     />
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentC"
+	table="EXTENT_TEST_C"
+ >
+    <extent-class class-ref="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentD" />
+    <field-descriptor
+        name="objId"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="name"
+       column="NAME"
+       jdbc-type="VARCHAR"
+     />
+</class-descriptor>
+
+<class-descriptor
+	class="org.apache.ojb.broker.MultipleTableExtentAwareQueryTest$ExtentD"
+	table="EXTENT_TEST_D"
+ >
+    <field-descriptor
+        name="objId"
+        column="OBJ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+     />
+     <field-descriptor
+       name="name"
+       column="NAME"
+       jdbc-type="VARCHAR"
+     />
+</class-descriptor>
+
+
+
+
+<!-- ************************************************* -->
+<!--      abstract collections test                    -->
+<!-- ************************************************* -->
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$AbstractIF_X">
+    <!-- demonstrates the problem:
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$AbstractIF_Y" />
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$AbstractClassX" />
+    -->
+
+    <!-- Using concrete classes in extent definition only works fine:-->
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$ConcreteZ" />
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$ConcreteZZ" />
+
+</class-descriptor>
+
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$AbstractIF_Y">
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$ConcreteZ" />
+</class-descriptor>
+
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$ConcreteZ"
+table="ABSTRACT_COL_Z">
+
+    <field-descriptor
+    name="id"
+    column="OBJ_ID"
+    jdbc-type="INTEGER"
+    primarykey="true"
+    autoincrement="true"/>
+
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+
+    <field-descriptor
+    name="someValue"
+    column="SOMEVALUE"
+    jdbc-type="INTEGER"/>
+
+    <field-descriptor
+    name="containerId"
+    column="CONTAINER_ID"
+    jdbc-type="INTEGER"/>
+</class-descriptor>
+
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$AbstractClassX">
+
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$AbstractClassY" />
+
+    <field-descriptor
+    name="containerId"
+    column="CONTAINER_ID"
+    jdbc-type="INTEGER"/>
+
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$AbstractClassY">
+
+    <extent-class class-ref="org.apache.ojb.broker.AbstractExtentClassTest$ConcreteZZ" />
+
+    <field-descriptor
+    name="containerId"
+    column="CONTAINER_ID"
+    jdbc-type="INTEGER"/>
+
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$ConcreteZZ"
+table="ABSTRACT_COL_ZZ">
+
+    <field-descriptor
+    name="id"
+    column="OBJ_ID"
+    jdbc-type="INTEGER"
+    primarykey="true"
+    autoincrement="true"/>
+
+    <field-descriptor
+    name="someValue"
+    column="SOMEVALUE"
+    jdbc-type="INTEGER"/>
+
+    <field-descriptor
+    name="containerId"
+    column="CONTAINER_ID"
+    jdbc-type="INTEGER"/>
+
+    <field-descriptor
+        name="name"
+        column="NAME"
+        jdbc-type="VARCHAR"
+    />
+
+    <field-descriptor
+        name="concreteZZName"
+        column="ZZ_NAME"
+        jdbc-type="VARCHAR"
+    />
+</class-descriptor>
+
+<class-descriptor
+class="org.apache.ojb.broker.AbstractExtentClassTest$XContainer"
+table="XCONTAINER">
+    <field-descriptor
+    name="id"
+    column="OBJ_ID"
+    jdbc-type="INTEGER"
+    primarykey="true"
+    autoincrement="true"/>
+
+    <collection-descriptor
+    name="myXReferences"
+    element-class-ref="org.apache.ojb.broker.AbstractExtentClassTest$AbstractIF_X"
+    auto-retrieve="true"
+    auto-update="true"
+    auto-delete="false">
+        <inverse-foreignkey field-ref="containerId"/>
+    </collection-descriptor>
+</class-descriptor>
+

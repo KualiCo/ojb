@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: logging.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>OJB logging configuration</title>
+        <authors>
+            <person name="Thomas Dudziak" email="tomdz@apache.org"/>
+        </authors>
+    </header>
+    <body>
+        <section>
+            <title>Logging in OJB</title>
+            <p>
+                For generating log messages, OJB provides its own, simplistic logging component
+                <a href="ext:api/poor-mans-logger">PoorMansLoggerImpl</a>, but is
+                also able to use the two most common Java logging libraries,
+                <a href="ext:jakarta/commons-logging">commons-logging</a> (which is actually a wrapper
+                around several logging components) and
+                <a href="ext:log4j">Log4j</a>. In addition, it is also possible to define your
+                own logging implementation.
+            </p>
+            <p>
+                Per default, OJB uses its own <a href="ext:api/poor-mans-logger">PoorMansLoggerImpl</a>
+                which does not require configuration and prints to <code>stdout</code>.
+            </p>
+        </section>
+
+        <section>
+            <title>Logging configuration within OJB</title>
+            <section>
+                <title>How and when OJB determines what kind of logging to use</title>
+                <p>
+                    Logging is the first component of OJB that is initialized. If you access any component
+                    of OJB, logging will be initialized first before that component is doing anything else.
+                    Therefore, you'll have to provide for the configuration of logging before you access
+                    OJB in your program (this is mostly relevant if you plan to initialize OJB at runtime
+                    as is described <a href="#Logging configuration at runtime">below</a>). Please
+                    note that logging configuration is independent of the configuration of other parts of
+                    OJB, namely the runtime (via <a href="site:ojb-properties">OJB.properties</a>)
+                    and the database/repository (via <a href="site:repository">repository.xml</a>).
+                </p>
+                <p>
+                   These are the individual steps OJB performs in order to initialize the logging component:
+                </p>
+                <ol>
+                    <li>
+                        First, OJB checks whether the system property
+                        <code>org.apache.ojb.broker.util.logging.Logger.class</code> is set. If specified,
+                        this property gives the fully qualified class name of the logger class
+                        (a class implementing the <a href="ext:api/logger">Logger</a> interface).
+                        Along with this property, another property is then read which may specify a
+                        properties file for this logger class,
+                        <code>org.apache.ojb.broker.util.logging.Logger.configFile</code>.
+                    </li>
+                    <li>
+                        If this property is not set, then OJB tries to read the file
+                        <code>OJB-logging.properties</code>. The name and path of this file can be changed by
+                        setting the runtime property of the same name. See
+                        <a href="#OJB-logging.properties">below</a> for the contents of this file.
+                    </li>
+                    <li>
+                        For backwards compatibility, OJB next tries to read the logging settings from the file
+                        <a href="site:ojb-properties">OJB.properties</a> which is the normal runtime
+                        configuration file of OJB. Again, the name and path of this file can be changed by
+                        setting the runtime property of the same name. This file may contain the same entries
+                        as the <code>OJB-logging.properties</code> file.
+                    </li>
+                    <li>
+                        If the the <code>OJB.properties</code> file does not contain logging settings, next
+                        it is checked whether the commons-logging log property
+                        <code>org.apache.commons.logging.Log</code> or the commons-logging log factory system
+                        property <code>org.apache.commons.logging.LogFactory</code> is set. If that's the case,
+                        OJB will use commons-logging for its logging purposes.
+                    </li>
+                    <li>
+                        Next, OJB checks for the presence of the Log4j properties file
+                        <code>log4j.properties</code>. If it is found, the OJB uses Log4j directley (without
+                        commons-logging).
+                    </li>
+                    <li>
+                        Finally, OJB tries to find the commons-logging properties file
+                        <code>commons-logging.properties</code> which when found directs OJB to use
+                        commons-logging for its logging.
+                    </li>
+                    <li>
+                        If none of the above is true, or if the specified logger class could not be found or
+                        initialized, then OJB defaults to its <code>PoorMansLoggerImpl</code> logger which
+                        simply logs to <code>stdout</code>.
+                    </li>
+                </ol>
+                <p>
+                    The only OJB component whose logging is not initialized this way, is the boot logger which
+                    is used by logging component itself and a few other core components. It will (for obvious
+                    reasons) always use <a href="ext:api/poor-mans-logger">PoorMansLoggerImpl</a> and
+                    therefore log to <code>stdout</code>. You can define the log level of the boot logger via
+                    the <code>OJB.bootLogLevel</code> system property. Per default, <strong>WARN</strong> is used.
+                </p>
+            </section>
+            
+            <section>
+                <title>Configuration of logging for the individual components</title>
+                <p>
+                    Regardless of the logging implementation that is used by OJB, the configuration is
+                    generally similar. The individual logging implementations mainly differ in the syntax
+                    and in the configuration of the format of the output and of the output target (where
+                    to log to). See below for specific details and examples.<br/>
+                    In general, you specify a default log level and for every component (usually a class)
+                    that should log differently, the amount and level of detail that is logged about that
+                    component. These are the levels:
+                </p>
+                <dl>
+                    <dt><strong>DEBUG</strong></dt>
+                    <dd>Messages that express what OJB is currently doing. This is the most detailed
+                        debugging level</dd>
+                    <dt><strong>INFO</strong></dt>
+                    <dd>Informational messages</dd>
+                    <dt><strong>WARN</strong></dt>
+                    <dd>Warnings that may denote potentional problems (this is the default level)</dd>
+                    <dt><strong>ERROR</strong></dt>
+                    <dd>As the name says, this level is for errors which means that some action could
+                        not be completed successfully</dd>
+                    <dt><strong>FATAL</strong></dt>
+                    <dd>Fatal errors which usually prevent an application from continuing</dd>
+                </dl>
+                <p>
+                    The levels <strong>DEBUG</strong> and <strong>INFO</strong> usually result in
+                    a lot of log messages which will reduce the performance of the application.
+                    Therefore these levels should only be used when necessary.
+                </p>
+                <p>
+                	There are two special loggers to be aware of. The <strong>boot logger</strong> is the
+                	logger used by the logging component itself as well as a few other core components.
+                	It will therefore always use the
+                	<a href="ext:api/poor-mans-logger">PoorMansLoggerImpl</a> logging implementation.
+                	You can configure its logging level via the <code>OJB.bootLogLevel</code> system
+                	property.<br/>
+                	The <strong>default logger</strong> is denoted in the <code>OJB-logging.properties</code>
+                	file by the keyword <code>DEFAULT</code> instead of the class name. It is used
+                	by components that don't require their own logging configuration (usually because
+                	they are rather small components). 
+                </p>
+            </section>
+        </section>
+
+        <section>
+            <title>Logging configuration via configuration files</title>
+            <section>
+                <title>OJB-logging.properties</title>
+                <p>
+                    This file usually specifies which logging implementation to use using the
+                    <code>org.apache.ojb.broker.util.logging.Logger.class</code> property, and which
+                    properties file this logger has (if any) using the
+                    <code>org.apache.ojb.broker.util.logging.Logger.configFile</code> property.
+                    You should also use this file to specify log levels for OJB's components if you're
+                    not using Log4j or commons-logging (which have their own configuration files).
+                </p>
+                <p>
+                    A typical <code>OJB-logging.properties</code> file looks like this:
+                </p>
+                <source><![CDATA[
+# Which logger to use
+org.apache.ojb.broker.util.logging.Logger.class=org.apache.ojb.broker.util.logging.PoorMansLoggerImpl
+
+# Configuration file of the logger
+#org.apache.ojb.broker.util.logging.Logger.configFile=
+
+# Global default log level used for all logging entities if not specified
+ROOT.LogLevel=ERROR
+
+# The log level of the default logger
+DEFAULT.LogLevel=WARN
+
+# Logger for PersistenceBrokerImpl class
+org.apache.ojb.broker.core.PersistenceBrokerImpl.LogLevel=WARN
+
+# Logger for RepositoryXmlHandler, useful for debugging parsing of repository.xml!
+org.apache.ojb.broker.metadata.RepositoryXmlHandler.LogLevel=WARN
+]]></source>
+            </section>
+            <section>
+                <title>commons-logging.properties</title>
+                <p>
+                    This file is used by <a href="ext:jakarta/commons-logging">commons-logging</a>. For
+                    details on its structure see <a href="ext:jakarta/commons-logging/configuration">here</a>.
+                </p>
+                <p>
+                    An example <code>commons-logging.properties</code> file would be:
+                </p>
+                <source><![CDATA[
+# Use Log4j
+org.apache.commons.logging.Log=org.apache.commons.logging.impl.Log4JLogger
+
+# Configuration file of the log
+log4j.configuration=log4j.properties
+]]></source>
+                <note>
+                    Since commons-logging provides the same function as the logging
+                    component of OJB, it will likely be used as OJB's logging component in the near future.
+                </note>
+            </section>
+            <section>
+                <title>log4j.properties</title>
+                <p>
+                    The <a href="ext:log4j">commons-logging</a> configuration file. Details can be
+                    found <a href="ext:log4j/configuration">here</a>.
+                </p>
+                <p>
+                    A sample log4j configuration is:
+                </p>
+                <source><![CDATA[
+# Root logging level is WARN, and we're using two logging targets
+log4j.rootCategory=WARN, A1, A2
+
+# A1 is set to be ConsoleAppender sending its output to System.out
+log4j.appender.A1=org.apache.log4j.ConsoleAppender
+
+# A1 uses PatternLayout
+log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+log4j.appender.A1.layout.ConversionPattern=%-5r %-5p [%t] %c{2} - %m%n
+
+# Appender A2 writes to the file "org.apache.ojb.log".
+log4j.appender.A2=org.apache.log4j.FileAppender
+log4j.appender.A2.File=org.apache.ojb.log
+
+# Truncate the log file if it aleady exists.
+log4j.appender.A2.Append=false
+
+# A2 uses the PatternLayout.
+log4j.appender.A2.layout=org.apache.log4j.PatternLayout
+log4j.appender.A2.layout.ConversionPattern=%-5r %-5p [%t] %c{2} - %m%n
+
+# Special logging directives for individual components
+log4j.logger.org.apache.ojb.broker.metadata.RepositoryXmlHandler=DEBUG
+log4j.logger.org.apache.ojb.broker.accesslayer.ConnectionManager=INFO
+log4j.logger.org.apache.ojb.odmg=INFO
+]]></source>
+            </section>
+
+            <section>
+                <title>Where to put the configuration files</title>
+                <p>
+                    OJB and the different logging implementations usually look up
+                    their configuration files in the classpath. So for instance, OJB
+                    searches for the <code>OJB-logging.properties</code> file directly
+                    in any of the entries of the classpath, directories and jar files.
+                    If the classpath contains in that order <code>some-library.jar</code>,
+                    <code>db-ojb.jar</code>, and <code>.</code>, then it will first
+                    search in the two jars (which themselves contain a directory
+                    structure in which OJB will search only in the root), and lastly
+                    in the current directory (which only happens if <code>.</code> is
+                    part of the classpath) but not in sub directories of it.
+                </p>
+                <p>
+                    For applications, this classpath can easily be set either as an
+                    environment variable <code>CLASSPATH</code> or by using the
+                    commandline switch <code>-classpath</code> when invoking the java
+                    executable.
+                </p>
+                <p>
+                    For web applications however, the server will define the classpath.
+                    There are specific folders in the webapp structure that are always
+                    part of the webapp's classpath. The one that is normally used to store
+                    configuration files, is the <code>classes</code> folder:
+                </p>
+                <source><![CDATA[
+[folder containing webapps]\
+    mywebapp\
+        WEB-INF\
+            lib\
+            classes\   <-- Put your configuration files here
+]]></source>
+            </section>
+        </section>
+
+        <section>
+            <title>Logging configuration at runtime</title>
+            <p>
+                Sometimes you want to configure OJB completely at runtime (within your
+                program). How to do that for logging depends on the used
+                logging implementation, but you can usually configure them via
+                system properties. The only thing to keep in mind is that logging
+                in OJB is initialized as soon as you use one of its components, so
+                you'll have to define the properties prior to using any OJB parts.
+            </p>
+            <p>
+                With system properties (which are accessible via <code>System.getProperty()</code>
+                from within a Java program) you can always define the following
+                OJB logging settings:
+            </p>
+            <dl>
+                <dt><code>org.apache.ojb.broker.util.logging.Logger.class</code></dt>
+                <dd>Which logger OJB shall use</dd>
+                <dt><code>org.apache.ojb.broker.util.logging.Logger.configFile</code></dt>
+                <dd>The config file of the logger</dd>
+                <dt><code>OJB-logging.properties</code></dt>
+                <dd>The path to the logging properties file, default is
+                    <code>OJB-logging.properties</code></dd>
+                <dt><code>OJB.properties</code></dt>
+                <dd>The path to the OJB properties file (which may contain logging settings),
+                    default is <code>OJB.properties</code></dd>
+                <dt><code>org.apache.commons.logging.Log</code></dt>
+                <dd>Use commons-logging with the specified log implementation</dd>
+                <dt><code>org.apache.commons.logging.LogFactory</code></dt>
+                <dd>Use commons-logging with the specified log factory</dd>
+                <dt><code>log4j.configuration</code></dt>
+                <dd>When using Log4j directly or via commons-logging, this is the
+                    Log4j configuration file (default is <code>log4j.properties</code>)</dd>
+            </dl>
+            <p>
+                In addition, all Log4j properties (e.g. <code>log4j.rootCategory</code>) can be
+                specified as system properties.
+            </p>
+        </section>
+
+        <section>
+            <title>Defining your own logger</title>
+            <p>
+                It is rather easy to use your own logger. All you need to do is to provide
+                a class that implements the interface <a href="ext:api/logger">Logger</a>.
+                Besides the actual log methods (<code>debug, info, warn, error, fatal</code>)
+                this interface defines a method <code>void configure(Configuration)</code> which
+                is used to initialize the logger with the logging properties (as contained in
+                <code>OJB-logging.properties</code>).
+            </p>
+            <note>
+                Because commons-logging performs a similar function to
+                the OJB logging component, it is likely that it will be used as such in the near
+                future. Therefore you're encouraged to also implement the
+                <a href="ext:jakarta/commons-logging/api-log">Log</a> interface which is
+                nearly the same as the <a href="ext:api/logger">Logger</a> interface.
+            </note>
+        </section>
+    </body>
+</document>
+
+
+
+
+
+

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+#/* Copyright 2003-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!--
+     XDoclet module for ObJectBridge ANT build configuration.
+     initial author: Thomas Dudziak
+-->
+
+<project name="XDoclet OJB module" default="build" basedir=".">
+
+    <!-- Allow any user specific values to override the defaults -->
+    <property file="${user.home}/build.properties" />
+    <!-- Allow to specify settings to be specified in the OJB build settings file -->
+    <property file="build.properties"/>
+
+    <!-- If not defined in the build.properties then we define them here: -->
+    <!-- The directories containing the source of the XDoclet OJB module (java src and unit tests) -->
+    <property name="src.xdoclet" value="${src.dir}/xdoclet"/>
+    <property name="src.xdoclet.java" value="${src.xdoclet}/java"/>
+    <property name="src.xdoclet.test" value="${src.xdoclet}/test"/>
+    <!-- The directories for building and running the unit tests -->
+    <property name="build.xdoclettest" value="${build.dir}/xdoclettest"/>
+    <property name="build.xdoclettest.src" value="${build.xdoclettest}/src"/>
+    <property name="build.xdoclettest.dest" value="${build.xdoclettest}/classes"/>
+    <property name="build.xdoclettest.report" value="${build.xdoclettest}/report"/>
+
+    <!-- Specifies where the XDoclet source distribution is located.
+         In a CVS checkout of 'xdoclet-all' this is the subdirectory xdoclet (besides xdoclet-gui
+         and xjavadoc). When using a download of a source dist, this is the directory where the
+         archve has been expanded to
+         Per default it is assumed that a CVS checkout of 'xdoclet-all' resides besides OJB -->
+    <property name="xdoclet.src.dir" value="../xdoclet-all/xdoclet"/>
+
+    <!-- Classpath for compiling/running the unit tests (the module is compiled with a different ant script) -->
+    <path id="test-classpath">
+        <fileset dir="${lib}">
+            <include name="**/*.jar"/>
+            <include name="**/*.zip"/>
+        </fileset>
+        <pathelement path="${build.dest}"/>
+        <pathelement path="${build.xdoclettest.dest}"/>
+    </path>
+
+
+    <!-- Checks whether xdoclet is present -->
+    <target name="check-xdoclet">
+        <available property="xdoclet.sources.present"
+                   file="${xdoclet.src.dir}"
+                   type="dir"/>
+    </target>
+
+    <!-- Copies the source of the XDoclet OJB module into the XDoclet tree -->
+    <target name="copy-to-xdoclet" depends="check-xdoclet" if="xdoclet.sources.present">
+        <mkdir dir="${xdoclet.src.dir}/modules/ojb"/>
+        <copy todir="${xdoclet.src.dir}/modules/ojb">
+            <fileset dir="${src.xdoclet.java}"/>
+        </copy>
+    </target>
+
+    <!-- Checks whether prettyprinting settings are available in XDoclet (cannot be turned off yet) -->
+    <target name="check-prettyprinting">
+        <available property="xdoclet.prettyprinting.present"
+                   file="${xdoclet.src.dir}/config/.Refactory/pretty.settings"
+                   type="file"/>
+    </target>
+
+    <!-- Copies some default pretty printing settings to the XDoclet config dir if necessary -->
+    <target name="setup-prettyprinting" depends="check-prettyprinting" unless="xdoclet.prettyprinting.present">
+        <mkdir dir="${xdoclet.src.dir}/config"/>
+        <mkdir dir="${xdoclet.src.dir}/config/.Refactory"/>
+        <copy file="${src.xdoclet}/pretty.settings" todir="${xdoclet.src.dir}/config/.Refactory"/>
+    </target>
+
+    <!-- Checks whether xjavadoc needs to be build -->
+    <target name="check-xjavadoc">
+        <available property="xdoclet.xjavadoc.present"
+                   file="${xdoclet.src.dir}/lib/xjavadoc*.jar"
+                   type="file"/>
+    </target>
+
+    <!-- Creates XJavaDoc if necessary -->
+    <target name="build-xjavadoc" depends="check-xjavadoc" unless="xdoclet.xjavadoc.present">
+        <ant dir="${xdoclet.src.dir}"
+             target="xjavadoc"
+             inheritall="false">
+        </ant>
+    </target>
+
+    <!-- Creates XDoclet (including XJavaDoc and its modules) -->
+    <target name="build-xdoclet" depends="copy-to-xdoclet,setup-prettyprinting,build-xjavadoc">
+        <!-- this includes the OJB module -->
+        <ant dir="${xdoclet.src.dir}"
+             target="modules"
+             inheritall="false">
+        </ant>
+    </target>
+
+    <!-- Only creates the XDoclet OJB module -->
+    <target name="build-ojb-module-only" depends="copy-to-xdoclet,setup-prettyprinting,build-xjavadoc">
+        <!-- this uses the build script in the OJB module directory directly -->
+        <ant dir="${xdoclet.src.dir}/modules/ojb"
+             inheritall="false">
+        </ant>
+    </target>
+
+    <!-- Copies the generated jar into the OJB lib folder -->
+    <target name="copy-xdoclet-jars">
+        <!-- XDoclet OJB module jar -->
+        <copy todir="${lib}">
+            <fileset dir="${xdoclet.src.dir}/target/lib">
+                <include name="xdoclet-ojb-module-*.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <!-- Main creation target -->
+    <target name="build" depends="build-xdoclet,copy-xdoclet-jars"/>
+
+    <!-- Faster creation target that only rebuilds the XDoclet OJB module -->
+    <target name="rebuild" depends="build-ojb-module-only,copy-xdoclet-jars"/>
+
+    <!-- Checks whether OJB needs to be build -->
+    <target name="check-ojb">
+        <available property="ojb.present"
+                   file="${dist}/${archive}.jar"
+                   type="file"/>
+    </target>
+
+    <!-- Creates OJB if necessary -->
+    <target name="build-ojb" depends="check-ojb" unless="ojb.present">
+        <ant target="jar-debug"
+             inheritall="false">
+        </ant>
+    </target>
+
+    <!-- Prepares the folder for the XDoclet OJB module tests -->
+    <target name="prepare-test">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.xdoclettest}"/>
+        <mkdir dir="${build.xdoclettest.src}"/>
+        <mkdir dir="${build.xdoclettest.dest}"/>
+        <copy todir="${build.xdoclettest.src}">
+            <fileset dir="${src.xdoclet.test}" excludes="**/CVS/*"/>
+        </copy>
+    </target>
+
+    <!-- Compiles only the test cases -->
+    <target name="compile-test-only" depends="prepare-test">
+        <javac srcdir="${build.xdoclettest.src}"
+               destdir="${build.xdoclettest.dest}"
+               debug="on"
+               deprecation="${deprecation}">
+            <classpath refid="test-classpath"/>
+        </javac>
+    </target>
+
+    <!-- Compiles the test cases -->
+    <target name="compile-test" depends="build,build-ojb,compile-test-only"/>
+    
+    <!-- Runs the tests without preparing or compiling them -->
+    <target name="junit-no-compile">
+        <echo message="This target might not properly work with Ant older than 1.6.0"/>
+        <!-- Run the tests -->
+        <junit printsummary="yes" fork="yes" dir="${build.xdoclettest}">
+            <classpath refid="test-classpath"/>
+            <formatter type="xml" />
+
+            <!-- Running all tests from a single vm will lead to an out-of-memory error, so we rather perform a batch test -->
+            <batchtest fork="yes" todir="${build.xdoclettest}">
+                <fileset dir="${build.xdoclettest.src}">
+                    <include name="xdoclet/**/*Tests.java"/>
+                    <!-- We don't use the runner class as this would lead to the situation explained above -->
+                    <exclude name="xdoclet/**/Run*Tests.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <antcall target="junit-report"/>
+    </target>
+
+    <!-- Generate the report -->
+    <target name="junit-report">
+        <junitreport todir="${build.xdoclettest}">
+            <fileset dir="${build.xdoclettest}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${build.xdoclettest.report}"/>
+        </junitreport>
+    </target>
+
+    <!-- Main test target -->
+    <target name="junit" depends="compile-test,junit-no-compile"/>
+
+    <!-- Main documentation target -->
+    <target name="docs">
+        <!-- Basically we call the appropriate target in the main build file which will also generate
+             the guide for the XDoclet OJB module -->
+        <ant dir="."
+             target="htmldoc"
+             inheritall="false">
+        </ant>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- End of targets                                                     -->
+    <!-- ================================================================== -->
+
+</project>

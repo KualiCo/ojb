@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-use-spring.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - <a href="ext:spring">Spring</a> with OJB</title>
+        <authors>
+            <person name="Jason McKerr" email=""/>
+        </authors>
+    </header>
+
+    <body>
+        <anchor id="introduction"/>
+        <section>
+            <title>Spring with OJB</title>
+            <p>
+                This Howto refers to external articles describe the usage of <a href="ext:spring">Spring</a>
+                with OJB's <a href="site:pb-guide">PB-api</a>.
+            </p>
+            <p>
+                Included are three articles that are in-depth How-to's for using Spring Framework's
+                <em>declarative transaction engine</em> with OJB's
+                <a href="site:pb-guide"><em>Persistence Broker</em></a> implementation.
+                For each article, I have included a complete sample application with an embedded
+                database that you can run.
+                <br/>
+                They are simple to setup and require minimal configuration.
+            </p>
+
+
+            <anchor id="part-1"/>
+            <section>
+                <title>Spring, OJB, and Struts, getting started</title>
+                <p>
+                    The first article covers a basic configuration and setup for integrating Spring with OJB.
+                    It covers:
+                </p>
+                    <ul>
+                        <li>
+                            Connecting to the database using Spring's local datasources (<em>LocalOjbConfigurer</em>)
+                        </li>
+                        <li>
+                            Register the appropriate transactionManager for use with OJB (PersistenceBrokerTransactionManager)
+                        </li>
+                        <li>
+                            Creating beans and interfaces for use with the database
+                        </li>
+                        <li>
+                            Having Spring handle transactions for the beans in declarative fashion
+                        </li>
+                    </ul>
+                <p>
+                    The article link is:
+                    <a href="ext:article/spring-ojb-part-1">Spring, OJB, and Struts, getting started</a>
+                </p>
+            </section>
+
+            <anchor id="part-2"/>
+            <section>
+                <title>Spring, OJB, and Struts. Version 2 with DAO.</title>
+                <p>
+                    The second article covers more advanced Spring usage, separating out the database
+                    implementation code from your Data Access Objects.
+                    This is an important abstraction layer for controlling data access ubiquitously.
+                </p>
+                <p>
+                    The article link is:
+                    <a href="ext:article/spring-ojb-part-2">Spring, OJB, and Struts. Version 2 with DAO.</a>
+                </p>
+            </section>
+
+            <anchor id="part-3"/>
+            <section>
+                <title>Spring, OJB, and Struts. Version 3: JNDI Datasources and Caching</title>
+                <p>
+                    The Third article covers using OJB's datasourcing and caching strategies.
+                    <br/>
+                    The first two articles require local datasources and
+                    <a href="site:object-cache">Per Broker caching</a> because of
+                    the way that the <em>OjbConfigurer</em> works.
+                    <br/>
+                    Now that we've completed basics of integrating
+                    OJB in Spring, this last entry shows how to use JNDI datasourcing with OJB and Spring,
+                    which in turn allows users to get back to other OJB caching strategies.
+                </p>
+                <p>
+                    The article link is:
+                    <a href="ext:article/spring-ojb-part-3">Spring, OJB, and Struts. Version 3: JNDI Datasources and Caching</a>
+                </p>
+            </section>
+        </section>
+    </body>
+</document>

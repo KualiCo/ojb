@@ -1,0 +1,236 @@
+
+<!-- Metadata for a more complex test data model -->
+<!--
+#/* Copyright 2003-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<class-descriptor
+        class="org.apache.ojb.broker.ComplexReferenceTest$Employee"
+        table="CRT_EMPLOYEE"
+    >
+        <field-descriptor
+         name="id"
+         column="EMPLOYEE_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+
+        <collection-descriptor
+            name="roles"
+            element-class-ref="org.apache.ojb.broker.ComplexReferenceTest$AbstractRole">
+                <inverse-foreignkey field-ref="employeeId"/>
+        </collection-descriptor>
+    </class-descriptor>
+
+
+    <class-descriptor class="org.apache.ojb.broker.ComplexReferenceTest$Role">
+        <extent-class class-ref="org.apache.ojb.broker.ComplexReferenceTest$AbstractRole"/>
+    </class-descriptor>
+
+
+    <class-descriptor class="org.apache.ojb.broker.ComplexReferenceTest$AbstractRole">
+        <extent-class class-ref="org.apache.ojb.broker.ComplexReferenceTest$TeamMember"/>
+        <extent-class class-ref="org.apache.ojb.broker.ComplexReferenceTest$ProjectEngineer"/>
+    </class-descriptor>
+
+
+    <class-descriptor
+        class="org.apache.ojb.broker.ComplexReferenceTest$TeamMember"
+        table="CRT_MEMBER"
+    >
+        <field-descriptor
+         name="id"
+         column="ROLE_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+
+        <field-descriptor
+            name="employeeId"
+            column="EMPLOYEE_ID"
+            jdbc-type="INTEGER"
+            access="anonymous"
+         />
+
+        <field-descriptor
+            name="name"
+            column="NAME"
+            jdbc-type="VARCHAR"
+        />
+
+        <reference-descriptor
+            name="employee"
+            class-ref="org.apache.ojb.broker.ComplexReferenceTest$Employee"
+            refresh="true">
+                <foreignkey field-ref="employeeID"/>
+        </reference-descriptor>
+
+        <collection-descriptor
+            name="subProjects"
+            element-class-ref="org.apache.ojb.broker.ComplexReferenceTest$SubProject"
+            auto-retrieve="true"
+            auto-update="true"
+            auto-delete="false"
+        >
+                <inverse-foreignkey field-ref="projectId"/>
+        </collection-descriptor>
+
+    </class-descriptor>
+
+
+    <class-descriptor
+        class="org.apache.ojb.broker.ComplexReferenceTest$ProjectEngineer"
+        table="CRT_LEADER"
+    >
+        <field-descriptor
+            name="id"
+            column="ROLE_ID"
+            jdbc-type="INTEGER"
+            primarykey="true"
+            autoincrement="true"
+        />
+
+        <field-descriptor
+            name="employeeId"
+            column="EMPLOYEE_ID"
+            jdbc-type="INTEGER"
+            access="anonymous"
+         />
+
+        <field-descriptor
+            name="name"
+            column="NAME"
+            jdbc-type="VARCHAR"
+        />
+
+        <reference-descriptor
+            name="employee"
+            class-ref="org.apache.ojb.broker.ComplexReferenceTest$Employee"
+            refresh="true">
+                <foreignkey field-ref="employeeID"/>
+        </reference-descriptor>
+
+        <collection-descriptor
+            name="projects"
+            element-class-ref="org.apache.ojb.broker.ComplexReferenceTest$Project"
+            auto-retrieve="true"
+            auto-update="true"
+            auto-delete="true"
+            >
+                <inverse-foreignkey field-ref="engineerId"/>
+        </collection-descriptor>
+    </class-descriptor>
+
+
+    <class-descriptor
+        class="org.apache.ojb.broker.ComplexReferenceTest$Project"
+        table="CRT_PROJECT"
+    >
+        <field-descriptor
+            name="id"
+            column="PROJECT_ID"
+            jdbc-type="INTEGER"
+            primarykey="true"
+            autoincrement="true"
+        />
+
+        <field-descriptor
+            name="name"
+            column="NAME"
+            jdbc-type="VARCHAR"
+        />
+
+        <field-descriptor
+            name="engineerId"
+            column="ENGINEER_ID"
+            jdbc-type="INTEGER"
+            access="anonymous"
+        />
+
+        <reference-descriptor
+            name="leader"
+            class-ref="org.apache.ojb.broker.ComplexReferenceTest$ProjectEngineer">
+                <foreignkey field-ref="engineerId"/>
+        </reference-descriptor>
+
+        <collection-descriptor
+            name="subProjects"
+            element-class-ref="org.apache.ojb.broker.ComplexReferenceTest$SubProject"
+            auto-retrieve="true"
+            auto-update="true"
+            auto-delete="true"
+        >
+            <inverse-foreignkey field-ref="projectId"/>
+        </collection-descriptor>
+
+    </class-descriptor>
+
+
+    <class-descriptor
+        class="org.apache.ojb.broker.ComplexReferenceTest$SubProject"
+        table="CRT_SUB_PROJECT"
+    >
+        <field-descriptor
+         name="id"
+         column="SUB_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+
+        <field-descriptor
+         name="projectId"
+         column="PROJECT_ID"
+         jdbc-type="INTEGER"
+         access="anonymous"
+        />
+
+        <field-descriptor
+         name="tutorId"
+         column="TUTOR_ID"
+         jdbc-type="INTEGER"
+         access="anonymous"
+        />
+
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+
+        <reference-descriptor
+            name="project"
+            class-ref="org.apache.ojb.broker.ComplexReferenceTest$Project"
+        >
+            <foreignkey field-ref="projectId"/>
+        </reference-descriptor>
+
+        <reference-descriptor
+            name="tutor"
+            class-ref="org.apache.ojb.broker.ComplexReferenceTest$TeamMember"
+        >
+            <foreignkey field-ref="tutorId"/>
+        </reference-descriptor>
+    </class-descriptor>
+
+<!-- Mapping of User defined classes ends here -->

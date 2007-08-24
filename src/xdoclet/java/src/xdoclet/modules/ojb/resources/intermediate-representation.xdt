@@ -1,0 +1,687 @@
+<XDtComment:comment>First pass: Gather all relevant types (e.g. those having the ojb.class tag or a member with a ojb.* tag</XDtComment:comment>
+<XDtClass:forAllClasses>
+    <XDtClass:ifHasClassTag tagName="ojb.class" superclasses="false">
+        <XDtOjb:processClass ojb-persistent="true">
+        </XDtOjb:processClass>
+    </XDtClass:ifHasClassTag>  
+    <XDtClass:ifHasClassTag tagName="ojb.field" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtClass:ifHasClassTag>  
+    <XDtClass:ifHasClassTag tagName="ojb.reference" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtClass:ifHasClassTag>  
+    <XDtClass:ifHasClassTag tagName="ojb.modify-inherited" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtClass:ifHasClassTag>  
+    <XDtOjbMember:ifHasMemberWithTag tagName="ojb.field" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtOjbMember:ifHasMemberWithTag>
+    <XDtOjbMember:ifHasMemberWithTag tagName="ojb.reference" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtOjbMember:ifHasMemberWithTag>
+    <XDtOjbMember:ifHasMemberWithTag tagName="ojb.collection" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtOjbMember:ifHasMemberWithTag>
+    <XDtOjbMember:ifHasMemberWithTag tagName="ojb.nested" superclasses="false">
+        <XDtOjb:processClass>
+        </XDtOjb:processClass>
+    </XDtOjbMember:ifHasMemberWithTag>
+</XDtClass:forAllClasses>
+<XDtComment:comment>Second pass: Gather fields etc. and establish sub-/supertype relationships between the relevant types</XDtComment:comment>
+<XDtOjb:forAllClassDefinitions>
+    <XDtOjb:originalClass>
+        <XDtOjb:processClass
+            accept-locks="<XDtClass:classTagValue tagName='ojb.class' paramName='accept-locks' values='true,false' superclasses='false'/>"
+            attributes="<XDtClass:classTagValue tagName='ojb.class' paramName='attributes' superclasses='false'/>"
+            documentation="<XDtClass:classTagValue tagName='ojb.class' paramName='documentation' superclasses='false'/>"
+            factory-class="<XDtClass:classTagValue tagName='ojb.class' paramName='factory-class' superclasses='false'/>"
+            factory-method="<XDtClass:classTagValue tagName='ojb.class' paramName='factory-method' superclasses='false'/>"
+            generate-repository-info="<XDtClass:classTagValue tagName='ojb.class' paramName='generate-repository-info' values='true,false' superclasses='false'/>"
+            generate-table-info="<XDtClass:classTagValue tagName='ojb.class' paramName='generate-table-info' values='true,false' superclasses='false'/>"
+            include-inherited="<XDtClass:classTagValue tagName='ojb.class' paramName='include-inherited' values='true,false' superclasses='false'/>"
+            initialization-method="<XDtClass:classTagValue tagName='ojb.class' paramName='initialization-method' superclasses='false'/>"
+            isolation-level="<XDtClass:classTagValue tagName='ojb.class' paramName='isolation-level' values='read-uncommitted,read-committed,repeatable-read,serializable,optimistic' superclasses='false'/>"
+            proxy="<XDtClass:classTagValue tagName='ojb.class' paramName='proxy' superclasses='false'/>"
+            proxy-prefetching-limit="<XDtClass:classTagValue tagName='ojb.class' paramName='proxy-prefetching-limit' superclasses='false'/>"
+            refresh="<XDtClass:classTagValue tagName='ojb.class' paramName='refresh' values='true,false' superclasses='false'/>"
+            row-reader="<XDtClass:classTagValue tagName='ojb.class' paramName='row-reader' superclasses='false'/>"
+            schema="<XDtClass:classTagValue tagName='ojb.class' paramName='schema' superclasses='false'/>"
+            table="<XDtClass:classTagValue tagName='ojb.class' paramName='table' superclasses='false'/>"
+            table-documentation="<XDtClass:classTagValue tagName='ojb.class' paramName='table-documentation' superclasses='false'/>"
+        >
+            <XDtClass:forAllClassTags tagName="ojb.field" tagKey="name" superclasses="false">
+                <XDtOjb:processAnonymousField
+                    attributes="<XDtClass:classTagValue tagName='ojb.field' paramName='attributes'/>"
+                    autoincrement="<XDtClass:classTagValue tagName='ojb.field' paramName='autoincrement' values='none,ojb,database'/>"
+                    column="<XDtClass:classTagValue tagName='ojb.field' paramName='column'/>"
+                    column-documentation="<XDtClass:classTagValue tagName='ojb.field' paramName='column-documentation'/>"
+                    conversion="<XDtClass:classTagValue tagName='ojb.field' paramName='conversion'/>"
+                    default-fetch="<XDtClass:classTagValue tagName='ojb.anonymous-feld' paramName='default-fetch' values='true,false'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.field' paramName='documentation'/>"
+                    id="<XDtClass:classTagValue tagName='ojb.field' paramName='id'/>"
+                    indexed="<XDtClass:classTagValue tagName='ojb.field' paramName='indexed' values='true,false'/>"
+                    jdbc-type="<XDtClass:classTagValue tagName='ojb.field' paramName='jdbc-type'/>"
+                    length="<XDtClass:classTagValue tagName='ojb.field' paramName='length'/>"
+                    locking="<XDtClass:classTagValue tagName='ojb.field' paramName='locking' values='true,false'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.field' paramName='name'/>"
+                    nullable="<XDtClass:classTagValue tagName='ojb.field' paramName='nullable' values='true,false'/>"
+                    precision="<XDtClass:classTagValue tagName='ojb.field' paramName='precision'/>"
+                    primarykey="<XDtClass:classTagValue tagName='ojb.field' paramName='primarykey' values='true,false'/>"
+                    scale="<XDtClass:classTagValue tagName='ojb.field' paramName='scale'/>"
+                    sequence-name="<XDtClass:classTagValue tagName='ojb.field' paramName='sequence-name'/>"
+                    table="<XDtClass:classTagValue tagName='ojb.field' paramName='table'/>"
+                    update-lock="<XDtClass:classTagValue tagName='ojb.field' paramName='update-lock' values='true,false'/>"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.reference" superclasses="false">
+                <XDtOjb:processAnonymousReference
+                    attributes="<XDtClass:classTagValue tagName='ojb.reference' paramName='attributes'/>"
+                    auto-delete="<XDtClass:classTagValue tagName='ojb.reference' paramName='auto-delete' values='true,false,none,link,object'/>"
+                    auto-retrieve="<XDtClass:classTagValue tagName='ojb.reference' paramName='auto-retrieve' values='true,false'/>"
+                    auto-update="<XDtClass:classTagValue tagName='ojb.reference' paramName='auto-update' values='true,false,none,link,object'/>"
+                    class-ref="<XDtClass:classTagValue tagName='ojb.reference' paramName='class-ref'/>"
+                    database-foreignkey="<XDtClass:classTagValue tagName='ojb.reference' paramName='database-foreignkey' values='true,false'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.reference' paramName='documentation'/>"
+                    foreignkey="<XDtClass:classTagValue tagName='ojb.reference' paramName='foreignkey'/>"
+                    otm-dependent="<XDtClass:classTagValue tagName='ojb.reference' paramName='otm-dependent' values='true,false'/>"
+                    proxy="<XDtClass:classTagValue tagName='ojb.reference' paramName='proxy' values='true,false'/>"
+                    proxy-prefetching-limit="<XDtClass:classTagValue tagName='ojb.reference' paramName='proxy-prefetching-limit'/>"
+                    refresh="<XDtClass:classTagValue tagName='ojb.reference' paramName='refresh' values='true,false'/>"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.index" tagKey="name" superclasses="false">
+                <XDtOjb:processIndexDescriptor
+                    documentation="<XDtClass:classTagValue tagName='ojb.index' paramName='documentation'/>"
+                    fields="<XDtClass:classTagValue tagName='ojb.index' paramName='fields'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.index' paramName='name'/>"
+                    unique="<XDtClass:classTagValue tagName='ojb.index' paramName='unique' values='true,false'/>"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.object-cache" tagKey="class" superclasses="false">
+                <XDtOjb:processObjectCache
+                    attributes="<XDtClass:classTagValue tagName='ojb.object-cache' paramName='attributes'/>"
+                    class="<XDtClass:classTagValue tagName='ojb.object-cache' paramName='class'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.object-cache' paramName='documentation'/>"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.delete-procedure" superclasses="false">
+                <XDtOjb:processProcedure
+                    arguments="<XDtClass:classTagValue tagName='ojb.delete-procedure' paramName='arguments'/>"
+                    attributes="<XDtClass:classTagValue tagName='ojb.delete-procedure' paramName='attributes'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.delete-procedure' paramName='documentation'/>"
+                    include-pk-only="<XDtClass:classTagValue tagName='ojb.delete-procedure' paramName='include-pk-only' values='true,false'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.delete-procedure' paramName='name'/>"
+                    return-field-ref="<XDtClass:classTagValue tagName='ojb.delete-procedure' paramName='return-field-ref'/>"
+                    type="delete"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.insert-procedure" superclasses="false">
+                <XDtOjb:processProcedure
+                    arguments="<XDtClass:classTagValue tagName='ojb.insert-procedure' paramName='arguments'/>"
+                    attributes="<XDtClass:classTagValue tagName='ojb.insert-procedure' paramName='attributes'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.insert-procedure' paramName='documentation'/>"
+                    include-all-fields="<XDtClass:classTagValue tagName='ojb.insert-procedure' paramName='include-all-fields' values='true,false'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.insert-procedure' paramName='name'/>"
+                    return-field-ref="<XDtClass:classTagValue tagName='ojb.insert-procedure' paramName='return-field-ref'/>"
+                    type="insert"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.update-procedure" superclasses="false">
+                <XDtOjb:processProcedure
+                    arguments="<XDtClass:classTagValue tagName='ojb.update-procedure' paramName='arguments'/>"
+                    attributes="<XDtClass:classTagValue tagName='ojb.update-procedure' paramName='attributes'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.update-procedure' paramName='documentation'/>"
+                    include-all-fields="<XDtClass:classTagValue tagName='ojb.update-procedure' paramName='include-all-fields' values='true,false'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.update-procedure' paramName='name'/>"
+                    return-field-ref="<XDtClass:classTagValue tagName='ojb.update-procedure' paramName='return-field-ref'/>"
+                    type="update"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.constant-argument" tagKey="name" superclasses="false">
+                <XDtOjb:processProcedureArgument
+                    attributes="<XDtClass:classTagValue tagName='ojb.constant-argument' paramName='attributes'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.constant-argument' paramName='documentation'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.constant-argument' paramName='name'/>"
+                    value="<XDtClass:classTagValue tagName='ojb.constant-argument' paramName='value'/>"
+                    type="constant"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.runtime-argument" tagKey="name" superclasses="false">
+                <XDtOjb:processProcedureArgument
+                    attributes="<XDtClass:classTagValue tagName='ojb.runtime-argument' paramName='attributes'/>"
+                    documentation="<XDtClass:classTagValue tagName='ojb.runtime-argument' paramName='documentation'/>"
+                    field-ref="<XDtClass:classTagValue tagName='ojb.runtime-argument' paramName='field-ref'/>"
+                    name="<XDtClass:classTagValue tagName='ojb.runtime-argument' paramName='name'/>"
+                    return="<XDtClass:classTagValue tagName='ojb.runtime-argument' paramName='return' values='true,false'/>"
+                    type="runtime"
+                />
+            </XDtClass:forAllClassTags>
+            <XDtClass:forAllClassTags tagName="ojb.modify-inherited" tagKey="name" superclasses="false">
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='access'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        access="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='access' values='readonly,readwrite'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='attributes'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        attributes="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='attributes'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='autoincrement'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        autoincrement="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='autoincrement' values='none,ojb,database'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='auto-delete'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        auto-delete="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='auto-delete' values='true,false,none,link,object'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='auto-retrieve'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        auto-retrieve="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='auto-retrieve' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='auto-update'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        auto-update="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='auto-update' values='true,false,none,link,object'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='class-ref'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        class-ref="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='class-ref'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='collection-class'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        collection-class="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='collection-class'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='column'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        column="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='column'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='column-documentation'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        column-documentation="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='column-documentation'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='conversion'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        conversion="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='conversion'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='database-foreignkey'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        database-foreignkey="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='database-foreignkey'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='default-fetch'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        default-fetch="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='default-fetch' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='documentation'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        documentation="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='documentation'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='element-class-ref'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        element-class-ref="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='element-class-ref'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='foreignkey'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        foreignkey="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='foreignkey'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='id'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        id="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='id'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='ignore'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        ignore="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='ignore' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='indexed'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        indexed="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='indexed' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='jdbc-type'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        jdbc-type="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='jdbc-type'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='length'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        length="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='length'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='locking'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        locking="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='locking' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='nullable'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        nullable="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='nullable' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='orderby'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        orderby="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='orderby'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='otm-dependent'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        otm-dependent="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='otm-dependent' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='precision'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        precision="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='precision'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='primarykey'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        primarykey="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='primarykey' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='proxy'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        proxy="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='proxy' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='proxy-prefetching-limit'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        proxy-prefetching-limit="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='proxy-prefetching-limit'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='query-customizer'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        query-customizer="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='query-customizer'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='query-customizer-attributes'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        query-customizer-attributes="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='query-customizer-attributes'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='refresh'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        refresh="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='refresh' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='scale'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        scale="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='scale'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='sequence-name'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        sequence-name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='sequence-name'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='table'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        table="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='table'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+                <XDtClass:ifHasClassTag tagName='ojb.modify-inherited' paramName='update-lock'>
+                    <XDtOjb:processModification
+                        name="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='name' superclasses='false'/>"
+                        update-lock="<XDtClass:classTagValue tagName='ojb.modify-inherited' paramName='update-lock' values='true,false'/>"
+                    />
+                </XDtClass:ifHasClassTag>
+            </XDtClass:forAllClassTags>
+            <XDtClass:ifClassTagValueEquals tagName="ojb.class" paramName="determine-extents" values="true,false" value="true" default="true" superclasses="false">
+                <XDtOjb:forAllSubClasses>
+                    <XDtOjb:addExtent name="<XDtClass:fullClassName/>"/>
+                </XDtOjb:forAllSubClasses>
+            </XDtClass:ifClassTagValueEquals>
+            <XDtClass:ifClassTagValueEquals tagName="ojb.class" paramName="determine-extents" values="true,false" value="false" default="true" superclasses="false">
+                <XDtClass:ifHasClassTag tagName="ojb.extent-class" superclasses="false">
+                    <XDtClass:forAllClassTags tagName="ojb.extent-class" tagKey="class-ref" superclasses="false">
+                        <XDtOjb:addExtent name="<XDtClass:classTagValue tagName='ojb.extent-class' paramName='class-ref' superclasses='false'/>"/>
+                    </XDtClass:forAllClassTags>
+                </XDtClass:ifHasClassTag>
+            </XDtClass:ifClassTagValueEquals>
+            <XDtOjbMember:forAllMembers tagName="ojb.field" superclasses="false" sort="false">
+                <XDtOjb:processField
+                    access="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='access' values='readonly,readwrite'/>"
+                    attributes="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='attributes'/>"
+                    autoincrement="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='autoincrement' values='none,ojb,database'/>"
+                    column="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='column'/>"
+                    column-documentation="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='column-documentation'/>"
+                    conversion="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='conversion'/>"
+                    default-fetch="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='default-fetch' values='true,false'/>"
+                    documentation="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='documentation'/>"
+                    id="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='id'/>"
+                    indexed="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='indexed' values='true,false'/>"
+                    jdbc-type="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='jdbc-type'/>"
+                    length="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='length'/>"
+                    locking="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='locking' values='true,false'/>"
+                    nullable="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='nullable' values='true,false'/>"
+                    precision="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='precision'/>"
+                    primarykey="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='primarykey' values='true,false'/>"
+                    scale="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='scale'/>"
+                    sequence-name="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='sequence-name'/>"
+                    table="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='table'/>"
+                    update-lock="<XDtOjbMember:memberTagValue tagName='ojb.field' paramName='update-lock' values='true,false'/>"
+                >
+                </XDtOjb:processField>
+            </XDtOjbMember:forAllMembers>
+            <XDtOjbMember:forAllMembers tagName="ojb.reference" superclasses="false" sort="false">
+                <XDtOjb:processReference
+                    attributes="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='attributes'/>"
+                    auto-delete="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='auto-delete' values='true,false,none,link,object'/>"
+                    auto-retrieve="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='auto-retrieve' values='true,false'/>"
+                    auto-update="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='auto-update' values='true,false,none,link,object'/>"
+                    class-ref="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='class-ref'/>"
+                    database-foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='database-foreignkey' values='true,false'/>"
+                    documentation="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='documentation'/>"
+                    foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='foreignkey'/>"
+                    otm-dependent="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='otm-dependent' values='true,false'/>"
+                    proxy="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='proxy' values='true,false'/>"
+                    proxy-prefetching-limit="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='proxy-prefetching-limit'/>"
+                    refresh="<XDtOjbMember:memberTagValue tagName='ojb.reference' paramName='refresh' values='true,false'/>"
+                 >
+                </XDtOjb:processReference>
+            </XDtOjbMember:forAllMembers>
+            <XDtOjbMember:forAllMembers tagName="ojb.collection" superclasses="false" sort="false">
+                <XDtOjb:processCollection
+                    attributes="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='attributes'/>"
+                    auto-delete="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='auto-delete' values='true,false,none,link,object'/>"
+                    auto-retrieve="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='auto-retrieve' values='true,false'/>"
+                    auto-update="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='auto-update' values='true,false,none,link,object'/>"
+                    collection-class="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='collection-class'/>"
+                    database-foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='database-foreignkey' values='true,false'/>"
+                    documentation="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='documentation'/>"
+                    element-class-ref="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='element-class-ref'/>"
+                    foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='foreignkey'/>"
+                    foreignkey-documentation="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='foreignkey-documentation'/>"
+                    indirection-table="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='indirection-table'/>"
+                    indirection-table-documentation="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='indirection-table-documentation'/>"
+                    indirection-table-primarykeys="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='indirection-table-primarykeys' values='true,false'/>"
+                    orderby="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='orderby'/>"
+                    otm-dependent="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='otm-dependent' values='true,false'/>"
+                    proxy="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='proxy' values='true,false'/>"
+                    proxy-prefetching-limit="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='proxy-prefetching-limit'/>"
+                    query-customizer="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='query-customizer'/>"
+                    query-customizer-attributes="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='query-customizer-attributes'/>"
+                    refresh="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='refresh' values='true,false'/>"
+                    remote-foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='remote-foreignkey'/>"
+                    remote-foreignkey-documentation="<XDtOjbMember:memberTagValue tagName='ojb.collection' paramName='remote-foreignkey-documentation'/>"
+                >
+                </XDtOjb:processCollection>
+            </XDtOjbMember:forAllMembers>
+            <XDtOjbMember:forAllMembers tagName="ojb.nested" superclasses="false" sort="false">
+                <XDtOjb:processNested/>
+	            <XDtOjbMember:forAllMemberTags tagName="ojb.modify-nested" tagKey="name" superclasses="false" sort="false">
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='access'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        access="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='access' values='readonly,readwrite'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='attributes'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        attributes="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='attributes'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='autoincrement'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        autoincrement="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='autoincrement' values='none,ojb,database'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='auto-delete'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        auto-delete="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='auto-delete' values='true,false,none,link,object'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='auto-retrieve'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        auto-retrieve="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='auto-retrieve' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='auto-update'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        auto-update="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='auto-update' values='true,false,none,link,object'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='class-ref'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        class-ref="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='class-ref'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='collection-class'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        collection-class="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='collection-class'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='column'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        column="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='column'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='column-documentation'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        column-documentation="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='column-documentation'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='conversion'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        conversion="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='conversion'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='database-foreignkey'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        database-foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='database-foreignkey'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='default-fetch'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        default-fetch="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='default-fetch' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='documentation'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        documentation="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='documentation'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='element-class-ref'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        element-class-ref="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='element-class-ref'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='foreignkey'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        foreignkey="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='foreignkey'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='id'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        id="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='id'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='ignore'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        ignore="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='ignore' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='indexed'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        indexed="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='indexed' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='jdbc-type'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        jdbc-type="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='jdbc-type'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='length'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        length="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='length'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='locking'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        locking="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='locking' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='nullable'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        nullable="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='nullable' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='orderby'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        orderby="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='orderby'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='otm-dependent'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        otm-dependent="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='otm-dependent' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='precision'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        precision="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='precision'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='primarykey'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        primarykey="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='primarykey' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='proxy'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        proxy="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='proxy' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='proxy-prefetching-limit'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        proxy-prefetching-limit="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='proxy-prefetching-limit'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='query-customizer'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        query-customizer="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='query-customizer'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='query-customizer-attributes'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        query-customizer-attributes="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='query-customizer-attributes'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='refresh'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        refresh="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='refresh' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='scale'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        scale="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='scale'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='sequence-name'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        sequence-name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='sequence-name'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='table'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        table="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='table'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	                <XDtOjbMember:ifHasMemberTag tagName='ojb.modify-nested' paramName='update-lock'>
+	                    <XDtOjb:processNestedModification
+	                        name="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='name'/>"
+	                        update-lock="<XDtOjbMember:memberTagValue tagName='ojb.modify-nested' paramName='update-lock' values='true,false'/>"
+	                    />
+	                </XDtOjbMember:ifHasMemberTag>
+	            </XDtOjbMember:forAllMemberTags>
+            </XDtOjbMember:forAllMembers>
+        </XDtOjb:processClass>
+    </XDtOjb:originalClass>
+</XDtOjb:forAllClassDefinitions><XDtOjb:prepare/>

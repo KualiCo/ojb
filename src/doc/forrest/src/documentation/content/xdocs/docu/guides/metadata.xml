@@ -1,0 +1,571 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: metadata.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Metadata handling</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                To make OJB proper work information about the used
+                databases (more info see
+                <a href="site:connection">connection handling</a>) and
+                <a href="site:sequence-manager">sequence managers</a> is needed.
+                Henceforth these metadata information is called
+                <strong>connection metadata</strong>.
+            </p>
+            <p>
+                Further on OJB needs information about
+                the persistent objects and object relations, henceforth this information is called
+                <strong>(persistent) object metadata</strong>.
+            </p>
+            <p>
+                All metadata information need to be stored in the OJB
+                <a href="site:repository">repository file</a>.
+            </p>
+            <p>
+                The
+                <em>connection metadata</em> are completely decoupled from the
+                <em>persistent object
+                    metadata</em>. Thus it is possible to use the same
+                <em>object metadata</em> on different databases.
+                <br/>
+                But it is also possible to use different
+                <a href="#metadata-profiles">
+                    <em>object metadata</em> profiles
+                </a>.
+            </p>
+            <p>
+                In OJB there are several ways to make metadata information available:
+            </p>
+            <ul>
+                <li>using xml configuration files parsed at start up by OJB</li>
+                <li>set metadata instances at runtime by building metadata class instances at runtime</li>
+                <li>parse additional xml configuration files (additional repository files) and merge at runtime</li>
+            </ul>
+            <p>
+                All classes used for managing metadata stuff can be find under
+                <code>org.apache.ojb.broker.metadata.*</code>-package.
+                <br/>
+                The main class
+                for metadata handling and entry point for metadata manipulation at
+                runtime is
+                <a href="ext:api/metadata-manager">
+                    <code>org.apache.ojb.broker.metadata.MetadataManager</code>
+                </a>.
+            </p>
+        </section>
+
+
+        <section>
+            <title>When does OJB read metadata</title>
+            <p>
+                By default all metadata is read at startup of OJB, when the first call to
+                <code>PersistenceBrokerFactory</code> (directly or by a top-level api) or
+                <code>MetadataManager</code> class was done.
+            </p>
+            <p>
+                OJB expects a
+                <a href="site:repository">repository file</a> at startup, but it is also possible
+                to start OJB
+                <a href="#without-repository">without an repository file</a> or only
+                <a href="#load-connection-metadata">load connection metadata</a>
+                and
+                <a href="#metadata-at-runtime">object metadata at runtime</a> or what ever
+                combination fit your requirements.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Connection metadata</title>
+            <p>
+                The
+                <em>connection metadata</em> encapsulate all information referring to used database and must be
+                declared in
+                <a href="site:repository">OJB repository file</a>.
+                <br/>
+                For each database a
+                <a href="site:repository/jdbc-connection-descriptor">
+                    <em>jdbc-connection-descriptor</em>
+                </a>
+                must be declared. This element encapusaltes the connection specific metadata information.
+            </p>
+            <p>
+                The
+                <em>JdbcConnectionDescriptor</em> instances are managed by
+                <a href="ext:api/connection-repository">
+                    <code>org.apache.ojb.broker.metadata.ConnectionRepository</code>
+                </a>
+            </p>
+
+
+            <anchor id="load-connection-metadata"/>
+            <section>
+                <title>Load and merge connection metadata</title>
+                <p>
+                    It is possible to load additional connection metadata at runtime and merge it with
+                    the existing one. The used repository files have to be valid against the
+                    <a href="ext:repository.dtd">repository.dtd</a>:
+                </p>
+                <source><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE descriptor-repository SYSTEM "repository.dtd">
+
+<descriptor-repository version="1.0" isolation-level="read-uncommitted">
+    <jdbc-connection-descriptor
+        jcd-alias="runtime"
+        platform="Hsqldb"
+        jdbc-level="2.0"
+        driver="org.hsqldb.jdbcDriver"
+        protocol="jdbc"
+        subprotocol="hsqldb"
+        dbalias="../OJB_FarAway"
+        username="sa"
+        password=""
+        batch-mode="false"
+    >
+
+        <object-cache class="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl">
+            <attribute attribute-name="timeout" attribute-value="900"/>
+            <attribute attribute-name="autoSync" attribute-value="true"/>
+        </object-cache>
+
+        <connection-pool
+            maxActive="5"
+            whenExhaustedAction="0"
+            validationQuery="select count(*) from OJB_HL_SEQ"
+        />
+
+        <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+            <attribute attribute-name="grabSize" attribute-value="5"/>
+        </sequence-manager>
+    </jdbc-connection-descriptor>
+
+    <!-- user/passwd at runtime required -->
+    <jdbc-connection-descriptor
+        jcd-alias="minimal"
+        platform="Hsqldb"
+        jdbc-level="2.0"
+        driver="org.hsqldb.jdbcDriver"
+        protocol="jdbc"
+        subprotocol="hsqldb"
+        dbalias="../OJB_FarAway"
+    >
+    </jdbc-connection-descriptor>
+</descriptor-repository>]]></source>
+                <p>
+                    In the above additional repository file two new
+                    <em>jdbc-connection-descriptor</em>
+                    (new databases)
+                    <em>runtime</em> and
+                    <em>minimal</em> are declared, to load and merge
+                    the additional connection metadata the
+                    <em>MetadataManager was used:</em>
+                </p>
+                <source><![CDATA[
+// get MetadataManager instance
+MetadataManager mm = MetadataManager.getInstance();
+
+// read connection metadata from repository file
+ConnectionRepository cr = mm.readConnectionRepository("valid path/url to repository file");
+
+// merge new connection metadata with existing one
+mm.mergeConnectionRepository(cr);]]></source>
+            </section>
+            <p>
+                After the merge the access to the new databases is ready for use.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Persistent object metadata</title>
+            <p>
+                The
+                <em>object metadata</em> encapsulate all information referring to the persistent capable
+                java objects and the associated tables in database.
+                <em>Object metadata</em> must be declared in
+                <a href="site:repository">OJB repository file</a>.
+                <br/>
+                Each persistence capable java object must be declared in a corresponding
+                <a href="site:repository/class-descriptor">class-descriptor</a>.
+            </p>
+            <anchor id="global-repository"/>
+            <p>
+                The
+                <em>ClassDescriptor</em> instances are managed by
+                <a href="ext:api/descriptor-repository">
+                    <code>org.apache.ojb.broker.metadata.DescriptorRepository</code>
+                </a>.
+                Per default OJB use only <strong>one global instance</strong> of this class - it's
+                the repository file read at startup of OJB. But it is possible to change the global
+                use repository:
+            </p>
+            <source><![CDATA[
+// get MetadataManager instance
+MetadataManager mm = MetadataManager.getInstance();
+
+mm.setDescriptor(myGlobalRepository, true);]]></source>
+
+            <anchor id="load-object-metadata"/>
+            <section>
+                <title>Load and merge object metadata</title>
+                <p>
+                    It is possible to load additional object metadata at runtime and merge it with
+                    the existing one. The used repository files have to be valid against the
+                    <a href="ext:repository.dtd">repository.dtd</a>:
+                </p>
+                <note>
+                    When using the dynamic mapping technique described below, all objects in
+                    the structure must implementet <code>java.io.Serializable</code> for OJB
+                    to be able to created cloned copies. OJB currently uses
+                    <a href="site:jakarta/commons-lang/api/serialization-utils">SerializationUtils</a>
+                    from Commons Lang Core Language Utilities for all deep-cloning operations.
+                </note>
+                <p>
+                    An additional repository file may look like:
+                </p>
+                <source><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE descriptor-repository SYSTEM "repository.dtd">
+
+<descriptor-repository version="1.0" isolation-level="read-uncommitted">
+
+    <class-descriptor
+      class="org.my.MyObject"
+      table="MY_OBJ"
+    >
+        <field-descriptor
+         name="id"
+         column="OBJ_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+    </class-descriptor>
+</descriptor-repository>]]></source>
+                <p>
+                    To load and merge the object metadata of the additional repository files first read
+                    the metadata using the
+                    <a href="ext:api/metadata-manager">
+                        <em>MetadataManager</em>
+                    </a>.
+                </p>
+                <source><![CDATA[
+// get MetadataManager instance
+MetadataManager mm = MetadataManager.getInstance();
+
+// read the additional repository file
+DescriptorRepository dr = mm.readDescriptorRepository("valid path/url to repository file");
+
+// merge the new class-descriptor with existing object metadata
+mm.mergeDescriptorRepository(dr);]]></source>
+                <p>
+                    It is also possible to keep the different
+                    <em>object metadata</em> for the same classes
+                    parallel by using
+                    <a href="#metadata-profiles">
+                        <em>metadata profiles</em>
+                    </a>.
+                </p>
+            </section>
+
+
+            <anchor id="global-changes"/>
+            <section>
+                <title>Global
+                    <em>object metadata</em> changes
+                </title>
+                <p>
+                    The
+                    <a href="ext:api/metadata-manager">
+                        <em>MetadataManager</em>
+                    </a>
+                    provide several methods to read/set and manipulate object metadata.
+                </p>
+                <p>
+                    Per default OJB use a <a href="#global-repository">global instance</a> of class
+                    <a href="ext:api/descriptor-repository">
+                        <em>DescriptorRepository</em>
+                    </a> to manage all
+                    <em>object metadata</em>. This means that all
+                    <em>PersistenceBroker</em> instances (kernel component
+                    used by all top-level api) use the same object metadata.
+                </p>
+                <p>
+                    So changes of the object metadata (e.g. remove of a CollectionDescriptor instance from a
+                    ClassDescriptor) will be seen immediately by all
+                    <em>PersistenceBroker</em> instances.
+                    This is in most cases not the favoured behaviour and OJB supports
+                    <a href="#per-thread-changes">per thread changes of object metadata</a>.
+                </p>
+
+            </section>
+
+            <anchor id="per-thread-changes"/>
+            <section>
+                <title>Per thread metadata changes</title>
+                <p>
+                    Per default the manager handle <a href="#global-repository">one global</a>
+                    <a href="ext:api/descriptor-repository">
+                        <em>DescriptorRepository</em>
+                    </a> for all calling threads
+                    (keep in mind PB-api is not threadsafe, thus each thread use it's own PersistenceBroker instance),
+                    but it is ditto possible to use different
+                    <em>metadata profiles</em> in a per thread manner -
+                    profiles means different instances of DescriptorRepository  objects. Each thread/PersistenceBroker instance
+                    can be associated with a specific
+                    <em>DescriptorRepository</em> instance. All made object metadata
+                    changes only will be seen by the PersistenceBroker instances using the same DescriptorRepository instance.
+                    In theory each PersistenceBroker instance could be associated with a separate instance of object
+                    metadata, but the recommended way is to use
+                    <a href="#metadata-profiles">metadata profiles</a>.
+                </p>
+                <anchor id="per-thread-mode"/>
+                <p>
+                    To enable the use of different
+                    <em>DescriptorRepository</em> instances for each thread do:
+                </p>
+                <source><![CDATA[
+MetadataManager mm = MetadataManager.getInstance();
+// tell the manager to use per thread mode
+mm.setEnablePerThreadChanges(true);
+...]]></source>
+                <p>
+                    This can be done e.g. at start up or at runtime when it's needed. If method
+                    <code>setEnablePerThreadChanges</code> is set <em>false</em> only the
+                    <a href="#global-repository"><em>global DescriptorRepository</em></a> was used.
+                    Now it's possible to use dedicated DescriptorRepository instances per thread:
+                </p>
+                <source><![CDATA[
+// e.g get a coppy of the global repository
+DescriptorRepository dr = mm.copyOfGlobalRepository();
+// now we can manipulate the persistent object metadata of the copy
+......
+
+// set the changed repository for current thread
+mm.setDescriptor(dr);
+
+// now let this thread lookup a PersistenceBroker instance
+// with the modified metadata
+// all other threads use still the global object metadata
+PersistenceBroker broker = PersistenceBrokerFactory.createPersistenceBroker(myKey)]]></source>
+            </section>
+            <note>
+                Set object metadata (setting of the DescriptorRepository) before lookup the PersistenceBroker instance
+                for current thread, because the metadata was bound to the PersistenceBroker instance at lookup.
+            </note>
+
+
+            <anchor id="metadata-profiles"/>
+            <section>
+                <title>Object metadata profiles</title>
+                <p>
+                    MetadataManager was shipped with a simple mechanism to add, remove and load different
+                    <em>persistent objects metadata profiles</em> (different DescriptorRepository instances)
+                    in a per thread manner. Use method
+                    <em>addProfile</em> to add different persistent object
+                    metadata profiles, method
+                    <em>removeProfile</em> to remove profiles and
+                    <em>loadProfile</em> load a profile for the calling thread.
+                </p>
+                <source><![CDATA[
+// get MetadataManager instance
+MetadataManager mm = MetadataManager.getInstance();
+
+// enable per thread mode if not done before
+mm.setEnablePerThreadChanges(true);
+
+// Load additional object metadata by parsing an repository file
+DescriptorRepository dr_1 = mm.readDescriptorRepository("pathOrURLtoFile_1");
+DescriptorRepository dr_2 = mm.readDescriptorRepository("pathOrURLtoFile_2");
+
+// add  profiles
+mm.addProfile("global", mm.copyOfGlobalRepository());
+mm.addProfile("guest", dr_1);
+mm.addProfile("admin", dr_2);
+
+// now load a specific profile
+mm.loadProfile("admin");
+broker = PersistenceBrokerFactory.defaultPersistenceBroker();]]></source>
+                <p>
+                    After the
+                    <em>loadProfile</em> call all PersistenceBroker instances will be associated
+                    with the
+                    <em>admin</em> profile.
+                </p>
+                <note>
+                    Method
+                    <em>loadProfile</em> only proper work if the
+                    <a href="#per-thread-mode">per thread mode</a> is enabled.
+                </note>
+            </section>
+
+
+            <section>
+                <title>Reference runtime changes on per query basis</title>
+                <fixme author="arminw">
+                    Changes of reference settings on a per query basis will be supported with
+                    next upcoming release 1.1
+                </fixme>
+            </section>
+
+            <section>
+                <title>Pitfalls</title>
+                <p>
+                    OJB's flexibility of <em>metadata handling</em> demanded specific attention
+                    on object caching. If a <a href="site:object-cache">global cache</a>
+                    (shared permanent cache) was used, be aware of side-effects caused by runtime
+                    metadata changes.
+                </p>
+                <p>
+                    For example, using two metadata profiles <em>A</em> and <em>B</em>. In profile A all
+                    fields of a class are showed, in profile B only the 'name filed' is showed. Thread 1 use
+                    profile A, thread 2 use profile B. It is obvious that a global shared cache will cause
+                    trouble.
+                </p>
+            </section>
+        </section>
+
+
+        <section>
+            <title>Questions</title>
+
+            <anchor id="without-repository"/>
+            <section>
+                <title>Start OJB without a repository file?</title>
+                <p>
+                    It is possible to start OJB without any repository file. In this case you have
+                    to declare the <code>jdbc-connection-descriptor</code> and
+                    <code>class-descriptor</code> at runtime. See
+                    <a href="#connect-at-runtime">Connect to database at runtime?</a> and
+                    <a href="#metadata-at-runtime">Add new persistent objects (class-descriptors) at runtime?</a>
+                    for more information.
+                </p>
+            </section>
+
+
+            <anchor id="connect-at-runtime"/>
+            <section>
+                <title>Connect to database at runtime?</title>
+                <p>
+                    There are two possibilities to connect your database at runtime:
+                </p>
+                <ul>
+                    <li>load connection metadata by parsing additional repository files</li>
+                    <li>create the
+                        <em>JdbcConnectionDescriptor</em> at runtime
+                    </li>
+                </ul>
+                <p>
+                    The first one is described in section
+                    <a href="#load-connection-metadata">load and merge connection metadata</a>.
+                    For the second one a new instance of class
+                    <a href="ext:api/jdbc-connection-descriptor">
+                        <code>org.apache.ojb.broker.metadata.JdbcConnectionDescriptor</code>
+                    </a>
+                    is needed. The prepared instance will be passed to class
+                    <em>ConnectionRepository</em>:
+                </p>
+                <source><![CDATA[
+ConnectionRepository cr = MetadataManager.getInstance().connectionRepository();
+
+JdbcConnectionDescriptor jcd = new JdbcConnectionDescriptor();
+jcd.setJcdAlias("testConnection");
+jcd.setUserName("sa");
+jcd.setPassWord("sa");
+jcd.setDbAlias("aAlias");
+jcd.setDbms("aDatabase");
+// .... the other required setter
+
+// add new descriptor
+cr.addDescriptor(jcd);
+
+// Now it's possible to obtain a PB-instance
+PBKey key = new PBKey("testConnection", "sa", "sa");
+PersistenceBroker broker = PersistenceBrokerFactory.
+createPersistenceBroker(key);]]></source>
+                <p>
+                    Please
+                    <a href="site:metadata">read this section from beginning</a> for further information.
+                </p>
+            </section>
+
+
+            <anchor id="metadata-at-runtime"/>
+            <section>
+                <title>Add new persistent objects metadata (
+                    <code>class-descriptor</code>) at runtime?
+                </title>
+                <p>
+                    There are two possibilities to add new
+                    <em>object metadata</em> at runtime:
+                </p>
+                <ul>
+                    <li>load object metadata by parsing additional repository files</li>
+                    <li>create new metadata objects at runtime</li>
+                </ul>
+                <p>
+                    The first one is described in section
+                    <a href="#load-object-metadata">load object metadata</a>.
+                </p>
+                <p>
+                    To create and add new metadata objects at runtime we create new
+                    <a href="ext:api/class-descriptor">
+                        <code>org.apache.ojb.broker.metadata.ClassDescriptor</code>
+                    </a>
+                    instances at runtime and using the
+                    <code>MetadataManager</code> to add them to OJB:
+                </p>
+                <source><![CDATA[
+DescriptorRepository dr = MetadataManager.getInstance().getRepository();
+
+ClassDescriptor cld = new ClassDescriptor(dr);
+cld.setClassOfObject(A.class);
+//.... other setter
+
+// add the fields of the class
+FieldDescriptor fd = new FieldDescriptor(cld, 1);
+fd.setPersistentField(A.class, "someAField");
+cld.addFieldDescriptor(fd);
+
+// now we add the the class descriptor
+dr.setClassDescriptor(cld);]]></source>
+                <p>
+                    Please
+                    <a href="site:metadata">read this section from beginning</a> for further information.
+                </p>
+            </section>
+        </section>
+    </body>
+</document>
+

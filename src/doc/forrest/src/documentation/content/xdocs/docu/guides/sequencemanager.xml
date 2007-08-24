@@ -1,0 +1,1178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: sequencemanager.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Sequence Manager</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Ryan Vanderwerf et al." email=""/>
+            <person name="Andrew Clute" email=""/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>The OJB Sequence Manager</title>
+            <p>
+                All <a href="ext:sequence-manager">sequence manager</a> implementations shipped with OJB
+                you can find under the <code>org.apache.ojb.broker.util.sequence</code> package using the
+                following naming convention <code>SequenceManagerXXXImpl</code>.
+            </p>
+
+            <anchor id="autoincrement"/>
+            <section>
+                <title>Automatical assignment of unique values</title>
+                <p>
+                    As mentioned in
+                    <a href="site:mapping-tutorial">mapping tutorial</a> OJB provides a mechanism to
+                    automatic assign unique values for primary key attributes. You just have to enable the
+                    <strong><em>autoincrement</em></strong> attribute in the respective
+                    <a href="site:repository/field-descriptor"><em>field-descriptor</em></a>
+                    of the XML repository file as follows:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+  class="my.Article"
+  table="ARTICLE"
+>
+    <field-descriptor
+     name="articleId"
+     column="ARTICLE_ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+    />
+    ....
+</class-descriptor>]]></source>
+                <p>
+                    This definitions contains the following information:
+                    <br/>
+                    The attribute
+                    <code>articleId</code> is mapped on the table's
+                    column
+                    <code>ARTICLE_ID</code>. The JDBC Type of
+                    this column is
+                    <code>INTEGER</code>. This
+                    is a primary key column and OJB shall automatically assign unique values
+                    to this attribute.
+                </p>
+
+                <p>
+                    This mechanism works for all whole-numbered column types like BIGINT, INTEGER, SMALLINT,...
+                    and for CHAR, VARCHAR columns. This mechanism helps you to keep your business logic free
+                    from code that computes unique ID's for primary key attributes.
+                </p>
+            </section>
+
+
+            <section>
+                <title>Force computation of unique values</title>
+                <p>
+                    By default OJB triggers the computation
+                    of unique ids during calls to PersistenceBroker.store(...).
+                    Sometimes it will be necessary to have the ids computed in advance,
+                    before a new persistent object was written to database.
+                    This can be done by simply obtaining the Identity of the respective object as
+                    follows:
+                </p>
+                <source><![CDATA[
+Identity oid = broker.serviceIdentity().buildIdentity(Object newPersistentObject);]]></source>
+                <p>
+                    This creates an <a href="ext:api/identity">Identity</a> object for the
+                    new persistent object and set all primary key values of the new persistent object
+                    - But it only works if <a href="#autoincrement"><code>autoincrement</code></a>
+                    is enabled for the primary key fields.
+                </p>
+                <warning>
+                    Force computation of unique values is not allowed when using <em>database based
+                    Identity columns</em> for primary key generation (e.g via
+                    <a href="#identity-columns">Identity column supporting sequence manager</a>), because the
+                    <em>real</em> PK value is at the earliest available after database insert operation. If you
+                    nevertheless force PK computing, OJB will use an temporary dummy PK value in the
+                    Identity object and this may lead to unexpeted behavior.
+                </warning>
+                <p>
+                    Info about lookup persistent objects by primary key fields
+                    <a href="site:pb-tutorial/find-by-pk">see here</a>.
+                </p>
+            </section>
+
+
+            <section>
+                <title>How to change the sequence manager?</title>
+                <p>
+                    To enable a specific
+                    <a href="ext:sequence-manager"><code>SequenceManager</code></a> implementation declare
+                    an <em>sequence-manager</em> attribute within the
+                    <a href="site:jdbc-connection-descriptor">jdbc-connection-descriptor</a>
+                    element in the <a href="site:repository">repository file</a>.
+                    <br/>
+                    If no <em>sequence-manager</em> was specified in the
+                    <em>jdbc-connection-descriptor</em>, OJB use a default sequence manager implementation
+                    (default was <em>SequenceManagerHighLowImpl</em>).
+                </p>
+                <p>
+                    Further information you could find in the
+                    <a href="ext:repository.dtd">repository.dtd</a> section sequence-manager element.
+                </p>
+                <p>
+                    Example
+                    <em>jdbc-connection-descriptor</em> using
+                    a <em>sequence-manager</em> tag:
+                </p>
+                <source><![CDATA[
+<jdbc-connection-descriptor
+        jcd-alias="farAway"
+        platform="Hsqldb"
+        jdbc-level="2.0"
+        driver="org.hsqldb.jdbcDriver"
+        protocol="jdbc"
+        subprotocol="hsqldb"
+        dbalias="../OJB_FarAway"
+        username="sa"
+        password=""
+        batch-mode="false"
+    >
+
+    <connection-pool
+        maxActive="5"
+        whenExhaustedAction="0"
+        validationQuery="select count(*) from OJB_HL_SEQ"
+    />
+
+    <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+        <attribute attribute-name="seq.start" attribute-value="10000"/>
+        <attribute attribute-name="grabSize" attribute-value="20"/>
+    </sequence-manager>
+</jdbc-connection-descriptor>]]></source>
+                <p>
+                    The mandatory
+                    <em>className</em> attribute needs the <strong>full-qualified class name</strong>
+                    of the desired sequence-manager implementation. If a implementation needs configuration
+                    properties you pass them using
+                    <a href="site:repository/custom-attribute">custom attribute</a> tags with
+                    <em>attribute-name</em> represents the property name and
+                    <em>attribute-value</em>
+                    the property value. Each sequence manager implementation shows all properties on
+                    the according javadoc page.
+                </p>
+            </section>
+
+
+            <section>
+                <title>SequenceManager implementations</title>
+                <p>
+                    Source code of all
+                    <a href="ext:sequence-manager">SequenceManager</a> implementations can be
+                    found in <code>org.apache.ojb.broker.util.sequence</code> package.
+                    <br/>
+                    If you still think something is missing, you can just write your
+                    <a href="#how-to-write">own</a>
+                    sequence manager implementation.
+                </p>
+
+                <anchor id="high-low"/>
+                <section>
+                    <title>High/Low sequence manager</title>
+                    <p>
+                        The <a href="ext:sequence-manager">sequence manager</a> implementation class
+                        <code>ojb.broker.util.sequence.SequenceManagerHighLowImpl</code>
+                        and is able to generate ID's unique to a given object and
+                        all <a href="site:advanced-technique/extents"><em>extent</em> objects</a> declarated in the
+                        objects class descriptor.
+                        <br/>
+                        If you ask for an ID using an interface with several
+                        implementor classes, or a baseclass with several subclasses the returned
+                        ID have to be unique accross all tables representing objects of the
+                        interface or base class (more see <a href="#extent-aware">here</a>).
+                        <br/>
+                        It's also possible to use this implementation in a
+                        <em>global mode</em>, generate global unique id's.
+                    </p>
+                    <p>
+                        This implementation <strong>needs an internal database table and object mapping declaration</strong>
+                        to persist the used sequences. The table structure can be found in
+                        <a href="site:platform/internal-tables">in platform guide</a> the object metadata mapping
+                        can be found in <a href="ext:repository_internal.xml">OJB internal mapping file
+                        (called <em>repository_internal.xml</em>)</a>.
+                    </p>
+                    <p>
+                        To declare this <em>sequence manager</em> implementation specify a <code>sequence-manager</code>
+                        element within the
+                        <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a>:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className=
+    "org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+
+    <attribute attribute-name="seq.start" attribute-value="5000"/>
+    <attribute attribute-name="grabSize" attribute-value="20"/>
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+    <attribute attribute-name="globalSequenceId" attribute-value="false"/>
+    <!-- deprecated settings -->
+    <attribute attribute-name="sequenceStart" attribute-value="5000"/>
+</sequence-manager>]]></source>
+                    <p>
+                        The property
+                        <code>seq.start</code> (or deprecated <code>sequenceStart</code>) define
+                        the start value of the
+                        id generation (default was '1'). It's recommended to use start values
+                        greater than '0' to avoid problems with primitive primary key fields when
+                        used as foreign key in references.
+                    </p>
+                    <p>
+                        With property
+                        <code>grabSize</code> you set the size of the assigned ID's kept
+                        in memory for each <em>autoincrement</em> field. If the assigned ID's
+                        are exhausted a database call is made to lookup the next bunch
+                        of ID's (default <em>grabSize</em> is 20).
+                        <br/>
+                        If OJB was shutdown/redeployed all unused assigned ID's are lost.
+                    </p>
+                    <p>
+                        If property
+                        <code>globalSequenceId</code> was set
+                        <code>true</code> you will
+                        get global unique ID's over all persistent objects. Default was
+                        <code>false</code>.
+                        <br/>
+                        NOTE: If the database is already populated or the global sequence name
+                        in <em>OJB_HL_SEQ</em> database table was removed (by accident), the <em>seq.start</em>
+                        value must be greater than the biggest PK value in database.
+                    </p>
+                    <p>
+                        This sequence manager implementation supports <em>user defined
+                        sequence-names</em> as well as <em>automatic generated sequence-names</em>
+                        to manage the sequences - more about
+                        <a href="#sequence-name"><em>sequence-names</em> here</a>.
+                        <br/>
+                        The attribute <code>autoNaming</code> can be used to enable <em>auto-generation</em>
+                        of <em>sequence-names</em>, default value is <em>true</em>.
+                        <br/>
+                        More info about attribute <a href="#auto-naming"><em>autoNaming</em> here</a>.
+                    </p>
+                    <p>
+                        Limitations:
+                        <br/>- do
+                        <strong>not</strong> use in
+                        <strong>managed environments</strong> when connections were enlisted
+                        in running transactions, e.g. when using DataSources of an application server
+                        <br/>- if set connection-pool attribute 'whenExhaustedAction' to 'block' (wait for
+                        connection if connection-pool is exhausted), under heavy load this sequence manager
+                        implementation can block application.
+                        <br/>- superfluously to mention, do not use if other non-OJB applications insert objects too
+                    </p>
+                </section>
+
+
+                <anchor id="in-memory"/>
+                <section>
+                    <title>In-Memory sequence manager</title>
+                    <p>
+                        Another sequence manager implementation is a
+                        <em>In-Memory</em> version
+                        called
+                        <code>ojb.broker.util.sequence.SequenceManagerInMemoryImpl</code>.
+                        <br/>
+                        Only the first time an UID was requested for a object,
+                        the manager query the database for the max value of the target
+                        column - all following request were performed in memory. This
+                        implementation ditto generate unique ID's across all
+                        <a href="site:advanced-technique/extents"><em>extents</em></a>,
+                        using the same mechanism as the High/Low sequence manager implementation.
+                    </p>
+                    <p>
+                        To declare this <em>sequence manager</em> implementation specify a <code>sequence-manager</code>
+                        element within the
+                        <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a>:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerInMemoryImpl">
+    <attribute attribute-name="seq.start" attribute-value="0"/>
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+</sequence-manager>]]></source>
+                    <p>
+                        The property
+                        <code>seq.start</code> (or deprecated <code>sequenceStart</code>) define
+                        the start value of the
+                        id generation (default was '1'). It's recommended to use start values
+                        greater than '0' to avoid problems with primitive primary key fields when
+                        used as foreign key in references.
+                    </p>
+                    <p>
+                        This sequence manager implementation supports <em>user defined
+                        sequence-names</em> as well as <em>automatic generated sequence-names</em>
+                        to manage the sequences - more about <a href="#sequence-name">sequence-names</a>.
+                        <br/>
+                        The attribute <code>autoNaming</code> can be used to enable <em>auto-generation</em>
+                        of <em>sequence-names</em>, default value is <em>true</em>.
+                        <br/>
+                        More info about <a href="#auto-naming">autoNaming</a>.
+                    </p>
+                    <p>
+                        The specified sequences will only be used <em>in memory</em>. First time a sequence was used
+                        OJB does a <code>select max</code>-query to find the latest/greatest value for the
+                        autoincrement field and use this as starting point for further <em>in-memory</em> key generation.
+                    </p>
+                    <p>
+                        This is the fastest standard sequence manager implementation and should work
+                        with all databases without any specific preparation, but has some Limitations.
+                    </p>
+                    <p>
+                        Limitations:
+                        <br/>- do not use in clustered environments
+                        <br/>- superfluously to mention, do not use (or handle with care) if other non-OJB
+                        applications insert objects too
+                        <br/>- only declare "number" fields as <em>autoincrement</em> fields (because e.g. "select max ...
+                        does not work with CHAR columns in the used manner)
+                    </p>
+                </section>
+
+
+                <anchor id="database-sequences-based"/>
+                <section>
+                    <title>Database sequences based implementation</title>
+                    <p>
+                        If your database support sequence key generation (e.g. Oracle, SAP DB, PostgreSQL, ...)
+                        you can use the <code>SequenceManagerNextValImpl</code> implementation to force generation
+                        of the sequence keys by your database.
+                    </p>
+                    <p>
+                        Database based sequences (sequence objects, sequence generators) are special
+                        (single-row) tables in the database created with an specific statement,
+                        e.g. <code>CREATE SEQUENCE sequenceName</code>. This implementation use database
+                        based sequences to assign ID's in <em>autoincrement fields</em>.
+                        <br/>
+                        The sequences can be managed by hand, by a database tool or by OJB. If the <em>autoNaming</em>
+                        attribute is enabled OJB creates sequences if needed. Also it's possible to declare
+                        <em>sequence names</em> in the <a href="site:repository/field-descriptor">field-descriptor</a>
+                    </p>
+                    <source><![CDATA[
+<class-descriptor
+    class="org.greatest.software.Person"
+    table="GS_PERSON"
+>
+    <field-descriptor
+        name="seqId"
+        column="SEQ_ID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        sequence-name="PERSON_SEQUENCE"
+    />
+
+....
+</class-descriptor>]]></source>
+                    <p>
+                        To declare this <em>sequence manager</em> implementation specify a <code>sequence-manager</code>
+                        element within the
+                        <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a>:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl">
+    <attribute attribute-name="seq.start" attribute-value="200000"/>
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+
+    <!-- optional attributes supported by Oracle, PostgreSQL, MaxDB/SapDB, DB2 -->
+    <!-- attribute attribute-name="seq.incrementBy" attribute-value="1"/ -->
+    <!-- attribute attribute-name="seq.maxValue" attribute-value="999999999999999999999999999"/ -->
+    <!-- attribute attribute-name="seq.minValue" attribute-value="1"/ -->
+    <!-- attribute attribute-name="seq.cycle" attribute-value="false"/ -->
+    <!-- attribute attribute-name="seq.cache" attribute-value="20"/ -->
+    <!-- attribute attribute-name="seq.order" attribute-value="false"/ -->
+</sequence-manager>]]></source>
+                    <p>
+                        Attribute
+                        <code>autoNaming</code>, default setting is <em>true</em>. If set <em>true</em> OJB will
+                        try to auto-generate a sequence name if none was found in
+                        <a href="site:repository/field-descriptor">field-descriptor's</a>
+                        <em>sequence-name</em> attribute and create a database sequence if needed - more
+                        details see <a href="#auto-naming">autoNaming</a> section.
+                        <br/>
+                        The auto-generated name will be set as
+                        <a href="#sequence-name"><em>sequence-name</em></a> in the <em>field-descriptor</em>.
+                        <br/>
+                        If set <em>false</em> OJB throws an exception
+                        if none <em>sequence-name</em> was found in <em>field-descriptor</em>, also
+                        OJB does NOT try to create a database sequence when
+                        for a given sequence name (specified in <em>field-descriptor</em>) no database sequence
+                        can be found.
+                    </p>
+                    <p>
+                        The table below show additional <em>sequence properties</em>. To specifiy the properties
+                        use <a href="site:repository/custom-attribute">custom-attributes</a>
+                        within the <a href="site:repository/sequence-manager">sequence-manager</a> element.
+                        <br/>
+                        The database sequence specific properties are generally speaking, see database user guide
+                        for detailed description.
+                    </p>
+                    <table>
+                        <tr>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th>Description</th>
+                            <th>Supported By</th>
+                        </tr>
+                        <tr>
+                            <td>seq.as</td>
+                            <td>database specific, e.g. <em>INTEGER</em></td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            Specifies the datatype of the sequence, the allowed datatypes
+                            depend on the used database implementation.
+                            </td>
+                            <td>DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.start</td>
+                            <td>1 ... max INTEGER</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            Specifies the first sequence number to be
+                            generated. Allowed: <em>1</em> or greater.
+                            </td>
+                            <td>Oracle, PostgreSQL, MaxDB/SapDB, DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.incrementBy</td>
+                            <td>&gt;=1</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            Specifies the interval between sequence numbers.
+                            This value can be any positive or negative
+                            integer, but it cannot be 0.
+                            <br/>
+                                <em>Decrement sequences are currently not supported</em>
+                            </td>
+                            <td>Oracle, PostgreSQL, MaxDB/SapDB, DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.maxValue</td>
+                            <td>1 ... max INTEGER</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            Set max value for sequence numbers.
+                            </td>
+                            <td>Oracle, PostgreSQL, MaxDB/SapDB, DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.minValue</td>
+                            <td>min INTEGER</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            Set min value for sequence numbers.
+                            <br/>
+                                <em>Negative sequences are not tested as yet.</em>
+                            </td>
+                            <td>Oracle, PostgreSQL, MaxDB/SapDB, DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.cycle</td>
+                            <td>true/false</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            If <em>true</em>, specifies that the sequence continues to generate
+                            values after reaching either its maximum or minimum value.
+                            <br/>
+                            If <em>false</em>, specifies that the sequence cannot generate more values after
+                            reaching its maximum or minimum value.
+                            </td>
+                            <td>Oracle, PostgreSQL, MaxDB/SapDB, DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.cache</td>
+                            <td>&gt;= 2</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            Specifies how many values of the sequence Oracle
+                            preallocates and keeps in memory for faster access.
+                            Allowed values: <em>2</em> or greater. If set <em>0</em>,
+                            an explicite <em>nocache</em> expression will be set.
+                            </td>
+                            <td>Oracle, PostgreSQL, MaxDB/SapDB, DB2</td>
+                        </tr>
+                        <tr>
+                            <td>seq.order</td>
+                            <td>true/false</td>
+                            <td>
+                            Database sequence specific property.<br/>
+                            If set <em>true</em>, guarantees that sequence numbers
+                            are generated in order of request.
+                            <br/>
+                            If <em>false</em>, a <em>no order</em> expression will be set.
+                            </td>
+                            <td>Oracle, MaxDB/SapDB, DB2</td>
+                        </tr>
+                    </table>
+
+                    <p>
+                        Limitations:
+                        <br/>- none known
+                    </p>
+                </section>
+
+
+                <anchor id="high-low-sequences"/>
+                <section>
+                    <title>Database sequences based high/low implementation</title>
+                    <p>
+                        Based on the sequence manager implementation described
+                        <a href="#database-sequences-based">above</a>, but
+                        use a high/low algorithm to avoid database access.
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerSeqHiLoImpl">
+    <attribute attribute-name="grabSize" attribute-value="20"/>
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+</sequence-manager>]]></source>
+                    <p>
+                        With property
+                        <code>grabSize</code> you set the size of the assigned ID's kept
+                        in memory for each <em>autoincrement</em> field. If the assigned ID's
+                        are exhausted a database call is made to lookup the next bunch
+                        of ID's using the next database sequence (default <em>grabSize</em> is 20).
+                        <br/>
+                        If OJB was shutdown/redeployed all unused assigned ID's are lost.
+                    </p>
+                    <note>
+                        Keep in mind that the database sequence value does not correspond with
+                        the used value in the <em>autoincrement</em>-field (table column value).
+                    </note>
+                    <p>
+                        Attribute
+                        <a href="#auto-naming"><em>autoNaming</em></a>
+                        is the same as for <a href="#database-sequences-based">SequenceManagerNextValImpl</a>.
+                    </p>
+                    <p>
+                        This sequence manager implementation supports user defined
+                        <em>sequence-names</em>
+                        to manage the sequences (see
+                        <a href="#sequence-name">more</a>) or if not
+                        set in <code>field-descriptor</code> it is done automatic when
+                        <a href="#auto-naming">autoNaming</a> is enabled.
+                    </p>
+                    <p>
+                        Limitations:
+                        <br/>- superfluously to mention, do not use (or handle with care) if other non-OJB
+                        applications insert objects too
+                    </p>
+                </section>
+
+
+                <anchor id="identity-columns"/>
+                <section>
+                    <title>Database Identity-column based sequence manager</title>
+                    <p>
+                        This sequence manager implementation supports database <em>Identity columns</em>
+                        (supported by MySQL, MsSQL, HSQL, ...). When using identity columns we have to do
+                        a trick to make the sequence manager work.
+                        <br/>
+                        OJB identify each persistence capable object by a unique
+                        <a href="ext:identity">ojb-Identity object</a>. These ojb-Identity
+                        objects were created using the sequence manager instance to
+                        get UID's. Often these ojb-Identity objects were created before
+                        the persistence capable object was written to database.
+                        <br/>
+                        When using Identity columns it is not possible to retrieve the next
+                        valid UID before the object was written to database. As recently as
+                        the real object was written to database, you can ask the DB for the last
+                        generated UID. Thus in SequenceManagerNativeImpl we have to do a trick and use
+                        a 'temporary' UID till the object was written to database.
+                        <br/>
+                        So for best compatibility try to avoid using <em>Identity columns</em> in your
+                        database model. If this is not possible, use this sequence manager implementation to
+                        work with database <em>Identity columns</em>.
+                    </p>
+                    <p>
+                        To enable this sequence manager implementation set in your
+                        <code>jdbc-connection-descriptor</code>:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager
+    className="org.apache.ojb.broker.util.sequence.SequenceManagerNativeImpl">
+</sequence-manager>
+                        ]]></source>
+                    <p>
+                        To declare the identity column in the persistent class mapping
+                        <a href="site:repository/class-descriptor">class-descriptor</a>, add the
+                        following attributes to the primary key/identity key
+                        <a href="site:repository/field-descriptor">field-descriptor</a>:
+                        <br/>
+                        <code>primarykey="true"</code>,
+                        <code>autoincrement="true"</code> and
+                        <strong><code>access="readonly"</code></strong>
+                        <br/>
+                        The first and second attributes are the same as all sequence manager implementations
+                        use to support autoincrement PK fields, the third one is mandatory for database
+                        <em>Identity columns</em> only.
+                    </p>
+                    <source><![CDATA[
+<field-descriptor
+        name="identifier"
+        column="NATIVE_ID"
+        jdbc-type="BIGINT"
+        primarykey="true"
+        autoincrement="true"
+        access="readonly"/>
+                        ]]></source>
+                    <p>
+                        Limitations:
+                        <br/>- The Identity columns have to
+                        <strong>start with value greater than '0'</strong> and should
+                        never be negative.
+                        <br/>- Use of Identity columns is
+                        <strong>not extent aware</strong> (This may change in further versions).
+                        More info
+                        <a href="#extent-aware">here</a>.
+                    </p>
+                </section>
+
+
+                <section>
+                    <title>Stored Procedures based (Oracle-style) sequencing</title>
+                    <p>
+                        <em>(By Ryan Vanderwerf et al.)</em>
+                        <br/>
+                        "This solution will give those seeking an oracle-style
+                        sequence generator a final answer (Identity columns really suck). If you are using
+                        multiple application servers in your environment, and your database does not
+                        support read locking like Microsoft SQL Server, this is the only
+                        safe way to guarantee unique keys (HighLowSequenceManager WILL
+                        give out duplicate keys, and corrupt your data)".
+                        <br/>
+                        The
+                        <code>SequenceManagerStoredProcedureImpl</code> implementation enabled database
+                        sequence key generation in a
+                        <em>Oracle-style</em> for all databases (e.g. MSSQL, MySQL, DB2, ...).
+                    </p>
+                    <p>
+                        To declare this <em>sequence manager</em> implementation specify a
+                        <code>sequence-manager</code> element within the
+                        <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a>:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerStoredProcedureImpl">
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+</sequence-manager>]]></source>
+                    <p>
+                        For attribute <a href="#auto-naming"><em>autoNaming</em> see</a>.
+                    </p>
+                    <p>
+                        This sequence manager implementation supports user defined
+                        <a href="#sequence-name"><em>sequence-names</em></a>
+                        to manage the sequences or if not
+                        set in <code>field-descriptor</code> it is done automatic when
+                        <a href="#auto-naming">autoNaming</a> is enabled.
+                    </p>
+                    <ul>
+                        <li>
+                            Add a new table <code>OJB_NEXTVAL_SEQ</code> to your database.
+                        </li>
+                        <li>
+                            You will also need a stored procedure called
+                            <code>ojb_nextval_proc</code> that will take care of giving you a
+                            guaranteed unique sequence number.
+                        </li>
+                    </ul>
+                    <p>
+                        Below you can find the stored procedures you need to
+                        use sequencing for MSSQL server and Informix.
+                        <br/>
+                        You have to adapt the scripts for other databases (We are interested
+                        in scripts for other databases).
+                    </p>
+                    <p>
+                        Here you can find the currently supported databases and the statements to
+                        create the sql functions:
+                    </p>
+                    <table>
+                        <tr>
+                            <th>Database</th>
+                            <th>Table Statement</th>
+                            <th>Stored Procedure</th>
+                        </tr>
+                        <tr>
+                            <td>MSSQL</td>
+                            <td>
+                                <source><![CDATA[
+DROP TABLE OJB_NEXTVAL_SEQ;
+CREATE TABLE OJB_NEXTVAL_SEQ
+(
+    SEQ_NAME    VARCHAR(150) NOT NULL,
+    MAX_KEY     INTEGER,
+    CONSTRAINT SYS_PK_OJB_NEXTVAL
+    PRIMARY KEY(SEQ_NAME)
+);]]></source>
+                            </td>
+                            <td>
+                                <source><![CDATA[
+CREATE PROCEDURE OJB_NEXTVAL_PROC
+@SEQ_NAME varchar(150)
+AS
+declare @MAX_KEY BIGINT
+-- return an error if
+-- sequence does not exist
+-- so we will know if someone
+-- truncates the table
+set @MAX_KEY = 0
+
+UPDATE OJB_NEXTVAL_SEQ
+SET    @MAX_KEY = MAX_KEY = MAX_KEY + 1
+WHERE  SEQ_NAME = @SEQ_NAME
+
+if @MAX_KEY = 0
+select 1/0
+else
+select @MAX_KEY
+RETURN @MAX_KEY
+                                ]]></source>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Informix</td>
+                            <td>
+                                <source><![CDATA[
+drop table ojb_nextval_seq;
+create table ojb_nextval_seq
+(
+    seq_name    varchar(250,0) not null,
+    max_key     int8,
+    primary key(seq_name)
+);]]></source>
+                            </td>
+                            <td>
+                                <source><![CDATA[
+create function ojb_nextval_proc
+(out arg1 int8, arg2 varchar(250,250))
+returns int8;
+let arg1 = 0;
+update ojb_nextval_seq
+set max_key = max_key + 1
+where seq_name = arg2;
+select max_key into arg1
+from ojb_nextval_seq
+where seq_name = arg2;
+return arg1;
+end function;]]></source>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Oracle</td>
+                            <td>
+                                <source><![CDATA[
+TODO]]></source>
+                            </td>
+                            <td>
+                                <source><![CDATA[
+TODO]]></source>
+                            </td>
+                        </tr>
+                    </table>
+                    <p>
+                        Limitations:
+                        <br/>- currently none known
+                    </p>
+                </section>
+
+
+                <anchor id="mssql-guid"/>
+                <section>
+                    <title>Microsoft SQL Server 'uniqueidentifier' type (GUID) sequencing</title>
+                    <p>
+                        For those users you are using SQL Server 7.0 and up, the uniqueidentifier
+                        was introduced, and allows for your rows Primary Keys to be GUID's that are
+                        guaranteed to be unique in time and space.
+                    </p>
+
+                    <p>
+                        However, this type is different than the Identity field type, whereas there
+                        is no way to programmatically retrieve the inserted value. Most
+                        implementations when using the u.i. field type set a default value of
+                        "newid()". The SequenceManagerMSSQLGuidImpl class manages this process for
+                        you as if it was any normal generated sequence/identity field.
+                    </p>
+
+                    <p>
+                        Assuming that your PK on your table is set to 'uniqueidentifier', your
+                        field-description would be the same as using any other SequenceManager:
+                    </p>
+                    <source><![CDATA[
+<field-descriptor
+    name="guid"
+    column="document_file_guid"
+    jdbc-type="VARCHAR"
+    primarykey="true"
+    autoincrement="true"
+/>]]></source>
+                    <p>
+                        Note that the jdbc-type is a VARCHAR,  and thus the attribute (in this case
+                        'guid') on your class should be a String (SQL Server does the conversion
+                        from the String representation to the binary representation when
+                        retrieved/set).
+                    </p>
+
+                    <p>
+                        You also need to turn on the SequenceManager in your
+                        jdbc-connection-descriptor like this:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerMSSQLGuidImpl"
+/>
+                        ]]></source>
+                    <p>
+                        Limitations:
+                        <br/>-This will only work with SQL Server 7.0 and higher as the
+                        uniqueidentifier type was not introduced until then.
+                        <br/>This works well in situations where other applications might be updated the
+                        database as well, because it guarantees (well, as much as Microsoft can
+                        guarantee) that there will be no collisions between the Guids generated.
+                    </p>
+                </section>
+
+            </section>
+
+
+            <anchor id="sequence-name"/>
+            <section>
+                <title>The <em>sequence-name</em> attribute</title>
+                <p>
+                    Several <a href="ext:sequence-manager">SequenceManager</a> implementations
+                    using <em>sequences</em> (synonyms: <em>sequence objects</em>, <em>sequence generators</em>)
+                    to manage the ID generation. Sequences are <em>entities</em> which generate unique ID's using
+                    e.g. database table per sequence, database row per sequence or an in-memory java-object.
+                    <br/>
+                    To address the sequences, each <em>sequence</em> has an unique <em>sequence-name</em>.
+               </p>
+               <p>
+                    In OJB the sequence-name of an autoincrement field is declared
+                    in a <em>sequence-name</em> attribute within the
+                    <a href="site:repository/field-descriptor">field-descriptor</a>.
+                </p>
+                <source><![CDATA[
+<class-descriptor
+class="org.greatest.software.Person"
+table="GS_PERSON"
+>
+<field-descriptor
+    name="id"
+    column="ID_PERSON"
+    jdbc-type="INTEGER"
+    primarykey="true"
+    autoincrement="true"
+    sequence-name="PERSON_SEQUENCE"
+/>
+
+....
+</class-descriptor>]]></source>
+                <p>
+                    The <em>sequence-name</em> attribute in the <em>field-descriptor</em> is only
+                    needed if the used sequence manager supports sequences, the field should be
+                    <em>autoincremented</em> and the auto-assign of a sequence-name is not desired.
+                </p>
+                <note>
+                    Each <em>sequence-name</em> has be <a href="#extent-aware">extent-aware</a>.
+                </note>
+                <p>
+                    If you don't specify a sequence name in the <em>field-descriptor</em> it is possible
+                    to auto-assign a sequence-name by OJB if <a href="#auto-naming">autoNaming</a>
+                    is supported by the used sequence manager implementation.
+                </p>
+
+            </section>
+
+            <anchor id="auto-naming"/>
+            <section>
+                <title>The <em>autoNaming</em> property</title>
+                <p>
+                    All shipped <a href="ext:sequence-manager">SequenceManager</a> implementations
+                    using <em>sequences</em> for ID generation support a property
+                    called <em>autoNaming</em> which can be declared as a
+                    <a href="site:repository/custom-attribute"><em>custom attribute</em></a>
+                    within the <em>sequence-manager</em> element:
+                </p>
+                <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl">
+<attribute attribute-name="autoNaming" attribute-value="true"/>
+</sequence-manager>]]></source>
+                <p>
+                    If set <em>true</em> OJB try to build a
+                    <em>sequence name</em> by it's own (a simple algorithm was used to auto-generate
+                    the sequence name - more details how it works in
+                    <a href="#pitfalls">pitfalls section</a>)
+                    and set this name as <code>sequence-name</code>
+                    in the <a href="site:repository/field-descriptor">field-descriptor</a> of
+                    the autoincrement field if no <a href="#sequence-name">sequence name</a>
+                    is specified.
+                    <br/>
+                    If set <em>false</em> the sequence manager throw an exception
+                    if a <em>sequence name</em> can't be found or was not declared in the
+                    <em>field-descriptor</em> of the autoincrement field.
+                    In this case OJB expects a valid <em>sequence-name</em> in the <em>field-descriptor</em>.
+                    <br/>
+                    If the attribute <code>autoNaming</code> is set <em>false</em> the sequence manager
+                    never try to auto-generate a <em>sequence-name</em> (more detailed info
+                    <a href="#no-auto-build">here</a>). If set <em>true</em> and a <em>sequence-name</em>
+                    is set in the <em>field-descriptor</em>, the <em>SequenceManager</em> will use this one and
+                    does <strong>not</strong> override the existing one.
+                </p>
+                <p>
+                    The default setting is <em>true</em>.
+                </p>
+            </section>
+
+
+            <anchor id="how-to-write"/>
+            <section>
+                <title>How to write my own sequence manager?</title>
+                <p>
+                    Very easy to do, just write a implementation class of the
+                    interface
+                    <code>org.apache.ojb.broker.util.sequence.SequenceManager</code>.
+                    OJB use a factory (
+                    <code>SequenceManagerFactory</code>)
+                    to obtain sequence manager instances.
+                </p>
+
+                <p>
+                    This Factory can be configured to generate instances of your
+                    specific implementation by adding a
+                    <code>sequence-manager</code>
+                    tag in the
+                    <code>jdbc-connection-descriptor</code>.
+                </p>
+                <source><![CDATA[
+<sequence-manager className="my.SequenceManagerMYImpl">
+</sequence-manager>]]></source>
+                <p>
+                    That's it!
+                </p>
+
+                <p>
+                    If your sequence manager implementation was derived from
+                    <code>org.apache.ojb.broker.util.sequence.AbstractSequenceManager</code>
+                    it's easy to pass configuration properties to your implementation using
+                    <a href="site:repository/custom-attribute"><em>custom attributes</em></a>.
+                </p>
+                <source><![CDATA[
+<sequence-manager className="my.SequenceManagerMYImpl">
+    <attribute attribute-name="myProperty" attribute-value="test"/>
+</sequence-manager>]]></source>
+                <p>
+                    With
+                </p>
+                <source><![CDATA[
+public String getConfigurationProperty(String key, String defaultValue)]]></source>
+                <p>
+                    method get the properties in your implementation class.
+                </p>
+
+                <note>
+                    Of course we interested in your solutions! If you have
+                    implemented something interesting, just contact us.
+                </note>
+
+            </section>
+
+
+            <section>
+                <title>Questions</title>
+
+                <anchor id="when-using"/>
+                <section>
+                    <title>When using sequence-name attribute in field-descriptor?</title>
+                    <p>
+                        Most
+                        <code>SequenceManager</code> implementations based on
+                        <a href="#sequence-name">sequence names</a>.
+                        If you want retain control of sequencing use your own
+                        <code>sequence-name</code> attribute
+                        in the
+                        <code>field-descriptor</code>. In that case you are reponsible to use the same name
+                        across extents, we call it <a href="#extent-aware">extent-aware</a> (see more
+                        info about <a href="site:advanced-technique/polymorphism">extents and polymorphism</a>).
+                        Per default the sequence manager build its own
+                        <em>extent aware</em> sequence name with an
+                        simple algorithm
+                        (see
+                        <code>org.apache.ojb.broker.util.sequence.SequenceManagerHelper#buildSequenceName</code>)
+                        if necessary.
+                        <br/>
+                        In most cases this should be sufficient. If you have a very complex data model and you
+                        will do many metadata changes in the repository file in future, then it could be better
+                        to explicit use
+                        <code>sequence-names</code> in the
+                        <code>field-descriptor</code>. See
+                        more
+                        <a href="#pitfalls">avoid pitfals</a>.
+                    </p>
+                </section>
+
+
+                <anchor id="extent-aware"/>
+                <section>
+                    <title>What to hell does
+                        <em>extent aware</em> mean?
+                    </title>
+                    <p>
+                        Say we have an abstract base class
+                        <code>Animal</code> and two classes
+                        <code>Dog</code> and
+                        <code>Cat</code>
+                        which extend
+                        <code>Animal</code>. For each non-abstract class we create a separate
+                        database table and
+                        <a href="site:advanced-technique/polymorphism">declare the inheritance</a> in OJB.
+                        <br/>
+                        Now it is possible to do a query like
+                        <em>give me all animals</em> and OJB will return all <code>Cat</code> and <code>Dog</code>
+                        objects. To make this working in OJB
+                        the ID's of <code>Dog</code> and <code>Cat</code> objects must be unique across the
+                        tables of both classes or else you may not get a vaild query result (e.g. you can't
+                        query for the <code>Animal</code> with <em>id=23</em>, because in both tables such an id
+                        can exist).
+                        <br/>
+                        The reason for this behaviour is the
+                        <a href="ext:identity"><code>org.apache.ojb.broker.Identity</code></a>
+                        class implementation (more details see javadoc/source of this class).
+                    </p>
+                </section>
+
+
+                <anchor id="no-auto-build"/>
+                <section>
+                    <title>How could I prevent auto-build of the sequence-name?</title>
+                    <p>
+                        All shipped
+                        <code>SequenceManager</code> implementations which using sequence names
+                        for UID generation, support by default auto-build (autoNaming) of the sequence name
+                        if none was found in the
+                        <code>field-descriptor</code>.
+                        <br/>
+                        To prevent this, all relevant SM implementations support a
+                        <code>autoNaming</code>
+                        property - set via
+                        <code>attribute</code> element. If set
+                        <code>false</code> OJB doesn't
+                        try to build sequence names automatic.
+                        </p>
+<source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl">
+    <attribute attribute-name="autoNaming" attribute-value="false"/>
+</sequence-manager>]]></source>
+                    <p>
+                        Keep in mind that user defined sequence names have to be
+                        <a href="#extent-aware">extent-aware</a>.
+                    </p>
+                </section>
+
+                <anchor id="sequenceManagerHandling"/>
+                <section>
+                    <title>Sequence manager handling using multiple databases</title>
+                    <p>
+                        If you use multiple databases you have to declare a sequence manager in each
+                        <code>jdbc-connection-descriptor</code>. If you don't specify a sequence manager
+                        OJB use a default one (currently
+                        <code>ojb.broker.util.sequence.SequenceManagerHighLowImpl</code>).
+                    </p>
+                </section>
+
+                <anchor id="oneSequenceManager"/>
+                <section>
+                    <title>One sequence manager with multiple databases?</title>
+                    <p>
+                        OJB was intended to use a sequence manager per database. But it
+                        shouldn't be complicated to realize a global sequence manager
+                        solution by writing your own
+                        <code>SequenceManager</code> implementation.
+                    </p>
+                </section>
+
+
+                <anchor id="directAccess"/>
+                <section>
+                    <title>Can I get direct access to the sequence manager?</title>
+                    <p>
+                        That's no problem:
+                    </p>
+                    <source><![CDATA[
+                    PersistenceBroker broker =
+                    PersistenceBrokerFactory.createPersistenceBroker(myPBKey);
+                    SequenceManager sm = broker.serviceSequenceManager();
+                    ...
+                    broker.close();]]></source>
+                    <p>
+                        If you use
+                        <code>autoincrement=true</code> in your
+                        <code>field-descriptor</code>,
+                        there is no reason to obtain UID directly from the sequence manager or to handle
+                        UID in your object model.
+                        <br/>
+                        Except when using <em>user-defined</em> sequence manager implementations, in this case
+                        it could be needed.
+                    </p>
+                    <note>
+                        Don't use SequenceManagerFactory#getSequenceManager(PersistenceBroker broker), this
+                        method returns a new sequence manager instance for the given broker instance and not the current
+                        used SM instance of the given PersistenceBroker instance]
+                    </note>
+                </section>
+
+
+                <anchor id="pitfalls"/>
+                <section>
+                    <title>Any known pitfalls?</title>
+                    <ul>
+                        <li>
+                            When using <em>sequences</em> based sequence manager implementations it's possible
+                            to enable auto-generation of <em>sequence names</em> - see
+                            <a href="#auto-naming">autoNaming section</a>.
+                            To build the <em>sequence name</em> an simple algorithm was used.
+                            <br/>
+                            <br/>
+                            The algorithm try to get the <em>top-level class</em> of the field's
+                            (the autoincrement <em>field-descriptor</em>) enclosing class,
+                            if no top-level class was found, the table name of the field's enclosing class was used.
+                            If a top-level class was found, the first found
+                            <a href="site:repository/class-descriptor"><em>extent class</em></a> table name
+                            was used as sequence name. The algorithm can be found in
+                            <code>org.apache.ojb.broker.util.sequence.SequenceManagerHelper#buildSequenceName</code>.
+                            <br/>
+                            <br/>
+                            When using base classes/interfaces with <em>extent classes</em> (declared in the
+                            <a href="site:repository/class-descriptor"><em>class-descriptor</em></a>) based on
+                            different database tables and the
+                            <em>extent-class</em> entries in repository often change (e.g. add new top-level class,
+                            change top-level class), the algorithm could be corrupted after restart of OJB, because
+                            the first found extent class's table name could be change, hence the used sequence-name.
+                            Now the ID generation start over and could clash with existing ID's.
+                            <br/>
+                            <br/>
+                            To avoid this, remove the implementation specific internal sequence name entry (e.g. from
+                            table OJB_HL_SEQ when using the Hi/Lo implementation, or remove the database sequence
+                            entry when using the 'Nextval' implementation) or use custom sequence name
+                            attributes in the field descriptor.
+                        </li>
+                    </ul>
+                </section>
+            </section>
+        </section>
+    </body>
+</document>

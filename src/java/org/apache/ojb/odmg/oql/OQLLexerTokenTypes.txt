@@ -1,0 +1,62 @@
+// $ANTLR 2.7.5 (20050128): oql-ojb.g -> OQLLexerTokenTypes.txt$
+OQLLexer    // output token vocab name
+TOK_RPAREN("right parenthesis")=4
+TOK_LPAREN("left parenthesis")=5
+TOK_COMMA("comma")=6
+TOK_SEMIC("semicolon")=7
+TOK_COLON=8
+TOK_DOT("dot")=9
+TOK_INDIRECT("dot")=10
+TOK_CONCAT("operator")=11
+TOK_EQ("comparison operator")=12
+TOK_PLUS("operator")=13
+TOK_MINUS("operator")=14
+TOK_SLASH("operator")=15
+TOK_STAR("operator")=16
+TOK_LE("comparison operator")=17
+TOK_GE("comparison operator")=18
+TOK_NE("comparison operator")=19
+TOK_NE2("comparison operator")=20
+TOK_LT("comparison operator")=21
+TOK_GT("comparison operator")=22
+TOK_LBRACK("left bracket")=23
+TOK_RBRACK("right bracket")=24
+TOK_DOLLAR=25
+NameFirstCharacter=26
+NameCharacter=27
+Identifier=28
+TOK_UNSIGNED_INTEGER=29
+TOK_APPROXIMATE_NUMERIC_LITERAL=30
+TOK_EXACT_NUMERIC_LITERAL("numeric value")=31
+CharLiteral("character string")=32
+StringLiteral("character string")=33
+WhiteSpace=34
+NewLine=35
+CommentLine=36
+MultiLineComment=37
+LITERAL_select="select"=38
+LITERAL_distinct="distinct"=39
+LITERAL_from="from"=40
+LITERAL_where="where"=41
+LITERAL_order="order"=42
+LITERAL_by="by"=43
+LITERAL_group="group"=44
+LITERAL_prefetch="prefetch"=45
+LITERAL_exists="exists"=46
+LITERAL_in="in"=47
+LITERAL_asc="asc"=48
+LITERAL_desc="desc"=49
+LITERAL_or="or"=50
+LITERAL_and="and"=51
+LITERAL_nil="nil"=52
+LITERAL_not="not"=53
+LITERAL_list="list"=54
+LITERAL_between="between"=55
+LITERAL_is_undefined="is_undefined"=56
+LITERAL_is_defined="is_defined"=57
+LITERAL_like="like"=58
+LITERAL_true="true"=59
+LITERAL_false="false"=60
+LITERAL_date="date"=61
+LITERAL_time="time"=62
+LITERAL_timestamp="timestamp"=63

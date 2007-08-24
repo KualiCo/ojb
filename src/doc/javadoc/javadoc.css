@@ -1,0 +1,82 @@
+body {
+	background: #FFFFFF;
+	color: #000000;
+	font-family: Verdana, Helvetica, Arial, sans-serif;
+	font-size: small;
+}
+
+img {
+    border: 0;
+}
+
+h1 {
+	padding:5px;
+    font-size: 145%
+}
+
+h2 {
+	padding:5px 10px 5px 10px;
+    background-color: #f0f0f0;
+}
+
+h3 {
+	padding:5px;
+    background-color: #dddddd;
+	font-size: small;
+}
+    
+h4 {
+	padding:5px;
+    background-color: #bbbdce;
+	font-size: small;
+}
+
+a:link {
+	color: #801458;
+}
+
+a:visited {
+	color: #555555 !important;
+}
+
+a:active, a:hover {
+	color: #b4005a !important;
+}
+
+th {
+	background-color: #bbb;
+}
+
+code, pre {
+	font-family: 'Andale Mono', Courier, monospace;
+	font-size: small;
+}
+
+pre {
+    border-color: #AAAAAA;
+	border-style: solid;
+	border-width: 1px;
+	padding: 1em 1.33em 1em 1.33em;
+	margin-left: 10px;
+	margin-right: 10px;
+} 
+
+small {
+	font-size: x-small;
+}
+
+
+/* Specific JavaDoc classes */
+
+.TableHeadingColor     { background: #ddd }
+.TableSubHeadingColor  { background: #bbb }
+.TableRowColor         { background: #FFFFFF }
+.FrameTitleFont        { font-size: 100%; font-family: Verdana, Helvetica, Arial, sans-serif }
+.FrameHeadingFont      { font-size:  90%; font-family: Verdana, Helvetica, Arial, sans-serif }
+.FrameItemFont         { font-size:  90%; font-family: Verdana, Helvetica, Arial, sans-serif }
+.NavBarCell1           { background-color:#bbbdce;}
+.NavBarCell1Rev        { background-color:#2c3c6d;}
+.NavBarFont1           { font-family: Arial, Helvetica, sans-serif; color:#FFFFFF;}
+.NavBarFont1Rev        { font-family: Arial, Helvetica, sans-serif; color:#FFFFFF;}
+.NavBarCell2           { font-family: Arial, Helvetica, sans-serif; background-color:#FFFFFF;}
+.NavBarCell3           { font-family: Arial, Helvetica, sans-serif; background-color:#FFFFFF;}

@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-use-anonymous-keys.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - Use Anonymous Keys</title>
+        <authors>
+            <person name="Brian McCallister" email="brianm@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Why Do We Need Anonymous Keys?</title>
+            <p>
+                The core difference between referential integrity in Java and in an RDBMS lies in where the
+                specific referential information is maintained. Java, and most modern OO languages,
+                maintain referential integrity information in the runtime environment. Actual object
+                relationships are maintained by the virtual machine so that the symbolic variable used
+                in the application is dereferenced it will in fact provide access to the object instance
+                which it is expected to provide access to. There is no need for a manual lookup or
+                search across the heap for the correct object instance. Entity reference integrity is
+                maintained and handled for the programmer by the environment.
+            </p>
+            <p>
+                Relational databases, on the other, purposefully place the referential integrity and lookups
+                into the problem domain - that is the problem they are designed to solve. An RDBMS presumes
+                you can design something more efficient for your specific circumstances than the JVM does
+                (you trust its ability to do object lookups in the heap is sufficiently efficient). As
+                an RDBMS has a much larger heap equivalent it is designed to not operate under that
+                assumption (mostly). So, in an RDBMS the concept of specific foreign keys exists to
+                maintain the referential integrity.
+            </p>
+            <p>
+                In crossing the object to relational entity barrier there is a mismatch between the
+                referential integrity implementations. Java programmers do not want to have to maintain
+                both object referential integrity and key referential integrity analogous to
+            </p>
+            <source><![CDATA[
+{
+    Foo child = new SomeOtherFooType();
+    Foo parent = new SomeFooType();
+    child.setParent(parent);
+    child.setParentId(parent.getId());
+}]]></source>
+            <p>
+                This is double the work required - you set up the object relationship, then set up the key
+                relationship. OJB knows about the relationship of the objects, thus it is only needed to
+                do
+            </p>
+<source><![CDATA[
+{
+    Foo child = new Foo();
+    Foo parent = new Foo();
+    child.setParent(parent);
+}]]></source>
+            <p>
+                OJB can provide transparent key relationship maintenance behind the scenes for
+                <a href="site:basic-technique/one-to-one">1:1 relations</a> via
+                <strong>anonymous access fields</strong>. As object relationships change, the relationships
+                will be propogated into the key values without the <em>Java object ever being aware of a
+                relational key</em> being in use. This means that the java object does not need to
+                specify a FK field for the reference.
+            </p>
+            <p>
+                Without use of <em>anonymous keys</em> class <code>Foo</code> have to look like:
+            </p>
+            <source><![CDATA[
+class Foo
+{
+    Integer id;
+    Integer fkParentFoo;
+    Foo parent;
+
+    // optional getter/setter
+    ....
+{]]></source>
+            <p>
+                When using <em>anonymous keys</em> the FK field will become obsolete:
+            </p>
+            <source><![CDATA[
+class Foo
+{
+    Integer id;
+    Foo parent;
+
+    // optional getter/setter
+    ....
+{]]></source>
+            <note>
+                Under specific conditions it's also possible to use anonymous keys for other relations
+                or primary keys. More info
+                <a href="site:advanced-technique/anonymous-keys">in advanced-technique section</a>.
+            </note>
+        </section>
+
+
+        <anchor id="how-it-works"/>
+        <section>
+            <title>How it works</title>
+            <p>
+                To play for safety it is mandatory to understand how this feature is working. More information
+                how it works <a href="site:advanced-technique/anonymous-keys">please see here</a>.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Using Anonymous Keys</title>
+            <p>
+                Now we can start using of the
+                <em>anonymous key</em> feature. In this section the using is
+                detailed described on the basis of an example.
+            </p>
+            <section>
+                <title>The Code</title>
+                <p>
+                    Take the following classes designed to model a particular problem domain. They may do
+                    it reasonably well, or may not. Presume they model it perfectly well for the problem
+                    being solved.
+                </p>
+                <source><![CDATA[
+public class Desk
+{
+    private Integer id;
+    private Finish finish;
+    /** Contains Drawer instances */
+    private List drawers;
+    private int numberOfLegs;
+
+    public Desk()
+    {
+        this.drawers = new ArrayList();
+    }
+....
+// getter/setter
+}
+
+public class Drawer
+{
+    private Integer id;
+    /** Contains Thing instances */
+    private List stuffInDrawer;
+
+    public Drawer()
+    {
+        this.stuffInDrawer = new ArrayList();
+    }
+
+....
+// getter/setter
+}
+
+public class Finish
+{
+    private Integer id;
+    private String wood;
+    private String color;
+
+....
+// getter/setter
+}
+
+public class Thing
+{
+    private Integer id;
+    private String name;
+
+....
+// getter/setter
+}]]></source>
+                <p>
+                    A Desk will typically reference multiple drawers and one finish.
+                </p>
+            </section>
+
+
+            <section>
+                <title>The Database</title>
+                <p>
+                    When we need to store our instances in a database we use a fairly typical table per class
+                    persistance model.
+                </p>
+                <source><![CDATA[
+CREATE TABLE finish
+(
+    id          INTEGER PRIMARY KEY,
+    wood        VARCHAR(255),
+    color       VARCHAR(255)
+);
+
+CREATE TABLE desk
+(
+    id          INTEGER PRIMARY KEY,
+    num_legs    INTEGER,
+    finish_id   INTEGER,
+    FOREIGN KEY (finish_id) REFERENCES finish(id)
+);
+
+CREATE TABLE drawer
+(
+    id          INTEGER PRIMARY KEY,
+    desk_id     INTEGER,
+    FOREIGN KEY (desk_id) REFERENCES desk(id)
+);
+
+CREATE TABLE thing
+(
+    id          INTEGER PRIMARY KEY,
+    name        VARCHAR(255),
+    drawer_id   INTEGER,
+    FOREIGN KEY (drawer_id) REFERENCES drawer(id)
+);]]></source>
+                <p>
+                    At the database level the possible relationships need to be explicitely defined by the
+                    foreign key constraints. These model all the possible object relationships according
+                    to the domain model (until generics enter the Java language for the collections API,
+                    this is technically untrue for the classes used here).
+                </p>
+            </section>
+            <section>
+                <title>The Repository Configuration</title>
+                <p>
+                    When we go to map the classes to the database, it is almost a one-to-one property to
+                    field mapping. The exception here is the primary key on each entity. This is meaningless
+                    information in Java, so we would like to keep it out of the object model. Anonymous access
+                    keys allow us to do that.
+                </p>
+                <p>
+                    The <a href="site:repository/introduction">repository.xml</a> must know about the
+                    database columns used for referential integrity, but OJB can maintain the foreign key
+                    relationships behind the scenes - freeing the developer
+                    to focus on more accurate modeling of her objects to the problem, instead of the the
+                    persistance mechanism. Doing this is also very simple - in the <em>repository.xml</em>
+                    file mark the <a href="site:repository/field-descriptor">field descriptors</a>
+                    with a <code>access="anonymous"</code> attribute.
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="Desk"
+    table="desk">
+
+    <field-descriptor
+        name="id"
+        column="id"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        />
+    <field-descriptor
+        name="numberOfLegs"
+        column="num_legs"
+        jdbc-type="INTEGER"
+        />
+    <field-descriptor
+        name="finishId"
+        column="finish_id"
+        jdbc-type="INTEGER"
+        access="anonymous" />
+
+    <reference-descriptor
+        name="finish"
+        class-ref="Finish">
+            <foreignkey field-ref="finishId"/>
+    </reference-descriptor>
+
+    <collection-descriptor
+        name="drawers"
+        element-class-ref="Drawer"
+        >
+        <inverse-foreignkey field-ref="deskId"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor
+    class="Finish"
+    table="finish">
+
+    <field-descriptor
+        name="id"
+        column="id"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        />
+    <field-descriptor
+        name="wood"
+        column="wood"
+        jdbc-type="VARCHAR"
+        size="255"
+        />
+   <field-descriptor
+        name="color"
+        column="color"
+        jdbc-type="VARCHAR"
+        size="255"
+        />
+</class-descriptor>
+
+<class-descriptor
+    class="Drawer"
+    table="drawer">
+
+    <field-descriptor
+        name="id"
+        column="id"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        />
+    <field-descriptor
+        name="deskId"
+        column="desk_id"
+        jdbc-type="INTEGER"
+        access="anonymous"
+        />
+    <collection-descriptor
+        name="stuffInDrawer"
+        element-class-ref="Thing"
+        >
+        <inverse-foreignkey field-ref="drawerId"/>
+    </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor
+    class="Thing"
+    table="thing">
+
+    <field-descriptor
+        name="id"
+        column="id"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        />
+    <field-descriptor
+        name="name"
+        column="name"
+        jdbc-type="VARCHAR"
+        size="255"
+        />
+    <field-descriptor
+        name="drawerId"
+        column="drawer_id"
+        jdbc-type="INTEGER"
+        access="anonymous"
+        />
+</class-descriptor>]]></source>
+                <p>
+                    Look first at the class descriptor for the Thing class. Notice the
+                    <a href="site:repository/field-descriptor">field-descriptor</a> with
+                    the name attribute "drawerId". This field is labeled as anonymous access. Because it is
+                    anonymous access OJB will not attempt to assign the value here to a "drawerId" field or
+                    property on the Thing class. Normally the name attribute is used as the Java name for the
+                    attribute, in this case it is not. The name is still required because it is used as an
+                    indicated for references to this anonymous field.
+                </p>
+                <p>
+                    In the field descriptor for Drawer, look at the collection descriptor with the name
+                    <em>stuffInDrawer</em>. This collection descriptor references a foreign key with the
+                    <code>field-ref="drawerId"</code>. This reference is to the anonymous field descriptor
+                    in the Thing descriptor. The field-ref matches to the name in the descriptor whether or
+                    not the name also maps to the Java attribute name. This dual use of
+                    <code>name</code> can be confusing - be careful.
+                </p>
+                <p>
+                    The same type mapping that is used for the collection descriptor in the Drawer descriptor
+                    is also used for the 1:1
+                    <a href="site:repository/reference-descriptor">reference descriptor</a> in the Desk descriptor.
+                </p>
+                <p>
+                    The primary keys are populated into the objects as it is generally a good practice to not
+                    implement primary keys as anonymous access fields. Primary keys may be anonymous-access but
+                    references will get lost if the cache is cleared or the persistent object is serialized.
+                </p>
+            </section>
+        </section>
+
+
+        <section>
+            <title>Benefits and Drawbacks</title>
+            <p>
+                There are both benefits and drawbacks to using anonymous field references for maintaining
+                referential integrity between Java objects and database relations. The most immediate
+                benefit is avoiding semantic code duplication. The second major benefit is avoiding
+                cluttering class definitions with persistance mechanism artifacts. In a well layered
+                application, the persistance mechanism will not really need to be so obvious in the
+                object model implementation. Anonymous fields helpt o achieve this - thereby making
+                persistence mechanisms more flexible. Moving to a different one becomes easier.
+            </p>
+        </section>
+    </body>
+</document>
+
+

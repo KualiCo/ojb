@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: odmg-tutorial.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>The ODMG API</title>
+        <authors>
+            <person name="Brian McCallister" email="brianm@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                The <em>ODMG API</em> is an implementation of the
+                <a href="ext:odmg-group">ODMG 3.0 Object Persistence API</a>.
+                The ODMG API provides a higher-level API and query
+                language based interface over the
+                <a href="site:pb-guide">PersistenceBroker API</a>.
+            </p>
+            <p>
+                More detailed information can be found in the <a href="site:odmg-guide">ODMG-guide</a>
+                and in the other <a href="site:guides/summary">reference guides</a>.
+            </p>
+            <p>
+                This tutorial operates on a simple example class:
+            </p>
+            <source><![CDATA[
+package org.apache.ojb.tutorials;
+
+public class Product
+{
+/* Instance Properties */
+
+private Double price;
+private Integer stock;
+private String name;
+
+/* artificial property used as primary key */
+
+private Integer id;
+
+/* Getters and Setters */
+...
+}]]></source>
+            <p>
+                The metadata descriptor for mapping this class is described in the
+                <a href="site:mapping-tutorial">mapping tutorial</a>
+            </p>
+            <p>
+                When using 1:1, 1:n and m:n references (the example doesn't use it) the ODMG-api
+                need specific metadata settings on relationship definition, the mandatory settings
+                are listed in the
+                <a href="site:odmg-guide/metadata">ODMG-Guide</a> - additional info see
+                <a href="site:basic-technique/cascading">auto-xxx settings</a> and
+                <a href="site:repository">repository file settings</a>.
+            </p>
+            <p>
+                As with the other tutorials, the source code for this tutorial is
+                contained in the <code>tutorials-src.jar</code> which can be downloaded
+                <a href="ext:ojb/binaries-version">here</a>. The source files
+                are contained in the <code>org/apache/ojb/tutorial2/</code> directory.<br/>
+                You can try it out with the ojb-blank project which can be downloaded from
+                the same place and is described in the
+                <a href="site:getting-started">Getting started</a> section.
+            </p>
+            <p>
+                Further information about the OJB odmg-api implementation can be found in
+                the <a href="site:odmg-guide">ODMG guide</a>.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Initializing ODMG</title>
+            <p>
+                The ODMG implementation needs to have a database opened for it to access.
+                This is accomplished via the following code:
+            </p>
+            <source><![CDATA[
+Implementation odmg = OJB.getInstance();
+Database db = odmg.newDatabase();
+db.open("default", Database.OPEN_READ_WRITE);
+
+/* ... use the database ... */
+
+db.close();]]></source>
+            <p>
+                With method call <code>OJB.getInstance()</code> always a <strong>new</strong>
+                <a href="ext:odmg-implementation">org.odmg.Implementation</a> instance will be created and
+                <code>odmg.newDatabase()</code> returns a new <code>Database</code> instance.
+            </p>
+            <p>
+                Call <code>db.open(...)</code> opens an ODMG
+                <code>Database</code> using the name specified in
+                <a href="site:odmg-guide/lookup-odmg">metadata for the database</a> -- "default" in
+                this case. Notice the <code>Database</code> is opened in read/write mode. It is possible to open it in <em>read-only</em> or <em>write-only</em>
+                modes as well.
+            </p>
+            <p>
+                Once a <code>Implementation</code> instance is created and a
+                <code>Database</code> has been opened it is available for use. Unlike
+                <a href="site:pb-guide"><code>PersistenceBroker</code> instances</a>, ODMG
+                <code>Implementation</code> and <code>Database</code> instances
+                are threadsafe and can typically be used for the entire lifecycle of an application.
+                There is no need to call the
+                <code>Database.close()</code> method until the database
+                is truly no longer needed.
+            </p>
+            <p>
+                The
+                <code>OJB.getInstance()</code> function provides the ODMG
+                <code>Implementation</code>
+                instance required for using the ODMG API. From here on out it is straight ODMG
+                code that should work against any compliant ODMG implementation.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Persisting New Objects</title>
+            <p>
+                Persisting an object via the ODMG API is handled by writing it to the peristence
+                store within the context of a transaction:
+            </p>
+            <source><![CDATA[
+public static void storeNewProduct(Product product)
+{
+    // get the used Implementation instance
+    Implementation odmg = ...;
+    Transaction tx = odmg.newTransaction();
+    tx.begin();
+    // get current used Database instance
+    Database db = odmg.getDatabase(null);
+    // make persistent new object
+    db.makePersistent(product);
+    tx.commit();
+}]]></source>
+            <p>
+                Once the ODMG implementation has been obtained it is used to begin a transaction,
+                obtain a write lock on the
+                <code>Product</code>, and commit the transaction. It is
+                very important to note that all changes need to be made within transactions in the
+                ODMG API. When the transaction is committed the changes are made to the database. Until
+                the transaction is committed the database is unaware of any changes -- they exist
+                solely in the object model.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Querying Persistent Objects</title>
+            <p>
+                The ODMG API uses the OQL query language for obtaining references to persistent objects.
+                OQL is very similar to SQL, and using it is very similar to use JDBC. The ODMG
+                implementation is used to create a query, the query is specifed, executed, and a
+                list fo results is returned:
+            </p>
+            <source><![CDATA[
+public static Product findProductByName(String name) throws Exception
+{
+    // get the used Implementation instance
+    Implementation odmg = ...;
+    Transaction tx = odmg.newTransaction();
+    tx.begin();
+
+    OQLQuery query = odmg.newOQLQuery();
+    query.create("select products from "
+                 + Product.class.getName()
+                 + " where name = $1");
+    query.bind(name);
+    List results = (List) query.execute();
+    Product product = (Product) results.iterator().next();
+
+    tx.commit();
+    return product;
+}]]></source>
+        </section>
+
+
+        <section>
+            <title>Updating Persistent Objects</title>
+            <p>
+                Updating a persistent object is done by modifying it in the context of a transaction,
+                and then committing the transaction:
+            </p>
+            <source><![CDATA[
+public static void sellProduct(Product product, int number)
+{
+    // get the used Implementation instance
+    Implementation odmg = ...;
+    Transaction tx = odmg.newTransaction();
+    tx.begin();
+
+    tx.lock(product, Transaction.WRITE);
+    product.setStock(new Integer(product.getStock().intValue() -  number));
+
+    tx.commit();
+}]]></source>
+            <p>
+                The sample code obtains a write lock on the object (<strong>before</strong> the changes are made),
+                binding it to the transaction, changes the object, and commits the transaction. The newly modified
+                <code>Product</code>
+                now has a new
+                <code>stock</code> value.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Deleting Persistent Objects</title>
+            <p>
+                Deleting persistent objects requires directly addressing the
+                <code>Database</code> which
+                contains the persistent object. This can be obtained from the ODMG
+                <code>Implementation</code> by asking for it. Once retrieved, just ask the
+                <code>Database</code> to delete the object. Once again, this is all done in the context
+                of a transaction.
+            </p>
+            <source><![CDATA[
+public static void deleteProduct(Product product)
+{
+    // get the used Implementation instance
+    Implementation odmg = ...;
+    Transaction tx = odmg.newTransaction();
+
+    tx.begin();
+    // get current used Database instance
+    Database db = odmg.getDatabase(null);
+    db.deletePersistent(product);
+    tx.commit();
+}
+        ]]></source>
+            <p>
+                It is important to note that the
+                <code>Database.deletePerstient()</code> call does
+                not delete the object itself, just the persistent representation of it. The transient
+                object still exists and can be used however desired -- it is simply no longer
+                persistent.
+            </p>
+        </section>
+
+    </body>
+</document>

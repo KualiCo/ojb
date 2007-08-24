@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: summary.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Testing Summary</title>
+        <authors>
+            <person name="Brian McCallister" email="brianm@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Martin Kalén" email="mkalen@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <p>
+            Summary of documentation about OJB Unit testing.
+        </p>
+        <p>
+            OJB has an extensive <a href="ext:junit">JUnit</a>-based test suite
+            with over 800 individual tests.
+        </p>
+
+        <ul>
+            <li>
+                <a href="site:testing/test-suite">The OJB test suite</a>
+                <br/>Information about how to run the test suite against your RDBMS.
+            </li>
+            <li>
+                <a href="site:testing/test-write">How to write tests</a>
+                <br/>Explains how to add your own tests to the OJB test suite.
+            </li>
+            <li>
+                <a href="site:performance">The OJB performance tests</a>
+                <br/>Link to the reference guide about OJB performance comparison
+                and the OJB performance test-suite.
+            </li>
+        </ul>
+    </body>
+</document>

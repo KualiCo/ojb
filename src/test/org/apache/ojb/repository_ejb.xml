@@ -1,0 +1,150 @@
+<!--
+#/* Copyright 2003-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!-- The mappings for the EJB-examples are placed here to make it
+     easier to find them for OJB newbies.
+-->
+
+
+<!-- Definitions for org.apache.ojb.ejb.PersonVO
+    private Integer personId;
+    private String firstName;
+    private String lastName;
+    private String grade;
+-->
+   <class-descriptor
+   	  class="org.apache.ojb.ejb.PersonVO"
+   	  table="EJB_PERSON"
+   >
+      <field-descriptor
+         name="personId"
+         column="PERSON_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+      />
+      <field-descriptor
+         name="firstName"
+         column="FIRST_NAME"
+         jdbc-type="VARCHAR"
+      />
+
+      <field-descriptor
+         name="lastName"
+         column="LAST_NAME"
+         jdbc-type="VARCHAR"
+      />
+      <field-descriptor
+         name="grade"
+         column="GRADE"
+         jdbc-type="VARCHAR"
+      />
+   </class-descriptor>
+
+
+<!-- Definitions for org.apache.ojb.ejb.ArticleVO
+    private Integer articleId;
+    private String name;
+    private BigDecimal price;
+    private String description;
+    private Integer categoryId;
+    private CategoryVO category;
+-->
+    <class-descriptor
+    class="org.apache.ojb.ejb.ArticleVO"
+    table="EJB_ARTICLE"
+    >
+        <field-descriptor
+         name="articleId"
+         column="ARTICLE_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+        <field-descriptor
+         name="name"
+         column="NAME"
+         jdbc-type="VARCHAR"
+        />
+        <field-descriptor
+         name="price"
+         column="PRICE"
+         jdbc-type="DECIMAL"
+        />
+        <field-descriptor
+         name="description"
+         column="DESCRIPTION"
+         jdbc-type="VARCHAR"
+        />
+        <field-descriptor
+         name="categoryId"
+         column="CATEGORY_ID"
+         jdbc-type="INTEGER"
+        />
+
+        <reference-descriptor
+        name="category"
+        class-ref="org.apache.ojb.ejb.CategoryVO"
+        auto-retrieve="false"
+        auto-update="false"
+        auto-delete="false"
+        >
+            <foreignkey field-ref="categoryId"/>
+        </reference-descriptor>
+    </class-descriptor>
+
+
+<!-- Definitions for org.apache.ojb.ejb.CategoryVO
+    private Integer categoryId;
+    private String categoryName;
+    private String description;
+    private Collection assignedArticles;
+-->
+    <class-descriptor
+      class="org.apache.ojb.ejb.CategoryVO"
+      table="EJB_CATEGORY"
+    >
+        <field-descriptor
+         name="objId"
+         column="CATEGORY_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+        />
+        <field-descriptor
+         name="categoryName"
+         column="CATEGORY_NAME"
+         jdbc-type="VARCHAR"
+        />
+        <field-descriptor
+         name="description"
+         column="DESCRIPTION"
+         jdbc-type="VARCHAR"
+        />
+
+        <collection-descriptor
+        name="assignedArticles"
+        element-class-ref="org.apache.ojb.ejb.ArticleVO"
+        auto-retrieve="true"
+        auto-update="false"
+        auto-delete="false"
+        >
+            <inverse-foreignkey field-ref="categoryId"/>
+        </collection-descriptor>
+    </class-descriptor>
+
+
+<!-- Mapping of User defined classes ends here -->

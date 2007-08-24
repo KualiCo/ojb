@@ -1,0 +1,4 @@
+The GUI of this application is built using Netbeans version 3.5 (see also
+http://www.netbeans.org). If you want to modify the GUI of the application
+please do so using Netbeans, so the .form files get updated as well. Otherwise
+your changes might be overwritten once somebody else opens the forms in Netbeans.

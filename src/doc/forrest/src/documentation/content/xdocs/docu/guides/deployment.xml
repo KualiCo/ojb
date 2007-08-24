@@ -1,0 +1,1349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: deployment.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Deployment</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Stephen Ting" email=""/>
+            <person name="Christophe Lombart" email=""/>
+            <person name="Lucy Zhao" email=""/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                This section enumerates all things needed to deploy OJB in standalone or servlet
+                based applications and j2ee-container.
+            </p>
+        </section>
+
+        <section>
+            <title>Things needed for deploying OJB</title>
+
+            <section>
+                <title>1. The OJB binary jar archive</title>
+                <p>
+                    You need a
+                    <code>db-ojb-&lt;version&gt;.jar</code> file containing the compiled OJB library.
+                    <br/>This jar files contains all OJB code neccessary in
+                    production level environments. It does not contain any test code. It
+                    also does not contain any configuration data.
+
+                    You'll find this file in the lib directory of the binary distribution.
+
+                    If you are working with the source distribution you can assemble the binary jar archive
+                    By calling
+                </p>
+                <source><![CDATA[
+ant jar]]></source>
+                <p>
+                    This ant task generates the binary jar to the dist directory.
+                </p>
+            </section>
+
+
+            <section>
+                <title>2. Configuration data</title>
+                <p>OJB needs two kinds of configuration data:</p>
+                <ol>
+                    <li>
+                        Configuration of the OJB runtime environment. This data is
+                        stored in a file named
+                        <a href="ext:ojb.properties">
+                            <code>OJB.properties</code>
+                        </a>.
+                        <a href="site:ojb-properties">Learn more about this file
+                            here</a>.
+                    </li>
+                    <li>
+                        Configuration of the MetaData layer. This data is stored in
+                        file named
+                        <a href="ext:repository.xml">
+                            <code>repository.xml</code>
+                        </a>
+                        (and several included files).
+                        <a href="site:repository">Learn more
+                            about this file here</a>.
+                    </li>
+                </ol>
+                <note>
+                    These configuration files are read in through ClassLoader resource
+                    lookup and must therefore be placed on the classpath.
+                </note>
+            </section>
+
+            <anchor id="additional-jars"/>
+            <section>
+                <title>3. External dependencies that do not come with OJB</title>
+                <p>
+                    Some components of OJB depend on external libraries and components that
+                    cannot be shipped with OJB. You'll also need these if you want to compile
+                    OJB from source. Here is a list of these dependencies:
+                </p>
+                <dl>
+                    <dt><code>j2ee.jar</code></dt>
+                    <dd>
+                        This is the main archive of the <a href="ext:sun/j2ee-sdk">J2EE SDK</a>.
+                    </dd>
+                    <dt><code>jdo.jar, jdori*.jar</code></dt>
+                    <dd>
+                        The <a href="ext:sun/jdo">JDO Reference implementation</a> is required
+                        if you plan to use the JDO Api.
+                    </dd>
+                </dl>
+            </section>
+
+            <anchor id="optional-jars"/>
+            <section>
+                <title>4. Optional jar archives that come with OJB</title>
+                <p>
+                    Some of jar files in the <code>lib</code> folder are only used during build-time
+                    or are only required by certain components of OJB, and so they might need not to
+                    be needed in runtime environments.
+                    <br/>
+                    Apart from wasting disk space they do no harm. If you don't care about disk space
+                    you just take all jars from the <code>lib</code> folder.
+                    <br/>
+                    If you do care, here is the list of jars you might omit during runtime:
+                </p>
+                <dl>
+                    <dt><code>ant-*.jar</code></dt>
+                    <dd>
+                        These are the <a href="ext:ant">Apache Ant 1.6</a> jars.
+                    </dd>
+                    <dt><code>antlr-[version].jar</code></dt>
+                    <dd>
+                        <a href="ext:antlr">ANTLR</a> is a parser generator which is
+                        used in the ODMG component of OJB. If you only use the PB Api, then you
+                        don't need this.
+                    </dd>
+                    <dt><code>junit.jar</code></dt>
+                    <dd>
+                        <a href="ext:junit">Junit</a> for running the unit tests. You'll need
+                        this only if you're also writing unit tests for you app.
+                    </dd>
+                    <dt><code>xerces.jar, xml-apis.jar</code></dt>
+                    <dd>
+                        The <a href="ext:xml-apache/xerces">Xerces</a> XML parser. Since most newer
+                        JDK's ship with an XML parser, it is likely that you do not need these files.
+                    </dd>
+                    <dt><code>xalan.jar</code></dt>
+                    <dd>
+                        <a href="ext:xml-apache/xalan">Xalan</a> is used to generate the unit test report,
+                        so you'll probably don't need this.
+                    </dd>
+                    <dt><code>jakarta-regexp-[version].jar</code></dt>
+                    <dd>
+                        The <a href="ext:jakarta/regexp">Jakarta Regular Expression library</a> is
+                        only used when building OJB from source.
+                    </dd>
+                    <dt><code>torque-xxx.jar, velocity-xxx.jar</code></dt>
+                    <dd>
+                        <a href="ext:torque">Torque</a> is used to generate concrete databases
+                        from database-independent schema files. OJB uses it internally to setup databases
+                        for the unit tests.
+                    </dd>
+                    <dt><code>xdoclet-[version].jar, xjavadoc-[version].jar, xdoclet-ojb-module-[version].jar, commons-collections-[version].jar</code></dt>
+                    <dd>
+                        The <a href="site:xdoclet-module">XDoclet OJB module</a> can be used
+                        to generate the repository metadata and Torque schema files from Javadoc comments
+                        in the Java source files. It is however not required at runtime, so you can safely
+                        ignore these files then.
+                    </dd>
+                </dl>
+            </section>
+
+            <section>
+                <title>5. Don't forget the JDBC driver</title>
+                <p>
+                    The repository.xml defines JDBC Connections
+                    to your runtime databases. To use the declared JDBC drivers the
+                    respective jar archives must also be present in the classpath. Refer
+                    to the documentation of your databases.
+                </p>
+            </section>
+
+            <p>
+                In the following sections I will describe how to deploy these items
+                for specific runtime environments.
+            </p>
+
+        </section>
+
+
+        <section>
+            <title>Deployment in standalone applications</title>
+            <p>
+                Deploying OJB for standalone applications is most simple. If you
+                follow these four steps your application will be up in a few minutes.
+            </p>
+            <ol>
+                <li>
+                    Add
+                    <code>db-ojb-&lt;version&gt;.jar</code>
+                    to the classpath
+                </li>
+                <li>
+                    place
+                    <code>OJB.properties </code>and
+                    <code>repository.xml</code> files on the
+                    classpath
+                </li>
+                <li>
+                    Add the additional runtime jar archives to the classpath.
+                </li>
+                <li>
+                    Add your JDBC drivers jar archive to the classpath.
+                </li>
+            </ol>
+        </section>
+
+
+        <section>
+            <title>Deployment in servlet based applications</title>
+            <p>
+                Generally speaking the four steps described in the previous
+                section have to be followed also in Servlet / JSP based environments.
+                <br/>
+                The exact details may differ for your specific Servlet container, but
+                the general concepts should be quite similar.
+            </p>
+
+            <ol>
+                <li>
+                    Deploy
+                    <code>db-ojb-&lt;version&gt;.jar</code>
+                    with your servlet applications WAR file.
+                    <br/>The WAR format specifies that
+                    application specific jars are to be placed in a directory
+                    <code>WEB-INF/lib</code>.
+                    Place
+                    <code>db-ojb-&lt;version&gt;.jar</code>
+                    to this directory.
+                </li>
+                <li>
+                    Deploy
+                    <a href="ext:ojb.properties">
+                        <code>OJB.properties</code>
+                    </a>
+                    and
+                    <a href="ext:repository.xml">
+                        <code>repository.xml</code>
+                    </a> with your
+                    servlet applications WAR file.
+                    <br/>The WAR format specifies that
+                    Servlet classes are to be placed in a directory
+                    <code>WEB-INF/classes</code>.
+                    The OJB configuration files have to be in this directory.
+
+                </li>
+                <li>
+                    Add the additional runtime
+                    jar archives to
+                    <code>WEB-INF/lib</code> too.
+                </li>
+                <li>
+                    Add your JDBC drivers jar archive to
+                    <code>WEB-INF/lib</code>.
+                </li>
+            </ol>
+
+            <p>
+                By executing
+                <code>ant war</code> you can generate a sample servlet application assembled
+                to a valid WAR file. The resulting
+                <code>ojb-servlet.war</code>
+                file is written to the dist directory. You can deploy this WAR file to
+                your servlet engine or unzip it to have a look at its
+                directory structure.
+                <br/>
+                you can also use the target
+                <code>war</code> as a starting point for your own
+                deployment scripts.
+            </p>
+
+        </section>
+
+
+        <anchor id="j2ee-server"/>
+        <section>
+            <title>Deployment in managed environment (e.g. EJB based)</title>
+
+            <p>
+                The above mentioned guidelines concerning
+                jar files and placing of the <em>OJB.properties</em> and the <em>repository.xml</em>
+                are valid for managed/EJB environments as well.
+                <br/>
+                But apart from these basic steps you'll have to perform some additional
+                configurations to integrate OJB into a managed environment.
+            </p>
+            <p>
+                <em>Managed environment: Using of OJB in a managed environment means primarily the cooperation
+                of OJB with the application server JTA service (via JCA or by using JTA classes).</em>
+            </p>
+            <p>
+                The instructions to make OJB running within your application server
+                should be similar for all server. So the following instructions for JBoss
+                should be useful for all user. E.g. most
+                <a href="ext:ojb.properties">
+                    <code>OJB.properties</code>
+                </a> file settings
+                are the same for all application server.
+            </p>
+            <p>
+                There are some topics you should examine very carefully:
+            </p>
+            <ul>
+                <li>
+                    <strong>Connection handling:</strong> Lookup DataSource from your AppServer, only these
+                    connections can be enlisted in running transactions (JTA)
+                </li>
+                <li>
+                    <strong>Caching:</strong> Do you need caching? Do you need distributed caching?
+                </li>
+                <li>
+                    <strong>Locking:</strong> Do you need distributed locking (when using odmg-api
+                    in clustered environments)?
+                </li>
+            </ul>
+
+
+            <section>
+                <title>Configure OJB for managed environments considering as JBoss example</title>
+                <p>
+                    The following steps describe how to configure OJB for managed environments and
+                    deploy on a ejb conform Application Server on the basis of the
+                    <a href="#example-beans">shipped ejb-examples</a>. In managed environments
+                    OJB needs some specific properties:
+                </p>
+
+
+                <anchor id="j2ee-ojb.properties"/>
+                <section>
+                    <title>
+                        <strong>1. Adapt OJB.properties file</strong>
+                    </title>
+                    <p>
+                        If the PB-api is the only persistence API being used (no ODMG nor JDO)
+                        and it is
+                        <strong>only</strong> being used in a managed environment, it is
+                        strongly recommended to use a special <code>PersistenceBrokerFactory</code> class, which
+                        enables <code>PersistenceBroker</code> instances to participate in the running JTA
+                        transaction - e.g. this makes <code>PBStateListener</code> proper work in managed
+                        environments and enables OJB to synchronize the persistent
+                        <a href="site:object-cache">caches</a> (e.g. the two-level cache):
+                    </p>
+                    <source><![CDATA[
+PersistenceBrokerFactoryClass=org.apache.ojb.broker.core.PersistenceBrokerFactorySyncImpl]]></source>
+                    <note>
+                        Don't use this setting in conjunction with any other top-level api (e.g. ODMG-api).
+                        <br/>
+                        <br/>
+                        If <strong>no permanent caching</strong> (only the "empty" cache implementation
+                        or the "per broker cache") is used and the <code>PBStateListener</code>
+                        is not used to detect tx demarcation, it's possible to use the default
+                        <code>PersistenceBrokerFactory</code> implementation, because OJB doesn't
+                        need to synchronize anything.
+                    </note>
+                    <p>
+                        Your
+                        <a href="ext:ojb.properties">
+                            <code>OJB.properties</code>
+                        </a> file need
+                        the following additional settings to work within managed environments (apply to
+                        <strong>all</strong> used api):
+                    </p>
+                    <source><![CDATA[
+...
+# only needed when using OJB 1.0.3 or earlier in managed environments. Since version
+# 1.0.4 OJB detects datasources from managed environments automatically.
+ConnectionFactoryClass=
+org.apache.ojb.broker.accesslayer.ConnectionFactoryManagedImpl
+
+...
+# set used application server TM access class
+JTATransactionManagerClass=
+org.apache.ojb.otm.transaction.factory.JBossTransactionManagerFactory]]></source>
+                    <p>
+                        A specific
+                        <a href="site:connection">
+                            <em>ConnectionFactory</em>
+                        </a> implementation
+                        is used in version before 1.0.4 to by-pass all forbidden method calls in managed environments.
+                        Since OJB 1.0.4 datasources from managed environments are detected automatically
+                        by checking the <em>JTA-TxManager</em>.
+                    </p>
+                    <p>
+                        The
+                        <em>JTATransactionManagerClass</em> property specify the used implementation
+                        class to lookup the <em>transaction manager</em> used by the application server.
+                        The <code>javax.transaction.TransactionManager</code> is needed to make it possible
+                        for OJB to participate in running <em>JTA transaction</em> via
+                        <code>javax.transaction.Synchronization</code> interface.
+                    </p>
+                    <p>
+                        The ODMG-api needs some additional settings for use in managed environments
+                        (only needed when odmg-api was used):
+                    </p>
+                    <source><![CDATA[
+...
+# only needed for odmg-api
+ImplementationClass=org.apache.ojb.odmg.ImplementationJTAImpl
+
+...
+# only needed for odmg-api
+OJBTxManagerClass=org.apache.ojb.odmg.JTATxManager]]></source>
+
+                    <p>
+                        The <em>ImplementationClass</em> specify the ODMG base class implementation. In
+                        managed environments a specific implementation is used, able to participate in
+                        <em>JTA transactions</em>.
+                    </p>
+                    <p>
+                        The <em>OJBTxManagerClass</em> specify the used OJBTxManager implementation to
+                        manage the transaction synchronization in managed enviroments.
+                    </p>
+                    <note>
+                        Currently OJB integrate in managed environments via <code>javax.transaction.Synchronization</code>
+                        interface. When the <em>JCA adapter</em> is finished (work in progress) integration will be more
+                        smooth.
+                    </note>
+                </section>
+
+                <section>
+                    <title>
+                        <strong>2. Declare datasource in the repository (repository_database) file and do additional configuration</strong>
+                    </title>
+                    <p>
+                        Do only use
+                        <code>DataSource</code> from the application server to connect to your database
+                        (Local used connections can not participate in JTA transaction).
+                    </p>
+                    <note>
+                        We strongly recommend to use JBoss 3.2.2 or higher of the 3.x series of JBoss. With earlier versions of
+                        3.x we got Statement/Connection resource problems when running some ejb stress tests. As workaround we
+                        introduce a jboss specific attribute
+                        <em>eager-release</em> for version before 3.2.2, but it seems that this
+                        attribute can cause side-effects. Again, this problem seems to be fixed in 3.2.2.
+                    </note>
+                    <p>
+                        Define OJB to use a DataSource:
+                    </p>
+                    <source><![CDATA[
+<!-- Datasource example -->
+<jdbc-connection-descriptor
+    jcd-alias="default"
+    default-connection="true"
+    platform="Sapdb"
+    jdbc-level="2.0"
+    jndi-datasource-name="java:DefaultDS"
+    username="sa"
+    password=""
+    eager-release="false"
+    batch-mode="false"
+    useAutoCommit="0"
+    ignoreAutoCommitExceptions="false"
+>
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl">
+        <attribute attribute-name="timeout" attribute-value="900"/>
+        <attribute attribute-name="autoSync" attribute-value="true"/>
+     </object-cache>
+
+    <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl">
+    </sequence-manager>
+
+</jdbc-connection-descriptor>]]></source>
+                    <p>
+                        In OJB versions before <em>1.0.4</em> the attribute
+                        <a href="site:repository/jdbc-connection-descriptor"><code>useAutoCommit="0"</code></a>
+                        is mandatory in managed environments, because it's in most cases not
+                        allowed to change the connection's <em>autoCommit</em> state.
+                    </p>
+
+
+                    <note>
+                        In managed environments you can't use the <em>default</em> sequence manager
+                        implementation (SequenceManagerHighLowImpl) of OJB. For alternative sequence
+                        manager implemetation <a href="site:sequence-manager">see here</a>.
+                    </note>
+                </section>
+
+
+                <section>
+                    <title>
+                        <strong>[2b. How to deploy ojb test hsqldb database to jboss]</strong>
+                    </title>
+                    <p>
+                        If you use hsql database for testing you can easy setup the DB on jboss.
+                        After creating the database in OJB test directory with
+                        <code>ant prepare-testdb</code>,
+                        take the generated
+                        <code>.../target/test/OJB.script</code> file and rename it to
+                        <code>default.script</code>.
+                        Then replace the jboss default.script file in
+                        <code>.../jboss-3.x.y/server/default/db/hypersonic</code>
+                        with this file.
+                    </p>
+                </section>
+
+
+                <section>
+                    <title>
+                        <strong>3. Include all OJB configuration files in classpath</strong>
+                    </title>
+                    <p>
+                        Include the all needed OJB configuration files in your classpath:
+                    </p>
+                    <p>
+                        - OJB.properties
+                        <br/>- repository.dtd
+                        <br/>- repository.xml
+                        <br/>- repository_internal.xml
+                        <br/>- repository_database.xml,
+                        <br/>- repository_ejb.xml (if you want to run the ejb examples)
+                    </p>
+                    <p>
+                        To deploy the ejb-examples beans we include all configuration files in a
+                        ejb jar file - more info about this see
+                        <a href="#all-together">below</a>.
+                    </p>
+                    <p>
+                        The repository.xml for the
+                        <a href="#example-beans">ejb-example beans</a> look like:
+                    </p>
+                    <source><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is a sample metadata repository for the ObJectBridge
+System. Use this file as a template for building your own
+mappings-->
+
+<!-- defining entities for include-files -->
+<!DOCTYPE descriptor-repository SYSTEM "repository.dtd" [
+<!ENTITY database SYSTEM "repository_database.xml">
+<!ENTITY internal SYSTEM "repository_internal.xml">
+<!ENTITY ejb SYSTEM "repository_ejb.xml">
+]>
+
+
+<descriptor-repository version="1.0"
+            isolation-level="read-uncommitted">
+
+    <!-- include all used database connections -->
+                            &database;
+
+    <!-- include ojb internal mappings here -->
+                            &internal;
+
+    <!-- include mappings for the EJB-examples -->
+                            &ejb;
+
+</descriptor-repository>]]></source>
+                </section>
+
+
+                <section>
+                    <title>
+                        <strong>4. Enclose all libraries OJB depend on</strong>
+                    </title>
+                    <p>
+                        In most cases it is recommended to include all libraries OJB depend on
+                        in the application .ear/.sar or ejb .jar file to make OJB run and
+                        (re-)deployable.
+                        Here are the libraries needed to make the ojb sample session beans run on JBoss:
+                    </p>
+                    <ul>
+                        <li>The jakarta commons libraries files (all commons-xxx.jar) from OJB /lib directory</li>
+                        <li>The antlr jar file (antlr-xxx.jar) from OJB /lib directory</li>
+                        <li>jakarta-regexp-xxx.jar from OJB /lib directory</li>
+                        <li>[jakarta turbine jcs.jar from OJB /lib directory, only if ObjectCacheJCSImpl was used]</li>
+                    </ul>
+                    <p>
+                        (This was tested with jboss 3.2.2)
+                    </p>
+                </section>
+
+
+                <section>
+                    <title>
+                        <strong>5. Take care of caching</strong>
+                    </title>
+                    <p>
+                        Very important thing is cache synchronization with the database.
+                        When using the ODMG-api or PB-api (with
+                        <a href="#j2ee-ojb.properties">special PBF (see 1.)</a> setting)
+                        it's possible to use all
+                        <a href="site:object-cache">
+                            <code>ObjectCache</code>
+                        </a> implementations as long as
+                        OJB doesn't run in a clustered mode. When the
+                        <code>ObjectCacheDefaultImpl</code> cache implementation was used it's
+                        recommended to enable the
+                        <em>autoSync</em> mode.
+                        <br/>
+                        In clustered environments (OJB run on different AppServer nodes) you
+                        need a
+                        <a href="site:howto/clustering">distributed ObjectCache</a> or you should
+                        use a local/empty cache like
+                    </p>
+                    <source><![CDATA[
+ObjectCacheClass=org.apache.ojb.broker.cache.ObjectCachePerBrokerImpl]]></source>
+                    <p>or</p>
+                    <source><![CDATA[
+ObjectCacheClass=org.apache.ojb.broker.cache.ObjectCacheEmptyImpl]]></source>
+                    <p>
+                        The cache is pluggable, so you can write your own ObjectCache implementation to accomplish
+                        your expectations.
+                    </p>
+                    <p>
+                        More info you can find in
+                        <a href="site:howto/clustering">clustering</a> and
+                        <a href="site:object-cache">ObjectCache</a> topic.
+                    </p>
+                </section>
+
+
+                <section>
+                    <title>
+                        <strong>6. Take care of locking</strong>
+                    </title>
+                    <p>
+                        If the used api supports
+                        <em>Object Locking</em> (e.g. ODMG-api, PB-api does not), in clustered environments
+                        (OJB run on different AppServer nodes) a distributed
+                        <a href="site:lock-manager">lock management</a> is mandatory.
+                    </p>
+                </section>
+
+
+                <anchor id="all-together"/>
+                <section>
+                    <title>
+                        <strong>7. Put all together</strong>
+                    </title>
+                    <p>
+                        Now put all files together. We keep the examples as simple as possible, thus we deploy only
+                        a ejb .jar file.
+                        <a href="#packing-ear">Below</a> you can find a short instruction
+                        how to pack an ejb application .ear file including OJB.
+                    </p>
+                    <p>
+                        Generate the ejb-examples
+                        <a href="#example-beans">described below</a> or build your own ejb .jar file
+                        including all beans, ejb-jar.xml and appServer dependend files. Then add all OJB configuration files,
+                        the db-ojb jar file and all libraries OJB depends on into this ejb .jar file.
+                        <br/>
+                        The structure of the ejb .jar file should now look like this:
+                    </p>
+                    <source><![CDATA[
+/OJB.properties
+/repository.dtd
+/repository.xml
+/all used repository-XYZ.xml
+/META-INF
+.../Manifest.mf
+.../ejb-jar.xml
+.../jboss.xml
+
+/all ejb classes
+
+/db-ojb-1.X.jar
+/all used libraries]]></source>
+                    </section>
+
+
+                    <anchor id="deployable-jar"/>
+                    <section>
+                    <title>
+                        <strong>7b. Example: Deployable jar</strong>
+                    </title>
+                    <p>
+                        For example the jar-file used to test the <a href="#example-beans"><em>ejb-examples</em></a>
+                        shipped with OJB, base on the <em>db-ojb-XY-beans.jar</em> file. This jar was created when the
+                        <a href="#example-beans"><em>ejb-examples</em></a> target was called.
+                    </p>
+                    <p>
+                        The generated jar contains only the ejb-classes and the deployment-descriptor. We have
+                        to add additional jars (all libraries used by OJB) and files (all configuration files)
+                        to make it deployable. The deployable <em>db-ojb-XY-beans.jar</em> should look like this:
+                    </p>
+                    <source><![CDATA[
+/OJB.properties
+/repository.dtd
+/repository.xml
+/repository_database.xml
+/repository_ejb.xml
+/repository_internal.xml
+/META-INF
+.../Manifest.mf
+.../ejb-jar.xml
+.../jboss.xml
+
+/org
+.../apache (all ejb classes)
+
+/db-ojb-1.X.jar
+
+/antlr-XXX.jar
+/commons-beanutils-XXX.jar
+/commons-collections-XXX.jar
+/commons-dbcp-XXX.jar
+/commons-lanf-XXX.jar
+/commons-logging-XXX.jar
+/commons-pool-XXX.jar
+/jakarta-regexp-XXX.jar]]></source>
+                    <p>
+                        Please pay attention on the <a href="#j2ee-ojb.properties">configuration settings</a>
+                        to make OJB work in managed environments (especially the OJB.properties settings).
+                    </p>
+                    <note>
+                        This example isn't a real world production example. Normally you will setup one or more enterprise
+                        archive files (.ear files) to bundle one or more complete J2EE (web) applications. More about
+                        how to build an <em>J2EE application</em> using OJB <a href="#packing-ear">see here</a>.
+                    </note>
+                    <p>
+                        The described example should be re-deployable/hot-deployable in JBoss.
+                        <br/><strong>If you will get any problems, please let me know. All suggestions are welcome!</strong>
+                    </p>
+                </section>
+
+                <anchor id="howto-access"/>
+                <section>
+                    <title>
+                        <strong>8. How to access OJB API?</strong>
+                    </title>
+                    <p>
+                        In managed environments it is possible to access OJB in same way used
+                        in non-managed environments:
+                        </p>
+                        <source><![CDATA[
+// PB-api
+PersistenceBroker broker = PersistenceBrokerFactory.create...;
+
+//ODMG-api
+Implementation odmg = OJB.getInstance();]]></source>
+                    <p>
+                        But it is recommended to bind OJB api access classes to JNDI and
+                        lookup the the api entry <a href="#bind-to-jndi">classes via JNDI</a>.
+                    </p>
+                </section>
+
+                <section>
+                    <title>
+                        <strong>9. OJB logging within JBoss</strong>
+                    </title>
+                    <p>
+                        Jboss use
+                        <a href="ext:log4j">log4j</a> as standard logging api.
+                        <br/>
+                        In summary, to use log4j logging with OJB within jBoss:
+                        <br/>
+                        1) in OJB.properties set
+                    </p>
+                    <source><![CDATA[
+LoggerClass=org.apache.ojb.broker.util.logging.Log4jLoggerImpl]]></source>
+                    <p>
+                        There is no need for a separate log4j.properties file of OJB-specific
+                        log4j settings (in fact the OJB.properties setting LoggerConfigFile is
+                        ignored).  Instead, the jBoss log4j configuration file must be used:
+                    </p>
+                    <p>
+                        2) in JBOSS_HOME/server/default/conf/log4j.xml,
+                        <br/>
+                        define appenders and add categories to add or filter logging of desired
+                        OJB packages, following the numerous examples in that file.  For example,
+                    </p>
+                    <source><![CDATA[
+<category name="org.apache.ojb">
+    <priority value="DEBUG" />
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+</category>
+
+<category name="org.apache.ojb.broker.metadata.RepositoryXmlHandler">
+    <priority value="ERROR" />
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+</category>]]></source>
+                </section>
+            </section>
+
+
+            <anchor id="example-beans"/>
+            <section>
+                <title>Example Session Beans</title>
+
+                <anchor id="example-introduction"/>
+                <section>
+                    <title>Introduction</title>
+                    <p>
+                        The OJB source distribution was shipped with a bunch of sample
+                        session beans and client classes for testing. Please recognize that we don't say that
+                        these examples show "best practices" of using OJB within enterprise java beans - it's
+                        only one way to make it work.
+                    </p>
+                    <p>
+                        To keep the examples as simple as possible we directly use the OJB main classes
+                        via static lookup or helper classes on each <em>ejbCreate()</em> call. But we recommend to
+                        <a href="#bind-to-jndi">bind the OJB main classes</a> in JNDI instead of direct use
+                        in the session beans.
+                    </p>
+                </section>
+
+                <section>
+                    <title>
+                        <strong>Generate the sample session beans</strong>
+                    </title>
+                    <p>
+                        The source code of the sample beans is stored in directory
+                        <br/>
+                        <code>[db-ojb]/src/ejb/org/apache/ojb/ejb</code>
+                        <br/>
+                        To generate the sample beans call
+                        </p>
+                        <source><![CDATA[
+ant ejb-examples]]></source>
+                    <p>
+                        This ant target copies the bean sources to
+                        <code>[db-ojb]/target/srcejb</code> generates all needed bean classes and
+                        deployment descriptor (
+                        <a href="ext:sourceforge/xdoclet">by using xdoclet</a>) to the same
+                        directory, compiles the sources and build an ejb .jar file called
+                        <code>[db-ojb]/dist/db-ojb-XXX-beans.jar</code>. Test clients
+                        for the generated beans included in the
+                        <code>[db-ojb]/dist/db-ojb-XXX-client.jar</code>.
+                    </p>
+                    <p>
+                        To run xdoclet properly the following xdoclet jar files needed in
+                        <code>[db-ojb]/lib</code> directory (xdoclet version 1.2xx or higher):
+                    </p>
+                    <source><![CDATA[
+xdoclet-xxx.jar
+xdoclet-ejb-module-xxx.jar
+xdoclet-jboss-module-xxx.jar
+xdoclet-jmx-module-xxx.jar
+xdoclet-web-module-xxx.jar
+xdoclet-xjavadoc-module-xxx.jar]]></source>
+                    <p>
+                        If you using a different application server than JBoss, you have to modifiy the
+                        <em>xdoclet</em> ant target in
+                        <code>[db-ojb]/build-ejb-examples.xml</code> to force xdoclet to generate the appServer specific files.
+                        See xdoclet documentation for further information.
+                    </p>
+                </section>
+
+                <section>
+                    <title>
+                        <strong>How to run test clients for PB / ODMG - api</strong>
+                    </title>
+                    <p>
+                        If the "extended ejb .jar" file was successfully deployed we need a test client to
+                        invoke the ejb-examples. As said above, the
+                        <em>ejb-examples</em> target generates a
+                        test client jar too. It's called
+                        <code>[db-ojb]/dist/db-ojb-XXX-client.jar</code> and
+                        contains junit based test clients for the PB-/ODMG-api.
+                        <br/>
+                        The main test classes are:
+                    </p>
+                    <ul>
+                        <li>org.apache.ojb.ejb.AllODMGTests</li>
+                        <li>org.apache.ojb.ejb.AllPBTests</li>
+                    </ul>
+                    <p>
+                        OJB provide an ant target to run the client side bean tests. Include all needed appServer
+                        libraries in
+                        <code>[db-ojb]/lib</code> (e.g. for JBoss jbossall-client.jar do the job, beside
+                        the "j2ee jars"). To run the PB-api test clients (access running JBoss server with default
+                        settings) call
+                    </p>
+                    <source><![CDATA[
+ant ejb-examples-run -Dclient.class=org.apache.ojb.ejb.AllPBTests]]></source>
+                    <p>
+                        To run the test clients on an arbitrary appServer pass the JNDI properties for naming context
+                        initalisation too, e.g.
+                    </p>
+                    <ul>
+                        <li>-Djava.naming.factory.initial="org.jnp.interfaces.NamingContextFactory"</li>
+                        <li>-Djava.naming.provider.url="jnp://localhost:1099"</li>
+                        <li>-Djava.naming.factory.url.pkgs="org.jboss.naming:org.jnp.interfaces"</li>
+                    </ul>
+                    <p>
+                        Then the target call may looks like
+                    </p>
+                    <source><![CDATA[
+ant ejb-examples-run -Dclient.class=org.apache.ojb.ejb.AllPBTests
+ -Djava.naming.factory.initial="org.jnp.interfaces.NamingContextFactory"
+  -Djava.naming.provider.url="jnp://localhost:1099"
+   -Djava.naming.factory.url.pkgs="org.jboss.naming:org.jnp.interfaces"]]></source>
+                </section>
+            </section>
+
+
+            <anchor id="packing-ear"/>
+            <section>
+                <title>Packing an .ear file</title>
+                <p>
+                    Here is an example of the .ear package structure. It is redeployable
+                    without having to restart JBoss.
+                </p>
+                <section>
+                    <title>The Package Structure</title>
+                    <p>
+                        The package structure of the <em>.ear</em> file should look like:
+                    </p>
+                    <source><![CDATA[
+/ejb.jar/
+...EJBs
+...META-INF/
+......ejb-jar.xml
+......jboss.xml
+......MANIFEST.MF
+
+/web-app.war/
+...JSP
+...WEB-INF/
+......web.xml
+
+/META-INF/
+...application.xml
+/ojb.jar
+/[ojb required runtime jar]
+
+/OJB.properties
+/OJB-logging.properties
+/repository.dtd
+/respository_internal.xml
+/repository.xml
+/repository_database1.xml
+/repository_app1.xml
+/repository_database2.xml
+/repository_app2.xml]]></source>
+                    </section>
+                <section>
+                    <title>Make OJB API Resources available</title>
+                    <p>
+                        There are two approaches to use OJB api in the ejb.jar file:
+                    </p>
+                    <p>
+                        <strong>1.</strong> To create a Manifest.mf file with classpath attribute that include
+                        all the runtime jar required by OJB (Very important to include all
+                        required jar). The sample below works fine (replace [version] with
+                        distributed JAR versions):
+                    </p>
+                    <source><![CDATA[
+Class-Path: db-ojb-[version].jar antlr-[version].jar commons-beanutils-[version].jar
+commons-collections-[version].jar commons-dbcp-[version].jar commons-lang-[version].jar
+commons-logging-[version].jar commons-pool-[version].jar
+jakarta-regexp-[version].jar]]></source>
+                    <note>
+                        If you to include the jar file under a directory of the ear file,
+                        says <code>/lib/db-ojb-[version].jar</code> and etc. At the classpath
+                        attribute it will be something like:
+                        <code>Class-Path: ./lib/db-ojb-[version].jar and etc</code> (The "." in front is
+                        important)
+                    </note>
+                    <p>
+                        <strong>2.</strong> To add the required jar file as a "java" element in the
+                        application.xml file:
+                    </p>
+                    <source><![CDATA[
+<module>
+    <java>antlr-[version].jar</java>
+</module>
+<module>
+    <java>commons-beanutils-[version].jar</java>
+</module>
+<module>
+    <java>commons-collections-[version].jar</java>
+</module>
+<module>
+    <java>commons-dbcp-[version].jar</java>
+</module>
+<module>
+    <java>commons-lang-[version].jar</java>
+</module>
+<module>
+    <java>commons-logging-[version].jar</java>
+</module>
+<module>
+    <java>commons-pool-[version].jar</java>
+</module>
+<module>
+    <java>db-ojb-[version].jar</java>
+</module>]]></source>
+                    <note>
+                    To use this approach, all the library had to be in the root of the
+                    ear.
+                    </note>
+                    </section>
+                <p>
+                    (This was tested on Jboss 3.2.3)
+                </p>
+            </section>
+
+            <anchor id="bind-to-jndi"/>
+            <section>
+                <title>Make OJB accessible via JNDI</title>
+                <p>
+                    Current bean examples do directly use OJB main classes, but it's also possible to make
+                    OJB accessible via JNDI and use a JNDI-lookup to access OJB api's in your beans.
+                    <br/>
+                    To make the OJB api's accessible via JNDI, bind main/access classes to JNDI. How to do
+                    this depends on the used environment. The main classes/methods to bind are:
+                </p>
+                <ul>
+                    <li>
+                        PB-api:<br/>
+                        Method <code>org.apache.ojb.broker.core.PersistenceBrokerFactoryFactory#instance()</code>
+                        returns the used <code>org.apache.ojb.broker.core.PersistenceBrokerFactoryIF</code>. Make
+                        this instance accessible via JNDI.
+                    </li>
+                    <li>
+                        ODMG-api:<br/>
+                        Method <code>org.apache.ojb.odmg.OJB#getInstance()</code> returns a new instance of
+                        the <code>org.odmg.Implementation</code> instance. Open a new <code>Database</code>and
+                        make this instance and the <code>Database</code> instance accessible via JNDI.
+                    </li>
+                </ul>
+
+                <section>
+                    <title>
+                        <strong>JBoss</strong>
+                    </title>
+                    <p>
+                        In JBoss you can write <em>mbean</em> classes to bind OJB main/access classes to JNDI,
+                        similar to the <a href="#pb.factory"><em>Weblogic</em> example</a> below.
+                        <br/>
+                        Let JBoss know about the new mbeans, so declare them in a
+                        <code>jboss-service.xml</code> file. Please see JBoss documentation how to write mbeans
+                        and bind objects to JNDI.
+                    </p>
+                </section>
+
+                <section>
+                    <title>
+                        <strong>Other Application Server</strong>
+                    </title>
+                    <p>
+                        In other application server you can do similar steps to bind OJB main api classes to
+                        JNDI. For example in Weblogic you can use <em>startup class</em> implementation to bind
+                        OJB main/access classes to JNDI (see <a href="#weblogic">below</a>).
+                    </p>
+                </section>
+            </section>
+
+
+            <anchor id="weblogic"/>
+            <section>
+                <title>Instructions for Weblogic</title>
+                    <p>
+                        <strong>1.</strong> Add the OJB jar files and depedencies into the Weblogic classpath
+                    </p>
+
+                    <p>
+                        <strong>2.</strong> As usual create the connection pool and the datasource.
+                    </p>
+
+                    <p>
+                        <strong>3.</strong> Prepare the OJB.properties file. Should be similar to
+                        <a href="#j2ee-ojb.properties">jboss</a>. Expect the
+                        following entry:
+                   </p>
+                        <source>
+...
+# Weblogic Transaction Manager Factory
+JTATransactionManagerClass=
+org.apache.ojb.broker.transaction.tm.WeblogicTransactionManagerFactory</source>
+                    <p>
+                        <strong>4.</strong> Modify the connection information in the repository.xml  (specify the
+                        datasource name). SequenceManager implementation depends on the used DB, more info
+                        <a href="site:sequence-manager">see here</a>:
+                    </p>
+                <source><![CDATA[
+<jdbc-connection-descriptor
+jcd-alias="default"
+default-connection="true"
+platform="Sapdb"
+jdbc-level="2.0"
+jndi-datasource-name="datasource_demodb"
+eager-release="false"
+batch-mode="false"
+useAutoCommit="0"
+ignoreAutoCommitExceptions="false"
+>
+
+<sequence-manager
+className="org.apache.ojb.broker.util.sequence.SequenceManagerNextValImpl">
+<attribute attribute-name="grabSize" attribute-value="20"/>
+</sequence-manager>
+</jdbc-connection-descriptor>]]></source>
+                        <note>
+                            The following step is only neccessary if you want to bind OJB main api classes to JNDI.
+                        </note>
+                        <p>
+                            <strong>[5.]</strong> Compile the following classes (see at the
+                            <a href="#pb.factory">end of this section</a>) and add
+                            them to the weblogic classpath. This allows to access the PB-api via
+                            JNDI lookup. Register via the weblogic console the startup class
+                            (see
+                            <code>OjbPbStartup</code> class below). The JNDI name and the OJB.properties file path can be specified as
+                            parameters in this startup class.
+                        </p>
+                        <p>
+                            To use the ODMG-api you have to write a similar startup class.
+                            This shouldn't be too complicated.
+                            Take a look in
+                            <code>org.apache.ojb.jboss</code> package
+                            (dir
+                            <code>src/connector/main</code>). Here you could find the jboss mbeans.
+                            All you have to do is bound a similar class to JNDI in weblogic.
+                            <br/>
+                            Implement
+                            <code>ODMGJ2EEFactory</code> Interface in your class bound this class
+                            to JNDI (in the ejb-examples the beans try to lookup the
+                            <code>Implementation</code>
+                            instance via
+                            <code>"java:/ojb/defaultODMG"</code>).
+                            Your ODMGFactory class should implement this method
+                        </p>
+                <source><![CDATA[
+    public Implementation getInstance()
+    {
+        return OJBJ2EE_2.getInstance();
+    }]]></source>
+                <p>
+                    Write a session bean similar to those provided for the JBOSS samples.
+                    It is also possible to use the ejb-example beans (doing minor modifications
+                    when the JNDI lookup should be used).
+                </p>
+                <anchor id="pb.factory"/>
+                <p>
+                    <em>Webolgic startup class</em>
+                    <br/>
+                    Write an OJB startup class to make OJB accessible via JNDI can look like (I couldn't test
+                    this sample class, so don't know if it will work ;-)):
+                </p>
+                <source><![CDATA[
+package org.apache.ojb.weblogic;
+
+import javax.naming.*;
+
+import org.apache.ojb.broker.core.PersistenceBrokerFactoryFactory;
+import org.apache.ojb.broker.core.PersistenceBrokerFactoryIF;
+
+import weblogic.common.T3ServicesDef;
+import weblogic.common.T3StartupDef;
+import java.util.Hashtable;
+
+/**
+* This startup class created and binds an instance of a
+* PersistenceBrokerFactoryIF into JNDI.
+*/
+public class OjbPbStartup
+        implements T3StartupDef, OjbPbFactory, Serializable
+{
+    private String defaultPropsFile = "org/apache/ojb/weblogic/OJB.properties";
+
+    public void setServices(T3ServicesDef services)
+    {
+    }
+
+    public PersistenceBrokerFactoryIF getInstance()
+    {
+        return PersistenceBrokerFactoryFactory.instance();
+    }
+
+    public String startup(String name, Hashtable args)
+            throws Exception
+    {
+
+        try
+        {
+            String jndiName = (String) args.get("jndiname");
+            if(jndiName == null || jndiName.length() == 0)
+                jndiName = OjbPbFactory.DEFAULT_JNDI_NAME;
+
+            String propsFile = (String) args.get("propsfile");
+            if(propsFile == null || propsFile.length() == 0)
+            {
+                System.setProperty("OJB.properties", defaultPropsFile);
+            }
+            else
+            {
+                System.setProperty("OJB.properties", propsFile);
+            }
+
+            InitialContext ctx = new InitialContext();
+            bind(ctx, jndiName, this);
+
+            // return a message for logging
+            return "Bound OJB PersistenceBrokerFactoryIF to " + jndiName;
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            // return a message for logging
+            return "Startup Class error: impossible to bind OJB PB factory";
+        }
+    }
+
+    private void bind(Context ctx, String name, Object val)
+            throws NamingException
+    {
+        Name n;
+        for(n = ctx.getNameParser("").parse(name); n.size() > 1; n = n.getSuffix(1))
+        {
+            String ctxName = n.get(0);
+            try
+            {
+                ctx = (Context) ctx.lookup(ctxName);
+            }
+            catch(NameNotFoundException namenotfoundexception)
+            {
+                ctx = ctx.createSubcontext(ctxName);
+            }
+        }
+        ctx.bind(n.get(0), val);
+    }
+}]]></source>
+
+                <p>
+                    The used OjbPbFactory interface:
+                </p>
+                <source><![CDATA[
+    package org.apache.ojb.weblogic;
+
+    import org.apache.ojb.broker.core.PersistenceBrokerFactoryIF;
+
+    public interface OjbPbFactory
+    {
+        public static String DEFAULT_JNDI_NAME = "PBFactory";
+        public PersistenceBrokerFactoryIF getInstance();
+    }]]></source>
+            </section>
+
+            <!-- UNUSED SNIP
+            <p>
+            <font color="#0000FF">
+            NOTE:
+            <br/>
+            When using JBoss 3.2.x the generated beans cause
+            start up problems (re-deployment works fine). The problem
+            is that in JBoss 3.2.x an ejb shouldn't be deployed until its
+            declared invokers have started. Thus the jboss.xml
+            file in the generated <code>db-ojb-XXX-beans.jar</code> needs
+            a new element called 'depends' in each session bean declaration:
+            <source><![CDATA[
+            ...
+            <session>
+                <ejb-name>ODMGSessionBean</ejb-name>
+                <jndi-name>org.apache.ojb.ejb.odmg.ODMGSessionBean</jndi-name>
+                <local-jndi-name>org.apache.ojb.ejb.odmg.ODMGSessionBeanLocal</local-jndi-name>
+                <depends optional-attribute-name="Invoker">jboss:service=invoker,type=jrmp</depends>
+            </session>
+            ...
+            ]]></source>
+            We hope with the next version of xdoclet this can be done
+            automatic.
+            <br/>
+            (Many thanks to Alex Bates)
+            </font>
+            </p>
+            -->
+
+            <!-- UNUSED SNIP
+            <p>
+            <strong>1. Get the missed jar files</strong>
+            <br/>
+            As a result of different licence models we could not ship all necessary
+            jar files with OJB. Thus you need some extra jar files to make the <em>ejb-examples</em> target run:
+            <ul>
+                <li>JBoss jar files (jars depend on used version, so trial and error)</li>
+                <li>jboss-j2ee.jar or use j2ee jars fron SUN</li>
+                <li>XDoclet jar file and modules for generating ejb's and jboss
+                    deployment descriptor (modules: jboss, jmx, ejb, web)</li>
+            </ul>
+            Put these jar files in the <code>lib</code> directory of OJB if you want to generate the ejb-examples.
+            </p>
+
+
+
+
+
+            <p>
+            <strong>4. Prepare OJB code base</strong>
+            <br/>
+            With <code>ant prepare-jboss jar</code> we rebuild OJB
+            jars including the jboss MBeans.
+            <br/>
+            The <code>prepare-jboss</code> target copy the jboss MBeans to the OJB code
+            base. After running the <code>jar</code> target you could find the new
+            <code>db-ojb-xxx.jar</code>, including the MBeans, in the <code>dist</code>
+            directory.
+            <br/>
+            (If you need a OJB jar file without the MBeans, clean the <code>target</code>
+            directory e.g. by calling the <code>clean</code> ant target and invoke the
+            <code>jar</code> ant target again).
+            <br/>
+            Copy the <code>db-ojb-xxx.jar</code> file into the <code>ojb.sar</code> directory.
+            </p>
+
+
+            <p>
+            <strong>8a. Inside your EJB's you can get a handle on the ODMG like this:</strong>
+            <source><![CDATA[
+            ODMGFactory factory =
+            (ODMGFactory) context.lookup("java:/ojb/defaultODMG");
+            odmg = factory.getInstance();
+            ]]></source>
+            </p>
+
+
+            <p>
+            <strong>8b. Inside your EJB's you can get a handle on the PB like this:</strong>
+            <source><![CDATA[
+            context = new InitialContext();
+            pbf = ((PBFactoryIF) context.lookup(
+                PBFactoryIF.PBFACTORY_JNDI_NAME)).getInstance();
+            ]]></source>
+            </p>
+
+
+            <p>
+            Check out the ejb's provided in the OJB distro at: <code>[db-ojb]/src/ejb/org/apache/ojb/ejb</code>
+            for an example of working beans.
+            </p>
+            <p>
+            <strong>
+            This solution should be re-deployable in jboss.
+            If you will get any problems, please let me know.
+            </strong>
+            </p>
+
+            -->
+
+        </section>
+
+    </body>
+</document>

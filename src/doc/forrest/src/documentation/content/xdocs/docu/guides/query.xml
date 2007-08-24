@@ -1,0 +1,779 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: query.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>OJB Queries</title>
+        <authors>
+            <person name="Jakob Braeuchi" email="jbraeuchi@gmx.ch"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                This tutorial describes the use of the different queries mechanisms.
+                The sample code shown here is taken mainly from JUnit test classes. The junit test
+                source can be found under
+                <code>[db-ojb]/src/test</code> in the source distribution.
+            </p>
+        </section>
+
+
+        <anchor id="query-by-criteria"/>
+        <section>
+            <title>Query by Criteria</title>
+            <p>
+                In this section you will learn how to use the query by criteria.
+                The classes are located in the package
+                <code>org.apache.ojb.broker.query</code>.
+                Using query by criteria you can either
+                <a href="#querying-for-objects">query for whole objects</a>
+                (ie. person) or you can use
+                <a href="#report-queries">report queries</a> returning row data.
+            </p>
+            <p>
+                A query consists mainly of the following parts:
+            </p>
+            <ol>
+                <li>the class of the objects to be retrieved</li>
+                <li>a list of criteria</li>
+                <li>a DISTINCT flag</li>
+                <li>additional ORDER BY and GROUP BY</li>
+            </ol>
+            <p>
+                OJB offers a QueryFactory to create a new Query. Although the
+                constructors of the query classes are public using the QueryFactory
+                is the preferred way to create a new query.
+            </p>
+            <source><![CDATA[
+Query q = QueryFactory.newQuery(Person.class, crit);]]></source>
+            <p>
+                To create a DISTINCT-Query, simply add
+                <strong>true</strong> as third parameter.
+           </p>
+                <source><![CDATA[
+Query q = QueryFactory.newQuery(Person.class, crit, true);]]></source>
+            <p>
+                Each criterion stands for a column in the SQL-WHERE-clause.
+            </p>
+                <source><![CDATA[
+Criteria crit = new Criteria();
+crit.addEqualTo("upper(firstname)", "TOM");
+crit.addEqualTo("lastname", "hanks");
+Query q = QueryFactory.newQuery(Person.class, crit);]]></source>
+                <p>
+                    This query will generate an SQL statement like this:
+                </p>
+                <source><![CDATA[
+SELECT ... FROM PERSON WHERE upper(FIRSTNAME) = "TOM" AND LASTNAME = "hanks";]]></source>
+            <p>
+                OJB supports
+                <strong>functions</strong> in field criteria ie. upper(firstname). When converting a field
+                name to a database column name, the function is added to the generated sql. OJB does not and can not verify the correctness of the specified function, an illegal function will produce an SqlException.
+            </p>
+
+            <section>
+                <title>Query Criteria</title>
+                <p>
+                    OJB provides selection criteria for almost any SQL-comparator.
+                    In most cases you do not have to deal directly with the implementing classes
+                    like
+                    <em>EqualToCriteria</em>.
+                    The
+                    <em>Criteria</em> class provides factory methods for the appropriate classes.
+                    There are four kinds of factory methods:
+                    </p>
+                    <ul>
+                        <li>create criteria to compare a field to a value: ie. addEqualTo("firstname", "tom");</li>
+                        <li>create criteria to compare a field to another field: ie. addEqualToField("firstname", "other_field");</li>
+                        <li>create criteria to check null value: ie. addIsNull("firstname");</li>
+                        <li>create a raw sql criteria: ie: addSql("REVERSE(name) like 're%'");</li>
+                    </ul>
+                    <p>
+                    The following list shows some of the factory methods to compare a field to a value:
+                        </p>
+                    <ul>
+                        <li>addEqualTo</li>
+                        <li>addLike</li>
+                        <li>addGreaterOrEqualThan</li>
+                        <li>addGreaterThan</li>
+                        <li>addLike</li>
+                        <li>addBetween , this methods has two value parameters</li>
+                        <li>addIn , this method uses a Collection as value parameter</li>
+                        <li>and of course there negative forms</li>
+                    </ul>
+                    <p>
+                    This list shows some factory methods to compare a field to another field, all those methods end on ...field:
+                        </p>
+                    <ul>
+                        <li>addEqualToField</li>
+                        <li>addGreaterThanField</li>
+                        <li>and of course there negative forms</li>
+                    </ul>
+
+                <anchor id="in-not-in"/>
+                <section>
+                    <title>in / not in</title>
+                    <p>
+                        Some databases limit the number of parameters in an IN-statement.
+                        <br/>
+                        If the limit is reached OJB will split up the IN-Statement into multiple Statements,
+                        the limit is set to 3 for the following sample:
+                    </p>
+                        <source><![CDATA[
+SELECT ... FROM Artikel A0 WHERE A0.Kategorie_Nr IN ( ? , ? , ? )
+OR A0.Kategorie_Nr IN ( ? , ? ) ORDER BY 7 DESC]]></source>
+                        <p>
+                        The IN-limit for prefetch can be defined in OJB.properties:
+                            </p>
+                        <source><![CDATA[
+...
+# The SqlInLimit entry limits the number of values in IN-sql
+# statement, -1 for no limits. This hint is used in Criteria.
+SqlInLimit=200
+...]]></source>
+                </section>
+
+                <section>
+                    <title>and / or</title>
+                    <p>
+                        All selection criteria added to a criteria set using the above factory methods
+                        will be
+                        <strong>AND</strong>ed in the WHERE-clause.
+                        To get an
+                        <strong>OR</strong> combination two criteria sets are needed.
+                        These sets are combined using addOrCriteria:
+                    </p>
+                        <source><![CDATA[
+Criteria crit1 = new Criteria();
+crit1.addLike("firstname", "%o%");
+crit1.addLike("lastname", "%m%");
+Criteria crit2 = new Criteria();
+crit2.addEqualTo("firstname", "hank");
+
+crit1.addOrCriteria(crit2);
+Query q = QueryFactory.newQuery(Person.class, crit1);
+
+Collection results = broker.getCollectionByQuery(q);]]></source>
+                        <p>
+                        This query will generate an SQL statement like this:
+                        </p>
+                        <source><![CDATA[
+SELECT ... WHERE (FIRSTNAME LIKE "%o%") AND LASTNAME
+LIKE "%m%" OR FIRSTNAME = "hank"]]></source>
+                </section>
+
+                <section>
+                    <title>negating the criteria</title>
+                    <p>
+                        A criteria can be negated to obtain
+                        <strong>NOT</strong> in the WHERE-clause:
+                    </p>
+                        <source><![CDATA[
+Criteria crit1 = new Criteria();
+crit1.addLike("firstname", "%o%");
+crit1.addLike("lastname", "%m%");
+crit1.setNegative(true);
+
+Collection results = broker.getCollectionByQuery(q);]]></source>
+                        <p>
+                        This query will generate an SQL statement like this:
+                        </p>
+                        <source><![CDATA[
+SELECT ... WHERE NOT (FIRSTNAME LIKE "%o%" AND LASTNAME LIKE "%m%")]]></source>
+                </section>
+            </section>
+
+            <section>
+                <title>ordering and grouping</title>
+                <p>
+                    The following methods of QueryByCriteria are used for ordering and grouping:
+                    </p>
+                    <ul>
+                        <li>addOrderByAscending(String anAttributeName);</li>
+                        <li>addOrderByDescending(String anAttributeName);</li>
+                        <li>addGroupBy(String anAttributeName); this method is used for
+                            <a href="#report-queries">report queries</a>
+                        </li>
+                    </ul>
+                <p>
+                    You can of course have multiple order by and group by clauses,
+                    simply repeat the addOrderBy.
+               </p>
+                    <source><![CDATA[
+crit = new Criteria();
+query = new QueryByCriteria(Person.class, crit);
+query.addOrderByDescending("id");
+query.addOrderByAscending("lastname");
+broker.getCollectionByQuery(query);]]></source>
+                <p>
+                    The code snippet will query all Persons and order them by
+                    <strong>attribute</strong> "id"
+                    descending and "lastname" ascending.
+                    The query will produce the following SQL-statement using column numbers
+                    in the ORDER BY clause:
+                </p>
+                    <source><![CDATA[
+SELECT A0.ID,A0.FIRSTNAME,A0.LASTNAME FROM
+PERSON A0 ORDER BY 1 DESC, 3]]></source>
+                    <p>
+                    When you use the
+                    <strong>column</strong> name "LASTNAME" instead of the
+                    <strong>attribute</strong> name
+                    "lastname" (query.addOrderBy("LASTNAME");), an additional column named "LASTNAME" without alias will be
+                    added.
+                    </p>
+                    <source><![CDATA[
+SELECT A0.ID,A0.FIRSTNAME,A0.LASTNAME,LASTNAME FROM
+PERSON A0 ORDER BY 1 DESC,4]]></source>
+                <p>
+                    If there are multiple tables with a column "LASTNAME" the SQL-Statement will produce an error,
+                    so it's better to always use attribute names.
+                </p>
+            </section>
+
+            <section>
+                <title>subqueries</title>
+                <p>
+                    Subqueries can be used instead of values in selection criteria.
+                    The subquery should thus be a ReportQuery.
+                    <br/>
+                    The following example queries all articles having a price greator or equal than the
+                    average price of articles named 'A%':
+                </p>
+                    <source><![CDATA[
+ReportQueryByCriteria subQuery;
+Criteria subCrit = new Criteria();
+Criteria crit = new Criteria();
+
+subCrit.addLike("articleName", "A%");
+subQuery = QueryFactory.newReportQuery(Article.class, subCrit);
+subQuery.setAttributes(new String[] { "avg(price)" });
+
+crit.addGreaterOrEqualThan("price", subQuery);
+Query q = QueryFactory.newQuery(Article.class, crit);
+
+Collection results = broker.getCollectionByQuery(q);]]></source>
+                <p>
+                    It's also possible to build a subquery with attributes referencing the enclosing query.
+                    These attributes have to use a special prefix
+                    <strong>Criteria.PARENT_QUERY_PREFIX</strong>.
+                    <br/>
+                    The following example queries all product groups having more than 10 articles:
+                    </p>
+                    <source><![CDATA[
+ReportQueryByCriteria subQuery;
+Criteria subCrit = new Criteria();
+Criteria crit = new Criteria();
+
+subCrit.addEqualToField("productGroupId", Criteria.PARENT_QUERY_PREFIX + "groupId");
+subQuery = QueryFactory.newReportQuery(Article.class, subCrit);
+subQuery.setAttributes(new String[] { "count(productGroupId)" });
+
+crit.addGreaterThan(subQuery, "10"); // MORE than 10 articles
+crit.addLessThan("groupId", new Integer(987654));
+Query q = QueryFactory.newQuery(ProductGroup.class, crit);
+
+Collection results = broker.getCollectionByQuery(q);]]></source>
+			<note>
+			Subqueries are not extent aware. Thus it's not possible to use an abstract class or an interface as search 
+			class of a subquery.
+			</note>
+            </section>
+
+            <anchor id="joins"/>
+            <section>
+                <title>joins</title>
+                <p>
+                    Joins resulting from
+                    <strong>path expressions</strong> ("relationship.attribute") in criteria are automatically handled by OJB.
+                    Path expressions are supported for all relationships 1:1, 1:n and m:n (decomposed and non-decomposed)
+                    and can be nested.
+                </p>
+                    <p>
+                    The following sample looks for all articles belonging to the product group "Liquors".
+                    Article and product group are linked by the relationship "productGroup" in class Article:
+                </p>
+                    <source><![CDATA[
+<!-- Definitions for org.apache.ojb.ojb.broker.Article -->
+   <class-descriptor
+         class="org.apache.ojb.broker.Article"
+         proxy="dynamic"
+         table="Artikel"
+   >
+      ...
+      <reference-descriptor
+         name="productGroup"
+         class-ref="org.apache.ojb.broker.ProductGroup"
+      >
+         <foreignkey field-ref="productGroupId"/>
+      </reference-descriptor>
+   </class-descriptor>
+
+   <class-descriptor
+         class="org.apache.ojb.broker.ProductGroup"
+         proxy="org.apache.ojb.broker.ProductGroupProxy"
+         table="Kategorien"
+   >
+      ...
+      <field-descriptor
+         name="groupName"
+         column="KategorieName"
+         jdbc-type="VARCHAR"
+      />
+      ...
+   </class-descriptor>]]></source>
+                    <p>
+                    The path expression includes the 1:1 relationship "productGroup" and the attribute "groupName":
+                    </p>
+                    <source><![CDATA[
+Criteria crit = new Criteria();
+crit.addEqualTo("productGroup.groupName", "Liquors");
+Query q = QueryFactory.newQuery(Article.class, crit);
+
+Collection results = broker.getCollectionByQuery(q);]]></source>
+                <p>
+                    If path expressions refer to a class having
+                    <strong>extents</strong>, the tables of the extent classes participate in the JOIN and the criteria is ORed. The shown sample queries all ProductGroups having an Article named 'F%'.
+                    The path expression 'allArticlesInGroup' refers to the class Articles which has two extents: Books and CDs.
+                </p>
+                    <source><![CDATA[
+Criteria crit = new Criteria();
+crit.addLike("allArticlesInGroup.articleName", "F%");
+QueryByCriteria q = QueryFactory.newQuery(ProductGroup.class, crit, true);
+
+Collection results = broker.getCollectionByQuery(q);
+]]></source>
+
+                <p>
+                    This sample produces the following SQL:
+                </p>
+                <source><![CDATA[
+SELECT DISTINCT A0.KategorieName,A0.Kategorie_Nr,A0.Beschreibung
+FROM Kategorien A0
+INNER JOIN Artikel A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+LEFT OUTER JOIN BOOKS A1E0 ON A0.Kategorie_Nr=A1E0.Kategorie_Nr
+LEFT OUTER JOIN CDS A1E1 ON A0.Kategorie_Nr=A1E1.Kategorie_Nr
+WHERE A1.Artikelname LIKE  'F%'  OR
+A1E0.Artikelname LIKE  'F%'  OR
+A1E1.Artikelname LIKE  'F%']]></source>
+                <p>
+                OJB tries to do it's best to automatically use
+                <strong>outer</strong> joins where needed.
+                This is currently the case for classes having extents and ORed criteria.
+                But you can force the SQLGenerator to use outer joins where you find it useful.
+                <br/>
+                This is done by the method
+                <em>QueryByCriteria#setPathOuterJoin(String)</em>. 
+                </p>
+                <source><![CDATA[
+ReportQueryByCriteria query;
+Criteria crit;
+Iterator result1, result2;
+
+crit = new Criteria();
+
+query = new ReportQueryByCriteria(Person.class, crit);
+query.setAttributes(new String[] { "id", "name", "vorname", "sum(konti.saldo)" });
+query.addGroupBy(new String[]{ "id", "name", "vorname" });
+
+result1 = broker.getReportQueryIteratorByQuery(query);
+
+query.setPathOuterJoin("konti");
+result2 = broker.getReportQueryIteratorByQuery(query);]]></source>
+                <p>
+                The first query will use an inner join for relationship "konti", the second an outer join.
+                </p>
+		<p>
+		The whole path is evaluated, thus for a multi segment path (ie. owner.address) you'll 
+		have to set an outer join path for each segment that needs an outer join.
+		<br/>
+		Given 'Account' - 'Owner' - 'Adress' and a query looking for 'Account'. 
+		To force an outer join from 'Owner' to 'Adress' setPathOuterJoin('owner.address') does the trick. 
+		In case you also need an outer join between 'Account' and 'Owner' an additional setPathOuterJoin('owner') is needed.
+		</p>
+            </section>
+
+
+            <section>
+                <title>user defined alias</title>
+                <p>
+                    This feature allows to have
+                    <strong>multiple</strong> aliases for the same table. The standard behaviour of OJB is to build one alias for one relationship.
+                    </p>
+                    <p>
+                    Suppose you have two classes Issue and Keyword and there is a 1:N relationship
+                    between them. Now you want to retrieve Issues by querying on Keywords.
+                    Suppose you want to retrieve all Issues with keywords 'JOIN' and 'ALIAS'. If these values
+                    are stored in the attribute 'value' of Keyword, OJB generates a query that contains
+                    " A1.value = 'JOIN' AND A1.value = 'ALIAS' " in the where-clause. Obviously,
+                    this will not work, no hits will occur because A1.value can not have
+                    more then 1 value at the time !
+                </p>
+
+                <p>
+                    For the examples below, suppose you have the following classes (pseudo-code):
+                    </p>
+                    <source><![CDATA[
+class Container
+    int id
+    Collection allAbstractAttributes
+
+class AbstractAttribute
+    int id
+    inf ref_id
+    String name
+    String value
+    Collection allAbstractAttributes]]></source>
+                    <p>
+                    OJB maps these classes to separate tables where it maps
+                    allAbstractAttributes using a collectiondescriptor to AbstractAttribute
+                    using ref_id as inverse foreignkey on Container for the collection
+                    descriptor.
+                    <br/>
+                    For demo purposes : AbstractAttribute also has a collection of abstract attributes.
+                    </p>
+                    <source><![CDATA[
+Criteria crit1 = new Criteria();
+crit1.setAlias("company");			// set an alias
+crit1.addEqualTo("allAbstractAttributes.name", "companyName");
+crit1.addEqualTo("allAbstractAttributes.value", "iBanx");
+
+Criteria crit2 = new Criteria();
+crit2.setAlias("contact");			// set an alias
+crit2.addEqualTo("allAbstractAttributes.name", "contactPerson");
+crit2.addLike("allAbstractAttributes.value", "janssen");
+
+Criteria crit3 = new Criteria();
+crit3.addEqualTo("allAbstractAttributes.name", "size");
+crit3.addGreaterThan("allAbstractAttributes.value", new Integer(500));
+
+crit1.addAndCriteria(crit2);
+crit1.addAndCriteria(crit3);
+
+q = QueryFactory.newQuery(Container.class, crit1);
+q.addOrderBy("company.value");	    // user alias]]></source>
+                    <p>
+                    The generated query will be as follows. Note that the alias name 'company' does not show up in the SQL.
+                    </p>
+                    <source><![CDATA[
+SELECT DISTINCT A0.ID, A1.VALUE
+FROM CONTAINER A0 INNER JOIN ABSTRACT_ATTRIBUTE A1
+     ON A0.ID=A1.REF_ID
+     INNER JOIN ABSTRACT_ATTRIBUTE A2
+     ON A0.ID=A2.REF_ID
+     INNER JOIN ABSTRACT_ATTRIBUTE A3
+     ON A0.ID=A3.REF_ID
+WHERE (( A0.NAME =  'companyName' ) AND  (A0.VALUE =  'iBanx' )) AND
+      (( A1.NAME =  'contactPerson' ) AND  (A1.VALUE LIKE '%janssen%' )) AND
+      (( A2.NAME =  'size' ) AND  (A2.VALUE =  '500' ))
+ORDER BY 2]]></source>
+                    <p>
+                    The next example uses a report query.
+                    </p>
+
+                    <source><![CDATA[
+Criteria crit1 = new Criteria();
+crit1.setAlias("ALIAS1");
+crit1.addEqualTo("allAbstractAttributes.allAbstractAttributes.name", "xxxx");
+crit1.addEqualTo("allAbstractAttributes.allAbstractAttributes.value", "hello");
+
+Criteria crit2 = new Criteria();
+crit2.setAlias("ALIAS2");
+crit2.addEqualTo("allAbstractAttributes.name", "yyyy");
+crit2.addLike("allAbstractAttributes.value", "");
+
+crit1.addAndCriteria(crit2);
+
+q = QueryFactory.newReportQuery(Container.class, crit1);
+
+String[] cols = { id, "ALIAS2.name", "ALIAS2.name", "ALIAS1.name", "ALIAS1.name" };
+q.setAttributes(cls);]]></source>
+                    <p>
+                    The generated query will be:
+                    </p>
+                    <source><![CDATA[
+SELECT DISTINCT A0.ID, A1.NAME, A1.VALUE, A2.NAME, A2.VALUE
+FROM CONTAINER A0 INNER JOIN ABSTRACT_ATTRIBUTE A1
+     ON A0.ID=A1.REF_ID
+     INNER JOIN ABSTRACT_ATTRIBUTE A2
+     ON A1.ID=A2.REF_ID
+WHERE (( A2.NAME =  'xxxx' ) AND  (A2.VALUE =  'hello' )) AND
+      (( A1.NAME =  'yyyy' ) AND  (A2.VALUE LIKE '%%' )) AND
+ORDER BY 2]]></source>
+                <note>
+                    When you define an alias for a criteria,
+                    you have to make sure that
+                    <em>all</em> attributes used in this criteria belong to the
+                    <em>same</em> class.
+                    If you break this rule OJB will probably use a wrong ClassDescriptor to resolve your attributes !
+                </note>
+            </section>
+
+            <section>
+                <title>class hints</title>
+                <p>
+                    This feature allows the user to specify which class of an extent to use for a path-segment.
+                    The standard behaviour of OJB is to use the base class of an extent when it resolves a path-segment.
+                </p>
+                <p>
+                    In the following sample the path <strong>allArticlesInGroup</strong> points to class Article,
+                    this is defined in the repository.xml. Assume we are only interested in ProductGroups containing CdArticles
+                    performed by Eric Clapton or Books authored by Eric Clapton, a class hint can be
+                    defined for the path. This hint is defined by: <br/><br/>
+                    Criteria#<strong>addPathClass</strong>("allArticlesInGroup", CdArticle.class);
+                </p>
+
+                    <source><![CDATA[
+//
+// find a ProductGroup with a CD or a book by a particular artist
+//
+String artistName = new String("Eric Clapton");
+crit1 = new Criteria();
+crit1.addEqualTo("allArticlesInGroup.musicians", artistName);
+crit1.addPathClass("allArticlesInGroup", CdArticle.class);
+
+crit2 = new Criteria();
+crit2.addEqualTo("allArticlesInGroup.author", artistName);
+crit2.addPathClass("allArticlesInGroup", BookArticle.class);
+
+crit1.addOrCriteria(crit2);
+
+query = new QueryByCriteria(ProductGroup.class, crit1);
+broker.getObjectByQuery(query);
+]]></source>
+
+                <note>
+                    This feature is also available in class QueryByCriteria but using it on Criteria-level provides
+                    additional flexibility. QueryByCriteria#addPathClass is only useful for ReportQueries to limit
+                    the class of the selected columns.
+				</note>
+
+            </section>
+
+            <section>
+                <title>prefetched relationships</title>
+                <p>
+                    This feature can help to minimize the number of queries when reading objects with relationships.
+                    In our Testcases we have ProductGroups with a one to many relationship to Articles.
+                    When reading the ProductGroups one query is executed to get the ProductGroups and for
+                    <strong>each</strong> ProductGroup
+                    another query is executed to retrieve the Articles.
+                    </p>
+                    <p>
+                    With prefetched relationships OJB tries to read all Articles belonging to the ProductGroups in
+                    <strong>one</strong> query.
+                    See further down why one query is not always possible.
+                    </p>
+                    <source><![CDATA[
+Criteria crit = new Criteria();
+crit.addLessOrEqualThan("groupId", new Integer(5));
+
+QueryByCriteria q = QueryFactory.newQuery(ProductGroup.class, crit);
+q.addOrderByDescending("groupId");
+q.addPrefetchedRelationship("allArticlesInGroup");
+
+Collection results = broker.getCollectionByQuery(q);]]></source>
+                    <p>
+                    The first query reads all matching ProductGroups:
+                        </p>
+                    <source><![CDATA[
+SELECT ... FROM Kategorien A0 WHERE
+A0.Kategorie_Nr <= ? ORDER BY 3 DESC]]></source>
+                <p>
+                    The second query retrieves Articles belonging to the ProductGroups read by the first query:
+                    </p>
+                    <source><![CDATA[
+SELECT ... FROM Artikel A0 WHERE A0.Kategorie_Nr
+IN ( ? , ? , ? , ? , ? ) ORDER BY 7 DESC]]></source>
+                    <p>
+                    After reading all Articles they are associated with their ProductGroup.
+                    </p>
+                    <note>
+                        This function is not yet supported for relationships using Arrays.
+                    </note>
+                    <p>
+                    Some databases limit the number of parameters in an IN-statement.
+                    If the limit is reached OJB will split up the second query into multiple queries,
+                    the limit is set to 3 for the following sample:
+                    </p>
+                    <source><![CDATA[
+SELECT ... FROM Artikel A0 WHERE A0.Kategorie_Nr
+IN ( ? , ? , ? ) ORDER BY 7 DESC
+SELECT ... FROM Artikel A0 WHERE A0.Kategorie_Nr
+IN ( ? , ? ) ORDER BY 7 DESC]]></source>
+                    <p>
+                    The IN-limit for prefetch can be defined in OJB.properties
+                    <a href="#in-not-in">SqlInLimit</a>.
+                </p>
+            </section>
+
+
+            <anchor id="querying-for-objects"/>
+            <section>
+                <title>querying for objects</title>
+                <p>
+                OJB queries return
+                <strong>complete</strong> objects, that means all instance variables are filled
+                and all 'auto-retrieve' relationships are loaded. Currently there's no way to retrieve partially
+                    loaded objects (ie. only first- and lastname of a person).
+                </p>
+                <p>
+                    More info about <a href="site:metadata">manipulation of metadata setting here</a>.
+                </p>
+            </section>
+
+
+            <anchor id="report-queries"/>
+            <section>
+                <title>Report Queries</title>
+                <p>
+                Report queries are used to retrieve row data, not 'real' business objects. A row is an array of Object.
+                With these queries you can define what attributes of an object you want to have in the row.
+                The attribute names may also contain path expressions like 'owner.address.street'.
+                To define the attributes use ReportQuery
+                <strong>#setAttributes(String[] attributes)</strong>.
+                </p>
+                <p>
+                The following ReportQuery retrieves the name of the ProductGroup, the name of the Article etc. for all
+                Articles named like "C%":
+                    </p>
+                <source><![CDATA[
+Criteria crit = new Criteria();
+Collection results = new Vector();
+crit.addLike("articleName", "C%");
+ReportQueryByCriteria q = QueryFactory.newReportQuery(Article.class, crit);
+q.setAttributes(new String[] { "productGroup.groupName","articleId", "articleName", "price" });
+
+Iterator iter = broker.getReportQueryIteratorByQuery(q);
+]]></source>
+                <p>
+                The ReportQuery returns an Iterator over a Collection of
+                Object[4] ([String, Integer, String, Double]).
+                </p>
+
+                <section>
+	                <title>Limitations of Report Queries</title>
+					<p>
+    	            ReportQueries should not be used with columns referencing classes with extents. Assume we want to select all ProductGroups
+    	            and summarize the amount and prize of items in stock per group. The class Article referenced by <strong>allArticlesInGroup</strong>						 has the extents Books and CDs.
+    	            </p>
+                <source><![CDATA[
+Criteria crit = new Criteria();
+Collection results = new Vector();
+ReportQueryByCriteria q = QueryFactory.newReportQuery(ProductGroup.class, crit);
+q.setAttributes(new String[] { "groupName", "sum(allArticlesInGroup.stock)", "sum(allArticlesInGroup.price)" });
+q.addGroupBy("groupName");
+
+Iterator iter = broker.getReportQueryIteratorByQuery(q);
+]]></source>
+					<p>
+					The ReportQuery looks quite reasonable, but it will produce an SQL not suitable for the task:
+					</p>
+                <source><![CDATA[
+SELECT A0.KategorieName,sum(A1.Lagerbestand),sum(A1.Einzelpreis)
+FROM Kategorien A0
+LEFT OUTER JOIN artikel A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+LEFT OUTER JOIN books A1E2 ON A0.Kategorie_Nr=A1E2.Kategorie_Nr
+LEFT OUTER JOIN cds A1E1 ON A0.Kategorie_Nr=A1E1.Kategorie_Nr
+GROUP BY A0.KategorieName
+]]></source>
+					<p>
+					This SQL will select the columns "Lagerbestand" and "Einzelpreis" from one extent only, and for ProductGroups
+					having Articles, Books and CDs the result is wrong!
+					</p>
+					<p>
+					As a workaround the query can be "reversed". Instead of selection the ProductGroup we go for the Articles:
+					</p>
+                <source><![CDATA[
+Criteria crit = new Criteria();
+Collection results = new Vector();
+ReportQueryByCriteria q = QueryFactory.newReportQuery(Article.class, crit);
+q.setAttributes(new String[] { "productGroup.groupName", "sum(stock)", "sum(price)" });
+q.addGroupBy("productGroup.groupName");
+]]></source>
+					<p>
+					This ReportQuery executes the following three selects (one for each concrete extent) and produces better results.
+					</p>
+                <source><![CDATA[
+SELECT  A1.KategorieName,sum(A0.Lagerbestand),sum(A0.Einzelpreis)
+FROM artikel A0
+INNER JOIN Kategorien A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+GROUP BY A1.KategorieName
+
+SELECT  A1.KategorieName,sum(A0.Lagerbestand),sum(A0.Einzelpreis)
+FROM cds A0
+INNER JOIN Kategorien A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+GROUP BY A1.KategorieName
+
+SELECT  A1.KategorieName,sum(A0.Lagerbestand),sum(A0.Einzelpreis)
+FROM books A0
+INNER JOIN Kategorien A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+GROUP BY A1.KategorieName
+]]></source>
+					<p>
+					Of course there's also a drawback here: the same ProductGroup may be selected several times, so to get the correct sum,
+					the results of the ProductGroup has to be added. In our sample the ProductGroup "Books" will be listed three times.
+					</p>
+					<p>
+					After listing so many drawbacks and problems, here's the SQL the produces the desired result.
+					This is a manually created SQL, not generated by OJB. Unfortunately it's not fully supported by some DBMS because of
+					"union" and sub-selects.
+					</p>
+                <source><![CDATA[
+select KategorieName, sum(lagerbestand), sum(einzelpreis)
+from
+(
+	SELECT  A1.KategorieName,A0.Lagerbestand,A0.Einzelpreis
+	FROM artikel A0
+	INNER JOIN Kategorien A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+
+	union
+
+	SELECT  A1.KategorieName,A0.Lagerbestand,A0.Einzelpreis
+	FROM books A0
+	INNER JOIN Kategorien A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+
+	union
+
+	SELECT  A1.KategorieName,A0.Lagerbestand,A0.Einzelpreis
+	FROM cds A0
+	INNER JOIN Kategorien A1 ON A0.Kategorie_Nr=A1.Kategorie_Nr
+)
+group by kategorieName
+]]></source>
+
+                </section>
+
+            </section>
+        </section>
+
+        <anchor id="odmg-oql"/>
+        <section>
+            <title>ODMG OQL</title>
+        </section>
+
+        <anchor id="jdo-oql"/>
+        <section>
+            <title>JDO queries</title>
+        </section>
+    </body>
+</document>

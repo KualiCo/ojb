@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: pb-guide.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>PB-api Guide</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <anchor id="introduction"/>
+        <section>
+            <title>Introduction</title>
+            <p>
+                The <em>PersistenceBroker API (PB-api)</em> provides the lowest level access to OJB's persistence engine.
+                While it is a low-level API compared to the standardised ODMG or JDO API's it is still very
+                straightforward to use.
+            </p>
+            <p>
+                The core class in the PersistenceBroker API is the
+                <a href="ext:persistence-broker"><code>org.apache.ojb.broker.PersistenceBroker</code></a>
+                class. This class provides the point of access for all persistence operations in this API.
+            </p>
+            <p>
+                This document is not a <a href="site:pb-tutorial">PB tutorial</a> (newbies please read the
+                tutorial first) rather than a guide
+                showing the specific usage and possible pitfalls in handling the PB-api.
+            </p>
+            <p>
+                If you don't find an answer for a specific question, please have a look at the
+                <a href="site:faq">FAQ</a> and the other <a href="site:guides/summary">reference guides</a>.
+            </p>
+        </section>
+
+
+        <anchor id="lookup-pb"/>
+        <section>
+            <title>How to access the PB-api?</title>
+            <p>
+                The <code>org.apache.ojb.broker.PersistenceBrokerFactory</code> make several
+                methods available:
+            </p>
+            <source><![CDATA[
+public PersistenceBroker createPersistenceBroker(PBKey key) throws PBFactoryException;
+
+public PersistenceBroker createPersistenceBroker(String jcdAlias, String user, String password)
+    throws PBFactoryException;
+
+public PersistenceBroker defaultPersistenceBroker() throws PBFactoryException;
+            ]]></source>
+            <p>
+                Method <code>defaultPersistenceBroker()</code> can be used if the attribute
+                <a href="site:repository/jdbc-connection-descriptor"><em>default-connection</em></a>
+                is set <em>true</em> in <em>jdbc-connection-descriptor</em>. It's a convenience method,
+                useful when only one database is used.
+            </p>
+            <p>
+                The standard way to lookup a broker instance is via <code>org.apache.ojb.broker.PBKey</code>
+                by specify <em>jcdAlias</em> (defined in the <em>jdbc-connection-descriptor</em> of the
+                <a href="ext:repository_database.xml">repository file or sub file</a>),
+                <em>user</em> and <em>passwd</em>. If the user and password is
+                already set in <em>jdbc-connection-descriptor</em> it is possible to lookup the broker
+                instance only be specify the <em>jcdAlias</em> in PBKey:
+            </p>
+            <source><![CDATA[
+PBKey pbKey = new PBKey("myJcdAliasName", "user", "password");
+// alternative if user/passwd set in configuration file
+PBKey pbKey = new PBKey("myJcdAliasName");
+PersistenceBroker broker = PersitenceBrokerFactory.createPersistenceBroker(pbKey);]]></source>
+            <p>
+                See further in FAQ
+                <a href="site:faq/password-needed">"Needed to put user/password of database connection in repository file?"</a>.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Notes on Using the PersistenceBroker API</title>
+
+            <anchor id="exception-handling"/>
+            <section>
+                <title>Exception Handling</title>
+                <p>
+                    The exception handling is described in the PB-tutorial
+                    <a href="site:pb-tutorial/exception-handling">exception handling section</a>.
+                </p>
+            </section>
+
+            <anchor id="pb-management"/>
+            <section>
+                <title>Management of PersistenceBroker instances</title>
+                <p>
+                    There is no need to cache or pool the used
+                    <a href="ext:persistence-broker">PersistenceBroker</a> instances, because OJB itself
+                    use a PB-pool. The configuration of the PB-pool is adjustable in the
+                    <a href="ext:ojb.properties">OJB.properties</a> file.
+                </p>
+                <p>
+                    Using the
+                    <code>PersistenceBroker.close()</code> method releases
+                    the broker back to the pool under the default implementation. For this reason
+                    the examples in the <a href="site:pb-tutorial">PB tutorial</a> all retrieve, use,
+                    and close a new broker for each logical transaction.
+                </p>
+                <p>
+                    Apart from the pooling management <code>PersistenceBroker.close()</code> force the internal
+                    cleanup of the used broker instance - e.g. removing of temporary PersistenceBrokerListener
+                    instances, release of used connection if needed, internal used object registration lists, ...
+                    <br/>
+                    Therefore it's not recommended always refer to the same PB instance without closing it.
+                </p>
+            </section>
+
+            <anchor id="pb-transaction"/>
+            <section>
+                <title>Transactions</title>
+                <p>
+                    Transactions in the PeristenceBroker API are <em>database level transactions</em>.
+                    This differs from <em>object level transactions</em> used by e.g. the
+                    <a href="site:odmg-guide">odmg-api</a>. The broker does not maintain
+                    a collection of modified, created, or deleted objects until a commit is called --
+                    it operates on the database using the databases transaction mechanism. If object
+                    level transactions are required, one of the higher level API's (ODMG, JDO, or OTM)
+                    should be used.
+                </p>
+            </section>
+
+        </section>
+
+        <anchor id="questions"/>
+        <section>
+            <title>Questions</title>
+
+            <anchor id="multiple-databases"/>
+            <section>
+                <title>How to use multiple Databases</title>
+                <p>
+                    For each database define a
+                    <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a> same way
+                    as described in the <a href="site:faq/multiple-databases">FAQ</a>.
+                </p>
+                <p>
+                    Now each database will be accessible via the <code>PersistenceBrokerFactory</code> using a
+                    <code>PBKey</code> matching the defined <em>jcdAliase</em> name as shown in section
+                    <a href="#lookup-pb"><em>How to access the PB-api?</em></a>.
+                </p>
+            </section>
+
+            <anchor id="listener"/>
+            <section>
+                <title>Hook into OJB - PB-Listener and Instance Callbacks</title>
+                <p>
+                    All <em>Listener</em> and instance callback interfaces supported by the
+                    <em>PB-api</em> can be used in the
+                    top-level API (like <a href="site:odmg-guide">ODMG-api</a>) as well.
+                </p>
+                <p>
+                    The OJB Kernel supports three types of "hook" into OJB:
+                </p>
+                <ul>
+                    <li>
+                        <a href="ext:pb-aware"><code>PersistenceBrokerAware</code></a>
+                        <p/>
+                        A callback interface used by persistence capable objects (the object class is
+                        declared in OJB <a href="site:mapping-tutorial">metadata mapping</a>)
+                        to be aware of <code>PersistenceBroker</code> operations on itself.
+                        <br/>
+                        More detailed information can be found in the
+                        <a href="site:advanced-technique/callback">Advanced-Technique Guide</a>.
+                    </li>
+                    <li>
+                        <a href="ext:pb-state-listener"><code>PBStateListener</code></a>
+                        <p/>
+                        The listener interface for receiving
+                        <a href="ext:persistence-broker"><code>PersistenceBroker</code></a> state changes.
+                    </li>
+                    <li>
+                        <a href="ext:pb-lifecycle-listener"><code>PBLifeCycleListener</code></a>
+                        <p/>
+                        The listener interface for receiving <em>persistent object</em> life cycle information.
+                        This interface is intended for non persistent objects which want to
+                        track persistent object life cycle. Persistence capable objects can implement
+                        <a href="ext:pb-aware"><code>PersistenceBrokerAware</code></a> - see above.
+                    </li>
+                </ul>
+                <p>
+                    To add a <em>PBListener</em> use one of the following
+                    <a href="ext:persistence-broker"><code>PersistenceBroker</code></a> methods:
+                </p>
+                <source><![CDATA[
+public void addListener(PBListener listener) throws PersistenceBrokerException;
+
+public void addListener(PBListener listener, boolean permanent) throws PersistenceBrokerException;]]></source>
+                <p>
+                    The first method adds a <strong>temporary</strong> <code>org.apache.ojb.broker.PBListener</code> to
+                    the current <code>PersistenceBroker</code> instance - on <code>PersistenceBroker.close()</code> call
+                    the listener was removed.
+                </p>
+                <p>
+                    The second one allows to add <strong>permanent</strong> <code>org.apache.ojb.broker.PBListener</code>
+                    when the method argument is set <em>true</em>. If set <em>false</em> the listener only be temporary
+                    added.
+                </p>
+                <note>
+                    Be carefully when adding <strong>permanent</strong> listener, keep in mind you don't know
+                    which instance was returned next time from the pool, with a permanent listener or without!
+                    <br/>
+                    To guarantee
+                    that any pooled broker instance use the permanent listener, best way is to extend the
+                    used <code>org.apache.ojb.broker.core.PersistenceBrokerFactoryIF</code> implementation
+                    and add the listener at creation of the
+                    <a href="ext:persistence-broker"><code>PersistenceBroker</code></a> instances.
+                    <br/>
+                    <br/>
+                    Or add each time you lookup a <code>PersistenceBroker</code> instance the listener
+                    as a temporary listener.
+                </note>
+            </section>
+
+        </section>
+
+    </body>
+</document>
+

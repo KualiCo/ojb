@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+#/* Copyright 2004-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!-- OJB ant build script for xdoclet use -->
+<project name="OJB XDoclet" default="jar-beans" basedir=".">
+
+    <!-- Allow any user specific values to override the defaults -->
+    <property file="build.properties"/>
+    <property file="${user.home}/build.properties" />
+
+    <property name="java.src.dir" value="${src.dir}/ejb"/>
+    <property name="generated.src.dir" value="${build.dir}/srcejb/generated"/>
+    <property name="beans.src.dir" value="${build.dir}/srcejb/beans"/>
+    <property name="client.src.dir" value="${build.dir}/srcejb/client"/>
+    <property name="generated.descriptor.dir" value="${build.dir}/srcejb"/>
+    <property name="generated.ejb.classes.dir" value="${build.dir}/classesejb/bean"/>
+    <property name="generated.ejb.classes.dir.client" value="${build.dir}/classesejb/client"/>
+    <property name="jar.name.beans" value="${ojb-filename-prefix}-beans.jar"/>
+    <property name="jar.name.client" value="${ojb-filename-prefix}-client.jar"/>
+    <property name="jar.name.ejb.app" value="${ojb-filename-prefix}-ejb-app.jar"/>
+    <property name="jar.name.junit" value="${ojb-filename-prefix}-junit.jar"/>
+    <property name="jar.name.app" value="${ojb-filename-prefix}.jar"/>
+    <property name="jar.dir" value="${dist}"/>
+
+    <path id="ojb.classpath">
+        <pathelement path="${build.dest}"/>
+        <pathelement path="${build.desttest}"/>
+        <fileset dir="${lib}">
+            <include name="**/*.jar"/>
+            <include name="**/*.zip"/>
+        </fileset>
+    </path>
+
+    <target name="classes-exist">
+        <available file="${build.dest}/org" property="build.classes.exist"/>
+    </target>
+
+    <target name="check" unless="build.classes.exist" depends="classes-exist">
+        <fail message="Run target 'main-opt' or 'jar' before run current target"/>
+    </target>
+
+    <!-- =================================================================== -->
+	<!-- run xdoclet                                                         -->
+	<!-- =================================================================== -->
+	<target name="xdoclet" depends="check">
+		<taskdef
+				name="ejbdoclet"
+				classname="xdoclet.modules.ejb.EjbDocletTask">
+			<classpath refid="ojb.classpath"/>
+		</taskdef>
+
+        <delete dir="${generated.src.dir}"/>
+		<mkdir dir="${generated.src.dir}"/>
+
+		<ejbdoclet
+			destdir="${generated.src.dir}"
+			excludedtags="@version,@author"
+            addedtags="@xdoclet-generated at ${TODAY}"
+			ejbspec="2.0"
+        >
+
+			<fileset dir="${java.src.dir}">
+                <include name="**/Bean*.java" />
+				<include name="**/*Bean.java" />
+                <include name="**/*BeanImpl.java" />
+				<include name="**/*BO.java" />
+			</fileset>
+			<!-- session/-->
+			<!-- dataobject/ -->
+			<remoteinterface/>
+			<localinterface/>
+			<homeinterface/>
+			<localhomeinterface/>
+			<!-- entitycmp pattern="{0}BeanImpl"/ -->
+			<deploymentdescriptor destdir="${generated.descriptor.dir}"/>
+			<jboss version="3.0"
+					xmlencoding="UTF-8"
+					destdir="${generated.descriptor.dir}"/>
+            <jonas version="3.0"
+					xmlencoding="UTF-8"
+					destdir="${generated.descriptor.dir}"/>
+		</ejbdoclet>
+	</target>
+
+
+    <!-- =================================================================== -->
+	<!-- Build jonas deployment files                                        -->
+	<!--                                                                     -->
+	<!-- =================================================================== -->
+    <!-- pass jonas.root as property, path to jonas root directory
+    This target generates the stubs and skeletons for JOnAS appServer beans.
+    But I get problems with xdoclet tags 'compile_beans' and in this target not
+    all classes are included in .jar file
+    -->
+    <!--
+    <target name="jonas" depends="compile_beans">
+        <ejbjar srcdir="${generated.ejb.classes.dir}"
+            descriptordir="${generated.descriptor.dir}"
+            basejarname="${ojb-filename-prefix}-jonas"
+            genericjarsuffix=""
+        >
+            <jonas destdir="${jar.dir}"
+                jonasroot="${jonas.root}"
+                nogenic="false"
+            >
+                <classpath>
+                    <path refid="ojb.classpath"/>
+                    <pathelement location="${jar.dir}/${jar.name.beans}"/>
+                    <pathelement location="${jonas.root}/lib/common/ow_jonas.jar"/>
+                    <pathelement location="${jonas.root}/lib/jonas.jar"/>
+                    <pathelement location="${jonas.root}/lib/common/ow_jonas_bootstrap.jar"/>
+                </classpath>
+            </jonas>
+
+            <include name="**/ejb-jar.xml"/>
+            <include name="**/*.class"/>
+            <exclude name="**/jonas-ejb-jar.xml"/>
+         </ejbjar>
+    </target>
+    -->
+
+	<!-- =================================================================== -->
+	<!-- Compiles the source directory and copy all xml                      -->
+	<!-- files in src to classes.dir                                         -->
+	<!-- =================================================================== -->
+	<target name="compile_beans" depends="xdoclet">
+		<delete dir="${generated.ejb.classes.dir}"/>
+		<mkdir dir="${generated.ejb.classes.dir}"/>
+		<mkdir dir="${generated.ejb.classes.dir}/META-INF"/>
+
+        <copy  todir="${beans.src.dir}">
+			<fileset dir="${java.src.dir}">
+                <include name="**/Bean*.java" />
+				<include name="**/*Bean.java" />
+                <include name="**/*BeanImpl.java" />
+				<include name="**/*VO.java" />
+				<include name="**/*Helper.java" />
+			</fileset>
+		</copy>
+
+		<javac srcdir="${generated.src.dir}; ${beans.src.dir}"
+			destdir="${generated.ejb.classes.dir}"
+			debug="true"
+			optimize="true"
+			deprecation="${deprecation}">
+			<classpath refid="ojb.classpath"/>
+		</javac>
+	</target>
+
+    <!-- =================================================================== -->
+	<!-- jboss mbeans, workaround till JCA works                             -->
+	<!-- =================================================================== -->
+    <!-- DEPRECATED, was no longer used - since ejb-examples no longer
+    bind OJB api's to JNDI -->
+    <target name="prepare-jboss">
+        <copy  todir="${build.src}">
+			<fileset dir="${src.dir}/connector/main">
+                <include name="**/ODMGFactory*.java" />
+				<include name="**/PBFactory*.java" />
+			</fileset>
+		</copy>
+    </target>
+
+
+	<!-- =================================================================== -->
+	<!-- Build deployable jar of the generated files                         -->
+	<!-- =================================================================== -->
+    <target name="jar-beans" depends="compile_beans">
+        <jar jarfile="${jar.dir}/${jar.name.beans}"
+            basedir="${generated.ejb.classes.dir}" >
+            <metainf dir="${generated.descriptor.dir}">
+                <include name="**/*.xml" />
+            </metainf>
+            <manifest>
+                <!-- attribute name="classpath" value="db-ojb-1.0.rc2.jar ${classpath.attributes}"/ -->
+            </manifest>
+        </jar>
+    </target>
+
+
+    <!-- =================================================================== -->
+	<!-- Prepare ejb jar                                                     -->
+	<!-- =================================================================== -->
+    <!-- ojb.files pass the directory with modified OJB config files -->
+    <!--
+    <target name="prepare-ejb-jar"
+        description="Extends the generated ejb sample jar with OJB config files">
+        <jar jarfile="${jar.dir}/${jar.name.beans}"
+            basedir="${ojb.files}"
+            update="true">
+            <fileset dir="${lib}">
+                <include name="commons-*.jar *regexp*.jar antlr*.jar"/>
+            </fileset>
+        </jar>
+    </target>
+    -->
+
+    <!-- =================================================================== -->
+	<!-- Build the client jar                                                -->
+	<!-- =================================================================== -->
+    <target name="jar-client" depends="check"
+            description="Build the client jar">
+        <copy  todir="${client.src.dir}">
+			<fileset dir="${java.src.dir}"
+                excludes="**/*Bean.class,
+			 		   **/*BeanImpl.class,
+			 		   **/*.xml,
+			 		   **/*.properties">
+			</fileset>
+		</copy>
+
+        <javac srcdir="${client.src.dir}; ${generated.src.dir}"
+			destdir="${generated.ejb.classes.dir}"
+			debug="${debug}"
+			optimize="${optimize}"
+			deprecation="${deprecation}">
+			<classpath refid="ojb.classpath"/>
+		</javac>
+
+        <jar jarfile="${jar.dir}/${jar.name.client}"
+			 basedir="${generated.ejb.classes.dir}"
+			 excludes="**/*Bean.class,
+			 		   **/*BeanImpl.class,
+			 		   **/*.xml,
+			 		   **/*.properties">
+        </jar>
+
+    </target>
+
+
+    <!-- =================================================================== -->
+	<!-- Run the test client                                                 -->
+	<!-- =================================================================== -->
+    <target name="ejb-examples-run" depends="" description="Run the ejb-examples test clients" >
+        <!-- client.class pass the class name of the class to run -->
+        <java fork="yes"
+            classname="${client.class}"
+            dir="${build.test}/ojb"
+            taskname="ojb-client"
+            failonerror="true"
+        >
+            <classpath>
+                <pathelement location="${jar.dir}/${jar.name.client}"/>
+                <path refid="ojb.classpath"/>
+            </classpath>
+            <jvmarg value="-Xms64m"/>
+            <jvmarg value="-Xmx256m"/>
+        </java>
+
+    </target>
+</project>

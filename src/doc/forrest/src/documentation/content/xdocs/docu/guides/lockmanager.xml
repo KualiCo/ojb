@@ -1,0 +1,1649 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: lockmanager.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Locking</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <anchor id="introduction"/>
+        <section>
+            <title>Introduction</title>
+            <p>
+                Lock management is needed to synchronize concurrent access to objects from multiple
+                transactions (possibly in clustered environments).
+            </p>
+            <p>
+                An example:
+                <br/>
+                Assume there are two transactions
+                <code>tx1</code> and <code>tx2</code> running.
+                The first transaction <code>tx1</code>
+                modify object <code>A</code> and perform an update.
+                At the same time transaction <code>tx2</code> modify
+                an object <code>A'</code> with the
+                <em>same</em> identity <code>oidA</code>, so both objects represent
+                the same row in DB table and both operate on the "same" row at the same
+                time, thus the state of object with identity <code>oidA</code> is inconsistent.
+                <br/>
+                Assume that <code>tx1</code> was committed, now the modified object <code>A'</code>
+                in <code>tx2</code> based on outdated data (state before <code>A</code> changed).
+                If now <code>tx2</code> commits object <code>A'</code> the changes of <code>tx1</code>
+                will be overwritten with the "illegal" object <code>A'</code>.
+            </p>
+            <p>
+                The OJB lock manager is responsible for detecting such a conflict and e.g. doesn't allow
+                <code>tx2</code> to read or modify objects with identity <code>oidA</code> as long as
+                <code>tx1</code> commit or rollback (<em>pessimistic locking</em>).
+                <br/>
+                In other words, if in a running transaction an object in a with identity <code>oidA</code>
+                has a <em>write lock</em>, the lock manager doesn't allow other
+                transactions to acquire a <em>read</em> or <em>write lock</em> on the same identity
+                <code>oidA</code> objects (for the sake of completeness: dependent on the used locking
+                isolation level).
+            </p>
+            <p>
+                OJB supports two kind of locking strategies:
+            </p>
+            <ul>
+                <li><a href="#optimistic-locking">optimistic locking</a></li>
+                <li><a href="#pessimistic-locking">pessimistic locking</a></li>
+            </ul>
+            <p>
+                OJB provide an pluggable low-level locking-api (located in <code>org.apache.ojb.broker.locking</code>)
+                for <em>pessimistic locking</em>,
+                which can be used by the top-level api's like <a href="site:odmg-tutorial">ODMG</a>.
+                The <a href="site:pb-tutorial">PB-api</a> itself does not
+                support <em>pessimistic locking</em> out of the box.
+            </p>
+            <p>
+                The base classes of the locking-api can be found in <code>org.apache.ojb.broker.locking</code>
+                and the entry point is class <a href="ext:api/lock-manager">LockManager</a>.
+            </p>
+            <p>
+                Object locking helps to guarantee data consistency without the need of database locks. During
+                a transaction objects can be locked without the use a database connection, e.g the
+                <a href="site:odmg-tutorial">ODMG</a> implementation lookup a database connection
+                not until the transaction commit was called. If database locks are used, a connection is needed
+                during the whole transaction.
+            </p>
+        </section>
+
+
+        <anchor id="optimistic-locking"/>
+        <section>
+            <title>Optimistic Locking</title>
+            <p>
+                To control concurrent access to objects <em>optimistic locking</em> uses a version field
+                on each persistent object.
+                <br/>
+            </p>
+            <p>
+                Optimistic locking is supported by all API's (PB-api, ODMG-api, <em>JDO when it's done</em>).
+            </p>
+            <p>
+                Optimistic locking use an additional field/column for each persistent-object/table
+                (<em>Long</em>, <em>Integer</em> or <em>Timestamp</em>)
+                which is incremented each time changes are committed to the object, and is utilizied
+                to determine whether an optimistic transaction should succeed or fail.
+                Optimistic locking is fast, because it checks data integrity only at update time.
+
+            </p>
+            <ol>
+                <li>
+                    In your table you need a dedicated column of type
+                    <code>BIGINT</code>, <code>INTEGER</code>
+                    or
+                    <code>TIMESTAMP</code>.
+                    Say the column is typed as
+                    <code>INTEGER</code> and named
+                    <code>VERSION_MAINTAINED_BY_OJB</code>.
+                </li>
+                <li>
+                    You then need a (possibly private) attribute in your java class corresponding to the column.
+                    Say the attribute is defined as:
+                <source><![CDATA[
+private int versionMaintainedByOjb;]]></source>
+                </li>
+                <li>
+                    in repository.xml you need a <a href="site:repository/field-descriptor">field-descriptor</a>
+                    for this attribute. This field-descriptor must specify attribute
+                    <code>locking="true"</code>
+                </li>
+                <li>
+                    The resulting field-descriptor will look as follows:
+                    <source><![CDATA[
+<field-descriptor
+    name="versionMaintainedByOjb"
+    column="VERSION_MAINTAINED_BY_OJB"
+    jdbc-type="INTEGER"
+    locking="true"
+/>]]></source>
+                </li>
+            </ol>
+            <note>
+                Using of <em>TIMESTAMP</em> as optimistic locking field could cause problems, because
+                dependent of the used operating system and database the precision of timestamp values
+                differ (e.g. new value only after 10 ms or 1000 ms). In high concurrency applications this
+                will cause problems.
+            </note>
+        </section>
+
+        <anchor id="pessimistic-locking"/>
+        <section>
+            <title>Pessimistic-Locking</title>
+            <p>
+                To control concurrent access to objects <em>pessimistic locking</em> uses shared and exclusive
+                locks on persistent object (more precisely, on the identity object of the persistent object).
+                <br/>
+                Pessimistic locking is currently used by the <a href="#odmg-locking">ODMG-api</a>
+                implementation. The <a href="site:pb-tutorial">PB-api</a> does not support
+                PL out of the box.
+            </p>
+            <p>
+
+            </p>
+
+
+        <anchor id="isolation-level"/>
+        <section>
+            <title>Supported Isolation Levels</title>
+            <p>
+                The OJB locking package supports four different
+                <a href="ext:api/isolation-level">isolation level</a>.
+            </p>
+            <ul>
+                <li>read-uncommitted</li>
+                <li>read-committed</li>
+                <li>repeatable-read</li>
+                <li>serializable</li>
+                <li>(none)</li>
+                <li>(optimistic)</li>
+            </ul>
+            <p>
+                The object locking isolation levels can be simply
+                characterized as follows:
+            </p>
+            <p>
+                <strong>Uncommitted Reads</strong>
+                <br/>
+                Obtaining
+                two concurrent write locks on a given object is not allowed (case
+                14). Obtaining read locks is allowed even if another transaction is
+                writing to that object (case 13). (Thats why this level is also
+                called
+                <em>dirty reads</em>, because you can read lock objects with an existing write lock).
+            </p>
+            <p>
+                <strong>Committed Reads</strong>
+                <br/>
+                Obtaining two
+                concurrent write locks on a given object is not allowed. Obtaining
+                read locks is allowed only if there is no write lock on the given
+                object (case 13).
+            </p>
+            <p>
+                <strong>Repeatable Reads</strong>
+                <br/>
+                Same as commited
+                reads, but obtaining a write lock on an object that has been locked
+                for reading by another transaction is not allowed (case 7).
+            </p>
+            <p>
+                <strong>Serializable transactions</strong>
+                <br/>
+                As
+                Repeatable Reads, but it is even not allowed to have multiple read
+                locks on a given object (case 6).
+            </p>
+            <p>
+                The isolation level <em>none</em> and <em>optimistic</em> are self-explanatory:
+                <br/><em>none</em> - don't lock objects associated with this isolation level
+                <br/><em>optimistic</em> - don't lock objects associated with this isolation level, because
+                optimistic locking was used instead.
+                <br/>
+                Thus the lock manager will ignore all objects associated with these isolation level.
+            </p>
+            <note>
+                It's not needed to declare the <em>optimistic</em> isolation level in all persistent objects
+                <a href="site:repository/class-descriptor">class-descriptor</a> using this isolation level,
+                because OJB will automatically detect an enabled optimistic locking and will bypass pessimistic locking.
+                <br/>Only the proper settings for <a href="#optimistic-locking">optimistic locking</a>
+                are mandatory.
+            </note>
+            <note>
+                The locking isolation levels named similar to the database transaction isolation level,
+                but the definitions are different from it, so take care when comparing database transaction
+                isolation level with object locking isolation level.
+            </note>
+            <p>
+                The proper behaviour of the different locking isolation level
+                is checked by JUnit TestCases that implement test
+                methods for each of the 17 cases specified in the above table. (See
+                code for classes in package <code>org.apache.ojb.broker.locking</code> in OJB
+                <a href="site:test-suite">test suite</a>).
+            </p>
+            <p>
+                The semantics of the strategies are defined by the following table:
+            </p>
+            <table>
+                <tr>
+                    <th>Case</th>
+                    <th>Name of TestCase</th>
+                    <th colspan="2">Transaction</th>
+                    <th colspan="4">Transaction-Isolationlevel</th>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <strong>Tx1</strong>
+                    </td>
+                    <td>
+                        <strong>Tx2</strong>
+                    </td>
+                    <td>
+                        <strong>ReadUncommited</strong>
+                    </td>
+                    <td>
+                        <strong>ReadCommited</strong>
+                    </td>
+                    <td>
+                        <strong>RepeatableReads</strong>
+                    </td>
+                    <td>
+                        <strong>Serializable</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>SingleReadlock</td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>18</td>
+                    <td>ReadThenRead</td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>UpgradeReadlock</td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>U</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>ReadThenWrite</td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>SingleWritelock</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>WriteThenRead</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>MultipleReadlock</td>
+                    <td>R</td>
+                    <td>R</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>UpgradeWithExistingReader</td>
+                    <td>R</td>
+                    <td>U</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>WriteWithExistingReader</td>
+                    <td>R</td>
+                    <td>W</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>UpgradeWithMultipleReaders</td>
+                    <td>R</td>
+                    <td>R</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>U</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>WriteWithMultipleReaders</td>
+                    <td>R</td>
+                    <td>R</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td>UpgradeWithMultipleReadersOn1</td>
+                    <td>R</td>
+                    <td>R</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td>WriteWithMultipleReadersOn1</td>
+                    <td>R</td>
+                    <td>R</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td>ReadWithExistingWriter</td>
+                    <td>W</td>
+                    <td>R</td>
+                    <td>True</td>
+                    <td>False</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td>MultipleWritelocks</td>
+                    <td>W</td>
+                    <td>W</td>
+                    <td>False</td>
+                    <td>False</td>
+                    <td>False</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>15</td>
+                    <td>ReleaseReadLock</td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Rel</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td>ReleaseUpgradeLock</td>
+                    <td>U</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Rel</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>17</td>
+                    <td>ReleaseWriteLock</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Rel</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Acquire ReadLock</td>
+                    <td>R</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Acquire WriteLock</td>
+                    <td>W</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Upgrade Lock</td>
+                    <td>U</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>Release Lock</td>
+                    <td>Rel</td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                    <td>
+                        <br/>
+                    </td>
+                </tr>
+            </table>
+
+            <p>
+                The table is to be read as follows. The
+                acquisition of a single read lock on a given object (case 1) is
+                allowed (returns True) for all isolationlevels. To upgrade a single
+                read lock (case 2) is also allowed for all isolationlevels. If there
+                is already a write lock on a given object for tx1, it is not allowed
+                (returns False) to obtain a write lock from tx2 for all
+                isolationlevels (case 14).
+            </p>
+            <note>
+                If the low-level locking api was used by hand:<br/>
+                Not all <a href="ext:api/lock-manager">LockManager</a> implementation support
+                the <code>LockManager#upgrade(...)</code> method (e.g. upgrade was delegated to write lock)
+                or behavior of this method is a wee bit other than shown above. More detail see javadoc comment
+                of the used <em>LockManager</em> implementation.
+            </note>
+        </section>
+
+
+        <anchor id="set-isolation-level"/>
+        <section>
+            <title>How to specify locking isolation level</title>
+            <p>
+                The locking isolation level can be specified <em>global</em> or <em>per class</em>.
+            </p>
+            <p>
+                The global setting is done in the
+                <a href="site:repository/descriptor-repository">descriptor-repository</a> element:
+            </p>
+            <source><![CDATA[
+<descriptor-repository version="1.0" isolation-level="read-uncommitted"
+        proxy-prefetching-limit="50">
+...
+</descriptor-repository>]]></source>
+            <p>
+                <br/>
+            </p>
+            <p>
+                The isolation level of a class can be configured with the following attribute to a
+                <a href="site:repository/class-descriptor">class-descriptor</a>:
+            </p>
+            <source><![CDATA[
+<ClassDescriptor isolation-level="read-uncomitted" ...>
+    ...
+</ClassDescriptor>]]></source>
+            <p>
+                If no <em>isolation-level</em> was specified a default isolation level was used - see interface
+                <a href="ext:api/isolation-level">IsolationLevels</a>.
+                The semantics of isolation levels are described in <a href="#isolation-level">isolation level</a>
+                section.
+            </p>
+        </section>
+
+            <anchor id="change-lock-manager"/>
+            <section>
+                <title>Specify the <em>LockManager</em> Implementation</title>
+                <p>
+                    To specify the used lock manager implementation set the
+                    <em>LockManagerClass</em> property in <a href="ext:ojb.properties">OJB.properties</a>
+                    file. By default an <a href="#lock-manager-in-memory">in memory lock manager</a> is enabled.
+                </p>
+                <source><![CDATA[
+LockManagerClass=org.apache.ojb.broker.locking.LockManagerInMemoryImpl
+ ...]]></source>
+            </section>
+
+            <anchor id="locking-implementation"/>
+            <section>
+                <title>The LockManager Implementations</title>
+                <p>
+                    Below all <a href="ext:api/lock-manager">LockManager</a> implementations shipped
+                    with OJB are listed.
+                </p>
+                <p>
+                    The <em>LockManager</em> implementation can optionally support
+                </p>
+                <ul>
+                    <li>
+                        lock timeout: The locked objects of an <em>owner</em> will be released after a specified time
+                    </li>
+                    <li>
+                        block timeout: The maximal time to wait for acquire a lock (e.g. when an object was locked
+                        by another thread). Implementations which do not support this feature are called
+                        <em>non-blocking</em>
+                    </li>
+                </ul>
+
+                <anchor id="lock-manager-in-memory"/>
+                <section>
+                    <title>LockManagerInMemoryImpl</title>
+                    <p>
+                        A <em>non-blocking</em>, single JVM, in-memory  <em>LockManager</em> implementation. All
+                        <code>LockManager.upgradeLock(...)</code> calls are delegated to write locks. It's a simple
+                        and fast implementation.
+                    </p>
+                    <p>
+                        The timeout of locks is supported. The block timeout is ignored, because it's non-blocking.
+                    </p>
+                </section>
+
+                <anchor id="lock-manager-commons"/>
+                <section>
+                    <title>LockManagerCommonsImpl</title>
+                    <p>
+                        This implementation use the locking part of apache's
+                        <a href="ext:commons-transaction">commons-transaction</a> api.
+                        The timeout of locks is currently (OJB 1.0.2) not supported, maybe
+                        in further versions. This implementation supports <em>blocking</em>
+                        (with deadlock detection) and <em>non-blocking</em> of acquired locks.
+                    </p>
+                </section>
+
+                <anchor id="lock-manager-remote"/>
+                <section>
+                    <title>LockManagerRemoteImpl</title>
+                    <p>
+                        Supports locking in distributed environments based on a servlet. The
+                        <em>LockManagerRemoteImpl</em> class delegates all locking calls to a
+                        remote servlet (<code>LockManagerServlet</code>). The URL to contact the
+                        servlet have to be set in <a href="ext:ojb.properties">OJB.properties</a>
+                        file using the <em>LockServletUrl</em> property, e.g.
+                    </p>
+                    <source><![CDATA[
+LockServletUrl=http://127.0.0.1:8080/ojb-lockserver]]></source>
+                    <p>
+                        To make deployment of the <code>LockManagerServlet</code> on a servlet container
+                        easier an Ant target <em>lockservlet-war</em> exist, which will build an example
+                        <em>.war</em> file containing all needed files (maybe some useless files) for deployment.
+                        <br/>
+                        The generated <code>web.xml</code> file look like:
+                    </p>
+                    <source><![CDATA[
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+    <display-name>OJB ODMG Lock Server</display-name>
+    <description>
+     OJB ODMG Lock Server
+    </description>
+
+    <servlet>
+        <servlet-name>lockserver</servlet-name>
+        <servlet-class>org.apache.ojb.broker.locking.LockManagerServlet</servlet-class>
+        <init-param>
+            <param-name>lockManager</param-name>
+            <param-value>org.apache.ojb.broker.locking.LockManagerInMemoryImpl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>lockTimeout</param-name>
+            <param-value>80000</param-value>
+        </init-param>
+        <init-param>
+            <param-name>blockTimeout</param-name>
+            <param-value>1000</param-value>
+        </init-param>
+
+        <!--load-on-startup>1</load-on-startup-->
+    </servlet>
+
+    <!-- The mapping for the webdav servlet -->
+    <servlet-mapping>
+        <servlet-name>lockserver</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!-- Establish the default list of welcome files -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.htm</welcome-file>
+    </welcome-file-list>
+</web-app>]]></source>
+                    <p>
+                        It's possible to use each <em>LockManager</em> implementation as backend of
+                        the lock manager servlet - only adapt the <em>lockManager</em> init-param
+                        entry in the <code>web.xml</code> file.
+                    </p>
+
+                </section>
+
+            </section>
+
+            <!-- close pessimistic locking section -->
+        </section>
+
+        <anchor id="odmg-locking"/>
+        <section>
+            <title>ODMG-api Locking</title>
+            <p>
+                The OJB ODMG implementation provides
+                object level transactions as specified by the ODMG. This includes
+                features like registering objects to transactions, persistence by
+                reachability (a toplevel object is registered to a transaction, and
+                also all its associated objects become registered implicitely) and as
+                a very important aspect: object level locking.
+            </p>
+            <p>
+                The ODMG locking implementation is located in <code>org.apache.ojb.odmg.locking</code>
+                and base on the OJB kernel locking code in <code>org.apache.ojb.broker.locking</code>. The
+                odmg implementation use it's own internal locking interface
+                <code>org.apache.ojb.odmg.locking.LockManager</code> with specific methods to handle transactions
+                as owner of a lock and persistent object <a href="ext:api/identity">Identity objects</a>
+                as resources to lock..
+            </p>
+        <section>
+            <title>What it does</title>
+            <p>
+                The ODMG-Api allows transactions to lock
+                an object
+                <code>obj</code> as follows:
+            </p>
+            <source><![CDATA[
+org.odmg.Transaction.lock(Object obj, int lockMode)]]></source>
+            <p>
+                where lockMode defines the locking modes:
+            </p>
+            <source><![CDATA[
+org.odmg.Transaction.READ
+org.odmg.Transaction.UPGRADE
+org.odmg.Transaction.WRITE]]></source>
+            <p>
+                A sample session could look as follows:
+            </p>
+            <source><![CDATA[
+// get odmg facade instance
+Implementation odmg = ...
+
+//get open database
+Database db = ...
+
+// start a transaction
+Transaction tx = odmg.newTransaction();
+tx.begin();
+
+MyClass myObject = ... ;
+
+// lock object for write access
+tx.lock(myObject, Transaction.WRITE);
+
+// now perform write access on myObject ...
+
+// finally commit transaction to make changes to myObject persistent
+tx.commit();]]></source>
+            <p>
+                The ODMG specification does not say if
+                locks must be acquired explicitely by client applications or may be
+                acquired implicitely. OJB provides implicit locking for the
+                application programmers convenience: On commit of a transaction all
+                read-locked objects are checked for modifications. If a modification
+                is detected, a write lock is acquired for the respective object. If
+                automatic acquisition of read- or write-lock failes, the transaction
+                is aborted.
+            </p>
+            <p>
+                On locking an object to a transaction,
+                OJB automatically locks all associated objects (as part of the
+                <em>persistence by reachability feature</em>) with the same
+                locking level. If application use large object nets which are shared
+                among several transactions acquisition of write-locks may be very
+                difficult. Thus OJB can be configured to aquire only read-locks for
+                associated objects.
+                <br/>You can change this behaviour by modifying the
+                file
+                <a href="site:ojb-properties">OJB.properties</a> and changing the entry
+                <code>LockAssociations=WRITE</code>
+                to
+                <code>LockAssociations=READ</code>.
+            </p>
+            <p>
+                The ODMG specification does not
+                prescribe transaction isolation levels or locking strategies to be
+                used. Thus there are no API calls for setting isolation levels. OJB provides
+                <a href="#isolation-level">four different isolation levels</a> that can be  configured
+                <a href="#set-isolation-level">global or for each persistent class</a> in the configuration
+                files.
+            </p>
+        </section>
+        </section>
+
+
+        <anchor id="distributed-locking"/>
+        <section>
+            <title>Locking in distributed environment</title>
+            <p>
+                In distributed or clustered environments the object level locking
+                (<a href="#pessimistic-locking">pessimistic locking</a>) have to be consistent over
+                several JVM. The <a href="#optimistic-locking">optimistic locking</a> works in
+                clustered/distributed environments without any modifications.
+            </p>
+            <p>
+                Currently OJB was shipped was simple servlet based
+                <a href="ext:api/lock-manager">LockManager</a> implementation called
+                <a href="#lock-manager-remote">LockManagerRemoteImpl</a>.
+            </p>
+            <p>
+                Here is a description how to use it:
+            </p>
+            <p>
+                1. Change <em>LockManagerClass</em> entry in
+                <a href="ext:ojb.properties">OJB.properties</a> file
+                to the remote implementation:
+                <br/><code>org.apache.ojb.broker.locking.LockManagerRemoteImpl</code>
+                and the <code>LockServletUrl</code> to the servelt engine where the lock-server
+                servlet will be deployed:
+            </p>
+            <source><![CDATA[
+LockManagerClass=org.apache.ojb.broker.locking.LockManagerRemoteImpl
+...
+LockServletUrl=http://127.0.0.1:8080/ojb-lockserver
+            ]]></source>
+            <p>
+                2. Run the <code>ant lockservlet-war</code> target to generate the lock-server servlet
+                <code>.war</code> application file. The generated file will be found in
+                <code>[db-ojb]/dist</code>.
+            </p>
+            <p>
+                3. Check that all needed libraries be copied in lockservlet-war file.
+            </p>
+            <p>
+                This implementation has some drawbacks, e.g. it uses one servlet node to deploy the
+                LockMap servlet.
+            </p>
+            <p>
+                A much better solution will be a JMS- or JavaGroups-based
+                <a href="ext:api/lock-manager">LockManager</a> implementation (hope we can start working
+                on such a implementation some day).
+            </p>
+        </section>
+
+
+        <section>
+            <title>Pluggin own locking classes</title>
+            <p>
+                OJB was shipped with several locking classes implementations.
+                <br/>
+                This may not be viable in some environments. Thus OJB allows to plug in user defined
+                <a href="ext:api/lock-manager">LockManager</a> implementations.
+                <br/>
+                To specify specific implementations change the following entry in the
+                <a href="ext:ojb.properties">OJB.properties</a> configuration file:
+            </p>
+            <source><![CDATA[
+LockManagerClass=my.ojb.LockManagerMyImpl]]></source>
+            <note>
+                Of course we are interested in your solutions! If you have
+                implemented something interesting, just contact us.
+            </note>
+        </section>
+</body>
+</document>

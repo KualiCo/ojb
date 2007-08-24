@@ -1,0 +1,925 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: objectcache.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>The Object Cache</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <section>
+            <title>Introduction</title>
+            <p>
+                OJB supports several caching strategies and allow to <a href="#own-cache">pluggin own</a> caching solutions
+                by implementing the <a href="ext:api/cache-interface">ObjectCache</a> interface. All
+                implementations shipped with OJB can be found in package
+                <strong><code>org.apache.ojb.broker.cache</code></strong>.
+                The naming convention of the implementation classes is <code>ObjectCacheXXXImpl</code>.
+            </p>
+            <p>
+                To classify the different implementations we differ
+                <em>local/session cache</em> and
+                <em>shared/global/application cache</em> implementations (we use the different terms synonymous).
+                The <a href="#two-level">ObjectCacheTwoLevelImpl</a> use both characteristics.
+            </p>
+            <ul>
+                <li>
+                    Local cache implementation mean that each instance use its own map to
+                    manage cached objects.
+                </li>
+                <li>
+                    Shared/global cache implementations share one
+                    (in most cases static) map to manage cached objects.
+                </li>
+            </ul>
+            <p>
+                A
+                <a href="site:howto/clustering">distributed object cache</a> implementation
+                supports caching of objects across different JVM.
+            </p>
+        </section>
+
+
+        <section>
+            <title>Why a cache and how it works?</title>
+            <p>
+                OJB provides a pluggable object cache provided by the
+                <a href="ext:api/cache-interface">ObjectCache</a> interface:
+            </p>
+            <source><![CDATA[
+public interface ObjectCache
+{
+    /**
+    * Write to cache.
+    */
+    public void cache(Identity oid, Object obj);
+
+    /**
+    * Lookup object from cache.
+    */
+    public Object lookup(Identity oid);
+
+    /**
+    * Removes an Object from the cache.
+    */
+    public void remove(Identity oid);
+
+    /**
+    * Clear the ObjectCache.
+    */
+    public void clear();
+}]]></source>
+            <p>
+                Each <a href="ext:api/persistence-broker">PersistenceBroker</a> instance (PersistenceBroker
+                is a standalone api and the basic layer for all top-level api's like ODMG) use it's own
+                <code>ObjectCache</code> instance. The
+                <code>ObjectCache</code> instances are created by the
+                <code>ObjectCacheFactory</code> class on <code>PersistenceBroker</code> instantiation.
+            </p>
+            <p>
+                Each cache implementation holds objects previously loaded or stored
+                by the <code>PersistenceBroker</code> - dependend on the implementation.
+                <br/>
+                Using a Cache has several advantages:
+            </p>
+            <ul>
+                <li>
+                    It increases performance as it reduces database
+                    lookups or/and object materialization. If an object is looked up
+                    by Identity the associated PersistenceBroker instance does not perform
+                    a
+                    <code>SELECT</code> against the database immediately but first looks
+                    up the cache if the requested object is already loaded. If the object is
+                    cached it is returned as the lookup result. If it is not cached a
+                    <code>SELECT</code> is performed.
+                    <br/>
+                    Other queries were performed against the database, but before an object
+                    from the ResultSet was materialized the object identity was looked up
+                    in cache. If not found the whole object was materialized.
+                </li>
+                <li>
+                    It allows to perform circular lookups (as by crossreferenced
+                    objects) that would result in non-terminating loops without such a
+                    cache (Note: Since OJB 1.0.2 this is handled internally by OJB and does not
+                    depend on the used cache implementation).
+                </li>
+            </ul>
+        </section>
+
+
+        <anchor id="changeImplementation"/>
+        <section>
+            <title>How to declare and change the used ObjectCache implementation</title>
+            <p>
+                The
+                <code>object-cache</code> element can be used to specify the ObjectCache
+                implementation used by OJB. If no <em>object-cache</em> is declared in configuration files (see below),
+                OJB use by default a <a href="#emptyImpl">noop-implementation</a> of the
+                <code>ObjectCache</code> interface.
+                <br/>
+                There are two levels of declaration:
+            </p>
+            <ul>
+                <li>jdbc-connection-descriptor level</li>
+                <li>class-descriptor level</li>
+            </ul>
+            <p>
+                and the possibility to exclude all persistent objects of
+                <a href="#excludePackages">specified package names</a>.
+            </p>
+            <p>
+                Use a
+                <a href="site:repository/jdbc-connection-descriptor">
+                    <strong>jdbc-connection-descriptor level</strong>
+                </a>
+                declaration to declare ObjectCache implementation on a per connection/user level.
+                Additional configuration properties can be passed by using
+                <a href="site:repository/custom-attribute">custom attributes</a> entries:
+            </p>
+            <source><![CDATA[
+<jdbc-connection-descriptor ...>
+...
+ <object-cache class="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl">
+     <attribute attribute-name="timeout" attribute-value="900"/>
+     <attribute attribute-name="useAutoSync" attribute-value="true"/>
+ </object-cache>
+...
+</jdbc-connection-descriptor>]]></source>
+            <p>
+                <br/>
+            </p>
+            <p>
+                Set an <em>object-cache</em> tag on
+                <a href="site:repository/class-descriptor">
+                    <strong>class-descriptor level</strong>
+                </a>,
+                to declare ObjectCache implementation on a per class level:
+            </p>
+            <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.util.sequence.HighLowSequence"
+    table="OJB_HL_SEQ"
+>
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCacheEmptyImpl">
+    </object-cache>
+...
+</class-descriptor>]]></source>
+            <p>
+                Additional configuration
+                properties can be passed by using
+                <a href="site:repository/custom-attribute">custom attributes</a> entries.
+            </p>
+
+            <anchor id="per-class-cache-note"/>
+            <note>
+                If <a href="site:advanced-technique/polymorphism">polymorphism</a> was
+                used it's only possible to declare the <em>object-cache</em> element in the
+                <a href="site:repository/class-descriptor">class-descriptor</a> of the
+                top-level class/interface (root class), all <em>object-cache</em> declarations
+                in the sub-classes will be ignored by OJB.
+            </note>
+
+            <anchor id="cache-priority"/>
+            <section>
+                <title>Priority of Cache Level</title>
+                <p>
+                    Since it is possible to mix the different levels of <em>object-cache</em> element
+                    declaration a ordering of priority is needed:
+                </p>
+                <note>
+                    The order of priority of declared <em>object-cache</em> elements in metadata are:
+                    <br/>
+                    <em>per class &gt; <a href="#excludePackages">excluded packages</a> &gt; per jdbc-connection-descriptor</em>
+                </note>
+                <p>
+                    E.g. if you declare ObjectCache 'OC1' on connection level and set
+                    ObjectCache 'OC2' in class-descriptor of class A. Then OJB use 'OC2'
+                    as ObjectCache for class A instances and 'OC1' for all other classes.
+                </p>
+            </section>
+
+            <anchor id="excludeClasses"/>
+        <section>
+            <title>Exclude classes from being cached</title>
+            <p>
+                If it's undesirable to cache an persistent object (e.g. persistent objects with BLOB fields or large
+                binary fields) declare an <code>object-cache</code> descriptor with the <em>noop-cache</em> implementation
+                called <a href="#emptyImpl">ObjectCacheEmptyImpl</a>.
+            </p>
+            <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.broker.util.sequence.HighLowSequence"
+    table="OJB_HL_SEQ"
+>
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCacheEmptyImpl">
+    </object-cache>
+...
+</class-descriptor>]]></source>
+            <note>
+                If <a href="site:advanced-technique/polymorphism">polymorphism</a> was
+                used and the class to exclude is part of an inheritance hierarchy <strong>and</strong>
+                it's declared in in OJB metadata, it's not possible to exclude it. Only for the
+                top-level class/interface (root class) it's allowed to specify the
+                <em>object-cache</em> element in metadata. So it's only possible to exclude all sub-classes
+                of the top-level class/interface (root class). More info
+                <a href="#per-class-cache-note">see here</a>.
+            </note>
+        </section>
+
+
+        <anchor id="excludePackages"/>
+        <section>
+            <title>Exclude packages from being cached</title>
+            <p>
+                To exclude all persistent objects of a whole package from being cached use the
+                <a href="site:repository/custom-attribute">custom attribute</a> <em>cacheExcludes</em>
+                on connection level within the object-cache declaration. To declare several packages use
+                a comma seperated list.
+            </p>
+            <source><![CDATA[
+<jdbc-connection-descriptor
+    jcd-alias="myDefault"
+    ...>
+
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl">
+        <attribute attribute-name="cacheExcludes"
+            attribute-value="my.core, my.persistent.local"/>
+        ... more attributes
+    </object-cache>
+</jdbc-connection-descriptor]]></source>
+        <p>
+            To include a persistent class of a excluded package, simply declare
+            an object-cache descriptor on class-descriptor level of the class to
+            include, object cache declarations on class-descriptor level have a higher priority as the
+            excluded packages - <a href="#changeImplementation">see more</a>.
+        </p>
+        </section>
+
+
+        <anchor id="turn-off-caching"/>
+        <section>
+            <title>Turn off caching</title>
+            <p>
+                If you don't declare a <em>object-cache</em> element in configuration files
+                (see <a href="#changeImplementation">here</a>), OJB doesn't cache persistent objects
+                by default.
+                <br/>
+                To explicitly turn off caching declare a <em>no-op</em> implementation of the
+                <a href="ext:api/cache-interface">ObjectCache</a> interface as caching implementation.
+                OJB was shipped with such a class called <a href="#emptyImpl">ObjectCacheEmptyImpl</a>.
+                To explicitly turn off caching for a used database look like this:
+            </p>
+            <source><![CDATA[
+<jdbc-connection-descriptor ...>
+    ...
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCacheEmptyImpl">
+    </object-cache>
+    ...
+</jdbc-connection-descriptor>]]></source>
+            <p>
+                To get more detailed info about the different level of cache declaration,
+                please see <a href="#changeImplementation">here</a>.
+            </p>
+        </section>
+
+        </section>
+
+
+        <section>
+            <title>Shipped cache implementations:</title>
+
+            <anchor id="defaultImpl"/>
+            <section>
+                <title>ObjectCacheDefaultImpl</title>
+                <p>
+                    Per default OJB use a shared reference based
+                    <a href="ext:api/cache-interface">ObjectCache</a>
+                    implementation - <a href="ext:api/cache-default">ObjectCacheDefaultImpl</a>.
+                    It's a really fast cache but there are a few drawbacks:
+                </p>
+                <ul>
+                    <li>
+                        There is no transaction isolation, when thread one modify an object,
+                        thread two will see the modification when lookup the same object or use a reference
+                        of the same object, so "dirty-reads" can happen.
+                    </li>
+                    <li>
+                        If you rollback/abort a transaction the modified/corrupted objects will
+                        <strong>not</strong>
+                        be removed from the cache by default(when using PB-api, top-level api may support
+                        automatic cache synchronization).
+                        You have to do this by your own using a service method to remove cached objects
+                        or enable the <a href="#autoSync">autoSync</a> property.
+                    </li>
+                </ul>
+                <source><![CDATA[
+broker.removeFromCache(obj);
+
+// or (using Identity object)
+ObjectCache cache = broker.serviceObjectCache();
+cache.remove(oid);]]></source>
+                <ul>
+                    <li>
+                        This implementation cache full object graphs (the object with all referenced objects) and
+                        does <strong>not</strong> synchronize the references. So if cached object <em>ProductGroup</em>
+                        has a 1:n reference to <em>Article</em>, e.g. article1, article2, article3 and another
+                        thread delete article2, the ProductGroup still has a reference to article2. To avoid such a
+                        behavior you can use the
+                        <a href="site:repository/collection-descriptor">collection-descriptor 'refresh' attribute</a>
+                        to force OJB to query the referenced objects when the main object is loaded from cache or
+                        use another <code>ObjectCache</code> implementation supporting synchronization of references
+                        (e.g. <a href="#two-level">ObjectCacheTwoLevelImpl</a>).
+                    </li>
+                </ul>
+                <p>
+                    This implementation use by default
+                    <code>SoftReference</code> to wrap
+                    all cached objects. If the cached object was not longer referenced by your application
+                    but only by the cache, it can be reclaimed by the garbage collector.
+                    <br/>
+                    As we don't know when the garbage collector reclaims the freed objects, it is
+                    possible to set a
+                    <code>timeout</code> property. So an cached object was
+                    only returned from cache if it was not garbage collected and was not timed out.
+                </p>
+                <p>
+                    To enable this
+                    <code>ObjectCache</code> implementation declare
+                </p>
+                <source><![CDATA[
+<object-cache class="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl">
+    <attribute attribute-name="cacheExcludes" attribute-value=""/>
+    <attribute attribute-name="timeout" attribute-value="900"/>
+    <attribute attribute-name="autoSync" attribute-value="true"/>
+    <attribute attribute-name="cachingKeyType" attribute-value="0"/>
+    <attribute attribute-name="useSoftReferences" attribute-value="true"/>
+</object-cache>]]></source>
+                <p>
+                    <br/>
+                </p>
+                <p>
+                    Implementation configuration properties:
+                </p>
+                <table>
+                    <tr>
+                        <td>
+                            <strong>Property Key</strong>
+                        </td>
+                        <td>
+                            <strong>Property Values</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>timeout</td>
+                        <td>
+                            Lifetime of the cached objects in seconds.
+                            If expired, the cached object was discarded - default was 900 sec.
+                            When set to
+                            <em>-1</em> the lifetime of the cached object never expire.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><anchor id="autoSync"/>autoSync</td>
+                        <td>
+                            If set
+                            <em>true</em> all cached/looked up objects within a PB-transaction are traced.
+                            If the the PB-transaction was aborted all traced objects will be removed from
+                            cache. Default is
+                            <em>false</em>.
+                            <p>
+                                <strong>NOTE:</strong> This does not prevent "dirty-reads" by concurrent threads (more info see above).
+                            </p>
+                            <p>
+                                It's not a smart solution for keeping cache in sync with DB but should do the job
+                                in most cases.
+                                <br/>
+                                E.g. if OJB read 1000 objects from the database within a transaction, one object was
+                                modified and the transaction will be aborted, then 1000 objects will be passed to
+                                the cache on lookup, 1000 objects will be traced and all 1000 objects will be
+                                removed from cache on abort.
+                                <br/>
+                                Read these objects without running tx or
+                                in a former tx and then modify one object in a tx and abort the tx, only one object was
+                                traced/removed. Keep in mind that this property counteract the <em>useSoftReferences</em>
+                                property as long as the PB-transaction is running, because all traced objects will have strong
+                                references.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>cachingKeyType</td>
+                        <td>
+                            Determines how the key was build for the cached objects:
+                            <br/>
+                            0 - Identity object was used as key, this was the <em>default</em> setting.
+                            <br/>
+                            1 - Idenity + jcdAlias name was used as key. Useful when the same object metadata model
+                            (DescriptorRepository instance) are used for different databases (JdbcConnectionDescriptor),
+                            because different databases should use separated caches (persistent object instances).
+                            <br/>
+                            2 - Identity + model (DescriptorRepository) was used as key. Useful when different metadata
+                            model (DescriptorRepository instance) are used for the same database. Keep in mind that there
+                            was no synchronization between cached objects with same Identity but different metadata model.
+                            E.g. when the same database use different metadata versions of the same persistent object class.
+                            <br/>
+                            3 - all together (Idenity + jcdAlias + model)
+                            <br/>
+                            If possible '0' is recommended, because it will be the best performing setting.
+                        </td>
+                    </tr>
+                    <tr>
+                    <td>useSoftReferences</td>
+                    <td>
+                        If set <em>true</em> this class use {@link java.lang.ref.SoftReference} to cache
+                        objects. Default value is <em>true</em>. If set <em>true</em> and the cached object was
+                        not longer referenced by your application but only by the cache, it can be reclaimed by
+                        the garbage collector. If set <em>false</em> it's strongly recommended to the <em>timeout</em>
+                        property to prevent memory problems of the JVM.
+                    </td>
+                    </tr>
+                </table>
+
+
+                <p>
+                    <strong>Recommendation:</strong>
+                    <br/>If you take care of cache synchronization (or use autoSync property) and be aware of dirty
+                    reads, this implementation is useful for read-only or less update
+                    centric classes.
+                </p>
+            </section>
+
+            <anchor id="two-level"/>
+            <section>
+                <title>ObjectCacheTwoLevelImpl</title>
+                <p>
+                    <a href="ext:api/cache-two-level">ObjectCacheTwoLevelImpl</a> is a two level
+                    <a href="ext:api/cache-interface">ObjectCache</a> implementation with a transactional
+                    session- and a shared application-cache part.
+                </p>
+                <p>
+                    The first level is a transactional session
+                    cache that cache objects till
+                    <a href="ext:api/persistence-broker">PersistenceBroker</a>#close()
+                    or if a PB-tx is running till <code>#abortTransaction()</code> or
+                    <code>#commitTransaction()</code> was called.
+                    <br/>
+                    On commit all objects reside in the session cache will be pushed to the application cache.
+                    <br/>
+                    If objects be new materialized from the database (e.g. when achieve a query), the full materialized
+                    objects will be pushed immediately to the application cache (more precisely, if the application
+                    cache doesn't contain the "new materialized" objects).
+                </p>
+                <p>
+                    The second level cache can be specified with the <em>applicationCache</em> property. Properties of
+                    the specified application cache are allowed too. Here is an example how to use the two level
+                    cache with <a href="#defaultImpl"><code>ObjectCacheDefaultImpl</code></a> as second level cache.
+                </p>
+                <source><![CDATA[
+<object-cache class="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl">
+    <!-- meaning of attributes, please see docs section "Caching" -->
+    <!-- common attributes -->
+    <attribute attribute-name="cacheExcludes" attribute-value=""/>
+
+    <!-- ObjectCacheTwoLevelImpl attributes -->
+    <attribute attribute-name="applicationCache"
+        attribute-value="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl"/>
+    <attribute attribute-name="copyStrategy"
+        attribute-value="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl$CopyStrategyImpl"/>
+    <attribute attribute-name="forceProxies" attribute-value="true"/>
+
+    <!-- ObjectCacheDefaultImpl attributes -->
+    <attribute attribute-name="timeout" attribute-value="900"/>
+    <attribute attribute-name="autoSync" attribute-value="true"/>
+    <attribute attribute-name="cachingKeyType" attribute-value="0"/>
+    <attribute attribute-name="useSoftReferences" attribute-value="true"/>
+</object-cache>]]></source>
+                <p>
+                    The most important characteristic of the two-level cache is that all objects put to or read from
+                    the application cache are copies of the target object, so the cached objects never could be
+                    corrupted by the user when changing fields, because all operations done on copies of
+                    objects cached in the application cache (in contrast to
+                    <a href="#defaultImpl">ObjectCacheDefaultImpl</a>).
+                </p>
+                <p>
+                    The strategy to make copies of the persistent objects is pluggable and can be specified by the
+                    <em>copyStrategy</em> property which expects an implementation of the
+                    <code>ObjectCacheTwoLevelImpl.CopyStrategy</code> interface.
+                </p>
+                <p>
+                    The <em>default</em> <code>ObjectCacheTwoLevelImpl.CopyStrategy</code> implementation make copies
+                    based on the <a href="site:repository/field-descriptor">field-descriptors</a> of the
+                    cached object and set these values in a new instance of the cached object. If you lookup a cached
+                    object with <em>1:n or m:n</em> relation a query is needed to get the ID's of the referenced objects,
+                    because in application cache only <em>"flat"</em> objects without references/reference-info will be
+                    cached.
+                </p>
+                <note>
+                    This two-level cache implementation does not guarantee that cache and persistent storage
+                    (e.g. database) are always consistent, because the session cache push the persistent
+                    objects to application cache <em>after</em> the PB-tx was commited.
+                    <br/>
+                    <br/>
+                    Let us assume that thread 1
+                    (using broker 1) update objects A1, A2, ... within a transaction and does  commit the tx. Now
+                    before OJB could execute the after commit call on thread 1 to force session cache to push the
+                    objects to the application cache, thread 2 (using broker 2)
+                    lookup and update object A2 too (improbably but could happen, because thread 1 has already
+                    commited the objects A1, A2,... to the persistent storage) and push A2 to application cache.
+                    After this thread 1 was able to perform the after commit call and the 'outdated' version of
+                    A2 was pushed to the application cache overwriting the actual version of A2 in cache - cache
+                    and persistent storage are out of synchronization.
+                    <br/>
+                    <br/>
+                    To avoid writing of outdated data to the persistence storage
+                    <a href="site:lock-manager/optimistic-locking">optimistic locking</a>
+                    can be used. OL will not prevent the above scenario, but if it happens and e.g. broker 3
+                    read the outdated object A1 from the cache and try to perform an update of A1, an
+                    optimistic locking exception will be thrown. So it is guaranteed that the persistent storage
+                    is always consistent.
+                    <br/>
+                    <br/>
+                    A possibility to completely prevent synchronization problems of cache and persistent storage
+                    is the usage of <a href="site:lock-manager/pessimistic-locking">pessimistic locking</a>
+                    (if the used api supports it) with an adequate locking isolation level. If only one thread/broker
+                    could modify an object at the same time and the lock will be released after all work is done, the
+                    above scenario can't happen.
+                </note>
+                <p>
+                    To avoid corrupted data, all objects cached by users (using the methods of the
+                    <em>ObjectCache</em> interface) will never be pushed to the application cache, they
+                    will be buffered in the session cache till it was cleared.
+                </p>
+                <p>
+                    <br/>
+                </p>
+                <p>
+                    Implementation configuration properties:
+                </p>
+                <table>
+                    <tr>
+                        <td>
+                            <strong>Property Key</strong>
+                        </td>
+                        <td>
+                            <strong>Property Values</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>applicationCache</td>
+                        <td>
+                            Specifies the <a href="ext:api/cache-interface">ObjectCache</a> implementation
+                            used as application cache (second level cache). By default
+                            <a href="#defaultImpl">ObjectCacheDefaultImpl</a> was used. It's
+                            recommended to use a shared cache implementation (all used PB instances should
+                            access the same pool of objects - e.g. by using a static Map in cache implementation).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>copyStrategy</td>
+                        <td>
+                            Specifies the implementation class of the <code>ObjectCacheTwoLevelImpl.CopyStrategy</code>
+                            interface, which was used to copy objects on read and write operations to application cache.
+                            If not set, a default implementation was used
+                            (<code>ObjectCacheTwoLevelImpl.CopyStrategyImpl</code> make field-descriptor based
+                            copies of the cached objects).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>forceProxies</td>
+                        <td>
+                            If <em>true</em> on materialization of cached objects, all referenced objects will
+                            be represented by proxy objects (independent from the proxy settings in
+                            <a href="site:repository/reference-descriptor">reference-</a> or
+                            <a href="site:repository/collection-descriptor">collection-descriptor</a>).
+                            <p/>
+                            <strong>Note:</strong> To use this feature all persistence capable objects have to be
+                            interface based <strong>or</strong> the <code>ProxyFactory</code> and
+                            <code>IndirectionHandler</code> implementation classes supporting dynamic proxy enhancement
+                            for all classes (see <a href="ext:ojb.properties">OJB.properties</a>, find more
+                            information about
+                            <a href="site:basic-technique/proxy-customization">proxy settings here</a>).
+                        </td>
+                    </tr>
+                </table>
+            </section>
+
+            <section>
+                <title>ObjectCachePerBrokerImpl</title>
+                <p>
+                    <a href="ext:api/cache-per-broker">ObjectCachePerBrokerImpl</a> is a local/session cache
+                    implementation allows to have dedicated caches per
+                    <a href="ext:api/persistence-broker">PersistenceBroker</a> instance.
+                </p>
+                <p>
+                    Note: When the used broker instance was closed (returned to pool) the cache was cleared.
+                </p>
+                <p>
+                    This cache implementation is not synchronized with the other <code>ObjectCache</code>
+                    instances, there will be no automatic refresh of objects modified/updated by other
+                    threads (<em>PersistenceBroker</em> instances).
+                </p>
+                <p>
+                    So, objects modified by other threads will not influence the cached objects, because for each
+                    broker instance the objects will be cached separately and each thread
+                    should use it's own <em>PersistenceBroker</em> instance.
+                </p>
+            </section>
+
+            <anchor id="emptyImpl"/>
+            <section>
+                <title>ObjectCacheEmptyImpl</title>
+                <p>
+                    This is an <em>no-op</em> ObjectCache implementation.
+                    Useful when caching was not desired.
+                </p>
+                <note>
+                    This implementaion supports <em>circular references</em> as well (since OJB 1.0.2, materialization
+                    of object graphs with circular references will be handled internally by OJB).
+                </note>
+            </section>
+
+
+            <section>
+                <title>ObjectCacheJCSImpl</title>
+                <p>
+                    A shared
+                    <code>ObjectCache</code> implementation using a JCS region for
+                    each classname. More info see
+                    <a href="ext:jakarta/jcs">turbine-JCS</a>.
+                </p>
+            </section>
+
+
+            <anchor id="oscache"/>
+            <section>
+                <title>ObjectCacheOSCacheImpl</title>
+                <p>
+                    You're basically in good shape at this point. Now you've just got to set up OSCache to
+                    work with OJB.  Here are the steps for that:
+                </p>
+                <ul>
+                    <li>
+                        Download OSCache from
+                        <a href="ext:oscache">OSCache</a>. Add the oscache-2.0.x.jar to
+                        your project so that it is in your classpath (for Servlet/J2EE users place in your
+                        WEB-INF/lib directory).
+                    </li>
+                    <li>
+                        Download JavaGroups from
+                        <a href="ext:javagroups">JavaGroups</a>.  Add the
+                        javagroups-all.jar to your classpath (for Servlet/J2EE users place in your
+                        WEB-INF/lib directory).
+                    </li>
+                    <li>
+                        Add oscache.properties from your OSCache distribution to your project so that it is in
+                        the classpath (for Servlet/J2EE users place in your WEB-INF/classes directory).
+                        Open the file and make the following changes:
+                        <ol>
+                            <li>
+                                Add the following line to the CACHE LISTENERS section of your oscache.properties file:
+                                <br/>
+                                <br/>
+                                <em>
+                                    cache.event.listeners=com.opensymphony.oscache.plugins.clustersupport.JavaGroupsBroadcastingListener
+                                </em>
+                                <br/>
+                                <br/>
+                            </li>
+                            <li>
+                                Add the following line at the end of the oscache.properties file (your network must support multicast):
+                                <br/>
+                                <br/>
+                                <code>cache.cluster.multicast.ip=231.12.21.132</code>
+                                <br/>
+                                <br/>
+                            </li>
+                        </ol>
+                    </li>
+                    <li>
+                        Add the following class to your project (feel free to change package name, but make sure
+                        that you specify the full qualified class name in configuration files).
+                        You can find source of this class under
+                        <code>db-ojb/contrib/src/ObjectCacheOSCacheImpl</code> or copy this source:
+                    </li>
+                </ul>
+                <source><![CDATA[
+public class ObjectCacheOSCacheImpl implements ObjectCacheInternal
+{
+    private Logger log = LoggerFactory.getLogger(ObjectCacheOSCacheImpl.class);
+    private static GeneralCacheAdministrator admin = new GeneralCacheAdministrator();
+    private static final int REFRESH_PERIOD = com.opensymphony.oscache.base.CacheEntry.INDEFINITE_EXPIRY;
+
+    public ObjectCacheOSCacheImpl()
+    {
+    }
+
+    public ObjectCacheOSCacheImpl(PersistenceBroker broker, Properties prop)
+    {
+    }
+
+    public void cache(Identity oid, Object obj)
+    {
+        try
+        {
+            /*
+            Actually, OSCache sends notifications (Events) only on flush
+            events. The putInCache method do not flush the cache, so no event is sent.
+            The ObjectCacheOSCacheInternalImpl should force OSCache to flush the entry
+            in order to generate an event. This guarantee that other nodes always
+            in sync with the DB.
+            Alternative a non-indefinite refresh-period could be used in conjunction
+            with optimistic-locking for persistent objects.
+            */
+            remove(oid);
+            admin.putInCache(oid.toString(), obj);
+        }
+        catch(Exception e)
+        {
+            log.error("Error while try to cache object: " + oid, e);
+        }
+    }
+
+    public void doInternalCache(Identity oid, Object obj, int type)
+    {
+        cache(oid, obj);
+    }
+
+    public boolean cacheIfNew(Identity oid, Object obj)
+    {
+        boolean result = false;
+        Cache cache = admin.getCache();
+        try
+        {
+            cache.getFromCache(oid.toString());
+        }
+        catch(NeedsRefreshException e)
+        {
+            try
+            {
+                cache.putInCache(oid.toString(), obj);
+                result = true;
+            }
+            catch(Exception e1)
+            {
+                cache.cancelUpdate(oid.toString());
+                log.error("Error while try to cache object: " + oid, e);
+            }
+        }
+        return result;
+    }
+
+    public Object lookup(Identity oid)
+    {
+        Cache cache = admin.getCache();
+        try
+        {
+            return cache.getFromCache(oid.toString(), REFRESH_PERIOD);
+        }
+        catch(NeedsRefreshException e)
+        {
+            // not found in cache
+            if(log.isDebugEnabled()) log.debug("Not found in cache: " + oid);
+            cache.cancelUpdate(oid.toString());
+            return null;
+        }
+        catch(Exception e)
+        {
+            log.error("Unexpected error when lookup object from cache: " + oid, e);
+            cache.cancelUpdate(oid.toString());
+            return null;
+        }
+    }
+
+    public void remove(Identity oid)
+    {
+        try
+        {
+            if(log.isDebugEnabled()) log.debug("Remove from cache: " + oid);
+            admin.flushEntry(oid.toString());
+        }
+        catch(Exception e)
+        {
+            throw new RuntimeCacheException("Unexpected error when remove object from cache: " + oid, e);
+        }
+    }
+
+    public void clear()
+    {
+        try
+        {
+            if(log.isDebugEnabled()) log.debug("Clear cache");
+            admin.flushAll();
+        }
+        catch(Exception e)
+        {
+            throw new RuntimeCacheException("Unexpected error while clear cache", e);
+        }
+    }
+}]]></source>
+                <p>
+                    To allow usage of this implementation as application cache level in the
+                    <a href="#two-level">two-level cache</a> implement the internal
+                    object cache interface instead of the standard one.
+
+                </p>
+                <p>
+                    Now <em>OSCache</em> can be used by OJB as standalone cache (by declaring the implementation
+                    class on <a href="#changeImplementation">connection- or class-level</a>) or as application
+                    cache in the <a href="#two-level">two-level cache</a>.
+                </p>
+            </section>
+
+
+            <section>
+                <title>More implementations ...</title>
+                <p>
+                    Additional
+                    <em>ObjectCache</em> implementations can be found in
+                    <em>org.apache.ojb.broker.cache</em> package.
+                </p>
+            </section>
+        </section>
+
+
+        <anchor id="distributed-cache"/>
+        <section>
+            <title>Distributed ObjectCache?</title>
+            <p>
+                If OJB was used in a clustered enviroment it is mandatory to
+                distribute all shared cached objects across different JVM. OJB does not support distributed
+                caching "out of the box", to do this a external caching library is needed, e.g. the
+                <a href="#oscache">OSCache implementation</a> supports
+                distributed caching. More information how to setup OJB in clustered enviroments
+                see <a href="site:clustering">clustering howto</a>.
+            </p>
+        </section>
+
+
+        <anchor id="own-cache"/>
+        <section>
+            <title>Implement your own cache</title>
+            <p>
+                The OJB cache implementations are quite simple but should do a good job for most
+                scenarios. If you need a more sophisticated cache or need to pluggin a proprietary caching
+                library you'll write your own implementation of the
+                <a href="ext:api/cache-interface">ObjectCache</a> interface.
+                <br/>
+                Integration of your implementation in OJB is easy since the object cache is
+                a pluggable component. All you have to do, is to declare it on
+                <a href="#changeImplementation">connection- or class-level</a>. Here an example howto
+                declare the new implementation on connection level:
+            </p>
+            <source><![CDATA[
+<jdbc-connection-descriptor
+    jcd-alias="myDefault"
+    ...
+>
+    <object-cache class="my.ObjectCacheMyImpl">
+        <attribute attribute-name="cacheExcludes" attribute-value=""/>
+        ... additional attributes of the cache
+     </object-cache>
+</jdbc-connection-descriptor]]></source>
+            <p>
+                If interested to get more detailed information about the "type" of the objects to cache
+                (objects written to DB, new materialized objects,...) implement the
+                <a href="ext:api/cache-interface-internal">ObjectCacheInternal</a> interface (For an
+                implementation example see source for <a href="ext:api/cache-two-level">ObjectCacheTwoLevelImpl</a>).
+            </p>
+
+            <note>
+                Of course we interested in your solutions! If you have
+                implemented something interesting, just contact us.
+            </note>
+        </section>
+
+        <section>
+            <title>Future prospects</title>
+            <p>
+                In OJB 1.1 the caching part will be rewritten to get rid of static classes, factories and
+                member variables.
+            </p>
+        </section>
+    </body>
+</document>

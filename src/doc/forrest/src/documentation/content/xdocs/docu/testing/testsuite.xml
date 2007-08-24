@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: testsuite.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>JUnit Test Suite</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                Building an Object/Relational mapping tool with support for multiple API's
+                is really error prone. To create a solid and stable software, the most awful thing in
+                programmers life has to be done - Testing.
+            </p>
+            <p>
+                Quality assurance taken seriously! OJB and provide specific tests for each
+                supported API. Currently more than 800 test cases for regression tests exist.
+                As testing framework
+                <a href="ext:junit">JUnit</a> was used.
+            </p>
+
+
+            <anchor id="location"/>
+            <section>
+                <title>Where can I find the test sources?</title>
+                <p>
+                    The test sources of the <em>OJB Test-Suite</em> can be find under
+                    <strong><code>[db-ojb]/src/test/org/apache/ojb</code></strong>.
+                    <br/>
+                    It's also possible to browse the test sources online using the
+                    <a href="ext:cvs-index"><em>apache cvs view</em></a>. The test directory can be found here:
+                    <a href="ext:cvs-view-tests"><strong><code>[db-ojb]/src/test/org/apache/ojb</code></strong></a>.
+                </p>
+            </section>
+        </section>
+
+
+        <anchor id="run-test-suite"/>
+        <section>
+            <title>How to run the Test Suite</title>
+            <p>
+                If the
+                <a href="site:platform">platform depended settings</a> are done, the test suite
+                can be started with the ant target:
+            </p>
+            <source><![CDATA[
+ant junit]]></source>
+            <p>
+                If compiling of the sources should be skipped use
+                </p>
+     <source><![CDATA[
+ant junit-no-compile]]></source>
+            <p>
+                If you did not manage to set up the target database with the
+                <code>ant prepare-testdb</code> you can use
+                </p>
+                <source><![CDATA[
+ant junit-no-compile-no-prepare]]></source>
+            <p>
+            to run the testsuite without generation of the test database
+                (and without compiling).
+            </p>
+            <p>
+                After running the regression tests
+                you should see a console output similar to this:
+            </p>
+            <source><![CDATA[
+junit-no-compile-no-prepare:
+    [junit] Running org.apache.ojb.broker.AllTests
+    [junit] Tests run: 620, Failures: 0, Errors: 0, Time elapsed: 81,75 sec
+    [junit] Running org.apache.ojb.odmg.AllTests
+    [junit] Tests run: 183, Failures: 0, Errors: 0, Time elapsed: 21,719 sec
+    [junit] Running org.apache.ojb.soda.AllTests
+    [junit] Tests run: 3, Failures: 0, Errors: 0, Time elapsed: 7,641 sec
+    [junit] Running org.apache.ojb.otm.AllTests
+    [junit] Tests run: 79, Failures: 0, Errors: 0, Time elapsed: 28,266 sec
+
+junit-no-compile-no-prepare-selected:
+junit-no-compile:
+junit:
+BUILD SUCCESSFUL
+Total time: 3 minutes 26 seconds]]></source>
+            <p>
+                We aim at shipping that releases have no failures and errors in the regression tests!
+                If the Junit tests report errors or failures something does not
+                work properly! There may be several reasons:
+            </p>
+            <ul>
+                <li>
+                    You made a mistake in configuration (OJB was shipped with settings pass all tests).
+                    See <a href="site:platform">platform</a>,
+                    <a href="site:ojb-properties">OJB.properties</a>,
+                    <a href="site:repository">repository file</a>,
+                    <a href="site:jdbc-types"></a>.
+                </li>
+                <li>Your database doesn't support specific features used by the tests</li>
+                <li>Evil hex</li>
+                <li>Bug in OJB</li>
+            </ul>
+            <p>
+                JUnit writes a <em>log-file</em> for each tested API. You can find the logs
+                under <code>[db-ojb]/target/test</code>. The log files named like <code>tests-XXX.txt</code>.
+                The test logs show in detail what's going wrong.
+            </p>
+            <p>
+                In such a case please check again if you followed all the above
+                steps. If you still have problems you might post a request to
+                the OJB user mailinglist.
+            </p>
+
+            <anchor id="change-database"/>
+            <section>
+                <title>How to run the test-suite with a different database than OJB default DB</title>
+                <p>
+                    Basically all you have to do is:
+                </p>
+                <ul>
+                    <li>
+                        Get source version of OJB or fetch OJB from CVS (take care of
+                        branches, branch OJB_1_0_RELEASE represents OJB 1.0.x).
+                    </li>
+                    <li>
+                        Adapt the profile file of your database under
+                        <code>[db-ojb]/profile/yourDB.profile</code> and set user, password, ...
+                    </li>
+                    <li>
+                        In <code>[db-ojb]/build.properties</code> file comment the
+                        "profile=hsqldb" line and uncomment the "#profile=yourDB" line.
+                    </li>
+                    <li>
+                        Drop jdo.jar and your database driver into
+                        <code>[db-ojb]/lib</code> directory.
+                    </li>
+                    <li>
+                        Drop <em>junit.jar</em> into your <code>...ant/lib</code> folder.
+                    </li>
+                    <li>
+                        Make sure that your database allows at least 20 concurrent connections.
+                    </li>
+                </ul>
+                <p>
+                    Then follow the steps described <a href="#run-test-suite">above</a>.
+                </p>
+            </section>
+
+        </section>
+
+        <section>
+            <title>What about known issues?</title>
+            <p>
+                All major known issues are listed in the <a href="ext:ojb/release-notes">release-notes</a>
+                file.
+                <br/>
+                The tests reproduce open bugs will be skipped on released OJB versions. It is possible to enable
+                these tests to see all failing test cases of the shipped version by changing a
+                flag in <code>[db-ojb]/build.properties</code> file:
+            </p>
+            <source><![CDATA[
+###
+# If 'true', junit tests marked as known issue in the junit-test
+# source code (see OJBTestCase class for more detailed info) will be
+# skipped. Default value is 'true'. For development 'false' is recommended,
+# because this will show unsolved problems.
+OJB.skip.issues=true]]></source>
+        </section>
+
+        <section>
+            <title>Donate own tests for OJB Test Suite</title>
+            <p>
+                Details about <a href="site:test-write">donate own test to OJB you can find here</a>.
+            </p>
+        </section>
+    </body>
+</document>

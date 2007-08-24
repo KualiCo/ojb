@@ -1,0 +1,240 @@
+<project name="ojb-blank" default="build" basedir=".">
+<!--
+/* Copyright [yyyy] [name of copyright owner]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+    <!--
+        This build file is designed so that you can add build/classes, build/resources
+        and lib/*.jar to a classpath and run the project.
+
+        The default "build" target will build everything and copy src/resources/*
+        over to build. Class files will wind up in build/classes.
+
+        The "jar" target kindly jars things up for you.
+
+        The "xdoclet" target can be used to build the repository_user.xml file
+        from javadoc tags embedded in the java source. It also generates a
+        database-independent schema that is can be used with the "setup-db" task
+        to setup the database.
+
+        You will probably want to modify this for your environment, but hopefully
+        it will work well for you.
+
+        Also, you will want to customize build.properties
+    -->
+    <property file="build.properties"/>
+
+    <path id="compile-classpath">
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="compile-build-classpath">
+        <pathelement path="${build.dir}/classes"/>
+        <path refid="compile-classpath"/>
+    </path>
+
+    <path id="runtime-classpath">
+        <fileset dir="${lib.dir}">
+            <exclude name="xdoclet*.jar"/>
+            <exclude name="xjavadoc*.jar"/>
+            <exclude name="torque*.jar"/>
+            <exclude name="velocity*.jar"/>
+        </fileset>
+    </path>
+
+    <!-- ================================================================== -->
+    <!-- Compiles the Java Source Code                                      -->
+    <!-- ================================================================== -->
+    <target name="compile">
+        <tstamp/>
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.dir}/classes"/>
+        <javac srcdir="${source.java.dir}" destdir="${build.dir}/classes">
+            <classpath refid="compile-classpath"/>
+        </javac>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Creates repository_user.xml and project-schema.xml from the source -->
+    <!-- ================================================================== -->
+    <target name="xdoclet" depends="compile">
+        <taskdef name="ojbdoclet"
+                 classname="xdoclet.modules.ojb.OjbDocletTask">
+            <classpath>
+                <path refid="compile-classpath"/>
+                <pathelement path="${build.dir}/classes"/>
+            </classpath>
+        </taskdef>
+
+        <ojbdoclet destdir=".">
+            <fileset dir="${source.java.dir}"/>
+
+            <ojbrepository destinationFile="${build.dir}/repository_user.xml"/>
+            <torqueschema databaseName="${databaseName}"
+                          dtdUrl="http://db.apache.org/torque/dtd/database_3_1.dtd"
+                          destinationFile="${build.dir}/database/project-schema.xml"/>
+        </ojbdoclet>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Builds the project and preprocesses the configuration files        -->
+    <!-- ================================================================== -->
+    <target name="build" depends="xdoclet">
+        <copy todir="${build.dir}/">
+            <fileset dir="${source.resource.dir}">
+                <include name="*.properties"/>
+                <include name="*.dtd"/>
+                <include name="repositor*.xml"/>
+                <exclude name="build.properties"/>
+            </fileset>
+            <filterset>
+                <filter token="JCD_ALIAS" value="${jcdAlias}"/>
+                <filter token="DBMS_NAME" value="${dbmsName}"/>
+                <filter token="JDBC_LEVEL" value="${jdbcLevel}"/>
+                <filter token="DRIVER_NAME" value="${jdbcRuntimeDriver}"/>
+                <filter token="URL_PROTOCOL" value="${urlProtocol}"/>
+                <filter token="URL_SUBPROTOCOL" value="${urlSubprotocol}"/>
+                <filter token="URL_DBALIAS" value="${urlDbalias}"/>
+                <filter token="USER_NAME" value="${databaseUser}"/>
+                <filter token="USER_PASSWD" value="${databasePassword}"/>
+            </filterset>
+        </copy>
+        <mkdir dir="${build.dir}/lib"/>
+        <copy todir="${build.dir}/lib">
+            <fileset dir="${lib.dir}">
+                <exclude name="xdoclet*.jar"/>
+                <exclude name="xjavadoc*.jar"/>
+                <exclude name="torque*.jar"/>
+                <exclude name="velocity*.jar"/>
+            </fileset>
+        </copy>
+        <antcall target="build_if_with_mainclass"/>
+    </target>
+
+    <target name="build_if_with_mainclass" if="source.main.class">
+        <pathconvert targetos="unix" property="script.classpath.unix" refid="runtime-classpath">
+            <map from="${basedir}\${lib.dir}" to="lib"/>
+            <map from="${basedir}/${lib.dir}" to="lib"/>
+        </pathconvert>
+        <pathconvert targetos="windows" property="script.classpath.windows" refid="runtime-classpath">
+            <map from="${basedir}\${lib.dir}" to="lib"/>
+            <map from="${basedir}/${lib.dir}" to="lib"/>
+        </pathconvert>
+        <copy todir="${build.dir}">
+            <fileset dir="${source.resource.dir}">
+                <include name="*.bat"/>
+                <include name="*.sh"/>
+            </fileset>
+            <filterset>
+                <filter token="MAIN_CLASS" value="${source.main.class}"/>
+                <filter token="CLASSPATH_UNIX" value="classes:${script.classpath.unix}"/>
+                <filter token="CLASSPATH_WINDOWS" value="classes;${script.classpath.windows}"/>
+            </filterset>
+        </copy>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Sets the database up using the generated project schema            -->
+    <!-- ================================================================== -->
+    <target name="setup-db" depends="xdoclet">
+        <property name="torque.buildFile"
+                  value="${source.schema.dir}/build-torque.xml"/>
+        <property name="torque.project"
+                  value="${databaseName}"/>
+        <property name="torque.schema.dir"
+                  value="${build.dir}/database"/>
+        <property name="torque.output.dir"
+                  value="${build.dir}/database"/>
+        <property name="torque.sql.dir"
+                  value="${torque.output.dir}"/>
+        <property name="torque.useClasspath"
+                  value="true"/>
+        <property name="torque.database.driver"
+                  value="${jdbcRuntimeDriver}"/>
+        <property name="torque.database.user"
+                  value="${databaseUser}"/>
+        <property name="torque.database.password"
+                  value="${databasePassword}"/>
+
+        <!-- We want Torque to also process the schema for OJB's internal tables.
+             If you do not require them, put a comment around this copy task -->
+        <mkdir dir="${build.dir}/database"/>
+        <copy todir="${build.dir}/database">
+            <fileset dir="${source.schema.dir}" includes="*schema.xml"/>
+            <filterset>
+                <filter token="DATABASE_DEFAULT" value="${databaseName}"/>
+            </filterset>
+        </copy>
+
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="sql">
+        </ant>
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="create-db">
+        </ant>
+        <ant dir="."
+             antfile="${torque.buildFile}"
+             target="insert-sql">
+        </ant>
+    </target>
+    
+    <!-- ================================================================== -->
+    <!-- Cleans the project                                                 -->
+    <!-- ================================================================== -->
+    <target name="clean">
+        <delete dir="target" quiet="true" failonerror="false"/>
+        <delete dir="build" quiet="true" failonerror="false"/>
+        <delete file="velocity.log" quiet="true" failonerror="false"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Creates a distribution jar for the project                         -->
+    <!-- ================================================================== -->
+    <target name="dist" depends="build">
+        <mkdir dir="${target.dir}"/>
+        <jar index="true"
+             jarfile="${target.dir}/${jar.name}"
+             basedir="${build.dir}"
+             excludes="**/*-schema.xml,**/*.sql,**/*.sql.generation,**/sqldb.map">
+            <manifest>
+                <attribute name="Built-By" value="Apache OJB Blank build script"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- jdo enhancer - sample target for enhancing the Product class from  -->
+    <!--                tutorial 5                                          -->
+    <!-- ================================================================== -->
+    <target name="enhance-jdori" depends="build">
+        <!-- One problem with the standard JDORI enhance is that it only works on
+             single files which means that it is necessary to invoke the enhancer
+             for any JDO-persistent class
+             Therefore we cannot provide a target that enhances all relevant
+             classes, but only a sample target that shows how to do it -->
+
+        <java fork="yes"
+              failonerror="yes"
+              classname="com.sun.jdori.enhancer.Main"
+              classpathref="compile-build-classpath">
+            <arg line="-v -f -d ${build.dir}/classes ${source.java.dir}/org/apache/ojb/tutorial5/Product.jdo ${build.dir}/classes/org/apache/ojb/tutorial5/Product.class"/>
+        </java>
+    </target>
+</project>
+

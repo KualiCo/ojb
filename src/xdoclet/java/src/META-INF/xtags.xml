@@ -1,0 +1,1244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xdoclet PUBLIC "-//XDoclet Team//DTD XDoclet Tags 1.1//EN" "http://xdoclet.sourceforge.net/dtds/xtags_1_1.dtd">
+<xdoclet>
+  <namespace>
+    <name>ojb</name>
+    <usage-description>
+    OJB tags used to generate ojb repository xml metadata and database table definitions.
+    </usage-description>
+    <condition-description>OJB</condition-description>
+    <condition type="class"/>
+    <tags>
+      <tag>
+        <level>class</level>
+        <name>ojb.class</name>
+        <usage-description>
+        The ojb.class tag determines whether the class shall be OJB-persistent which results in repository metadata created for it.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="class"/>
+        <parameter type="text">
+            <name>accept-locks</name>
+            <usage-description>
+            Specifies whether implicit locking should propagate to this class. Currently relevant for the ODMG layer only.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>attributes</name>
+            <usage-description>
+            Contains attributes of the class as name-value pairs (e.g. attributes="name1=value1,name2=value2").
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>determine-extents</name>
+            <usage-description>
+            If "true" then the extenting ojb-persistent classes are determined automatically. if not, then they have to be specified using the ojb.extent-class tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Contains documentation on the class.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>factory-class</name>
+            <usage-description>
+            Specifies a factory-class that is to be used instead of a no argument constructor. If the factory-class is specified, the factory-method also must be defined.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>factory-method</name>
+            <usage-description>
+            Specifies a static no-argument method in the class specified by factory-class that will be used for constructing instances.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>generate-table-info</name>
+            <usage-description>
+            Determines whether table info should be generated. Useful when handling abstract base types who should not have their own tables but need to be present in the repository. When no table info is generated then the following attributes of the ojb.class tag are ignored: table, include-inherited. In addition, in the same class and its members the following tags are completely ignored: ojb.field, ojb.reference, ojb.collection, ojb.foreignkey. Note that the member tags will be processed for sub-types with include-inherited set.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>include-inherited</name>
+            <usage-description>
+            If "true" then fields/references/collections of super types are included in the descriptor. This in effect flattens the inheritance hierarchy for the fields.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>initialization-method</name>
+            <usage-description>
+            Specifies an instance method without arguments that is called after an object has been read from the database.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>isolation-level</name>
+            <usage-description>
+            Specifies the transactional isolation to be used for this class on ODMG-level.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>read-uncommitted</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>read-uncommitted</option>
+						<option>read-committed</option>
+						<option>repeatable-read</option>
+						<option>serializable</option>
+						<option>optimistic</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>proxy</name>
+            <usage-description>
+            If set, proxies are used for all loading operations of instances of this class. If set to "dynamic", dynamic proxies are used. If set to another value this value is interpreted as the full-qualified name of the proxy class to use.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>proxy-prefetching-limit</name>
+            <usage-description>
+            If set to a value > 0, then collections of objects of this class are materialized by groups of the specified size. Set this parameter to 0 (the default) to turn this feature off.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>refresh</name>
+            <usage-description>
+            The "true" setting forces OJB to refresh instances when loaded from cache.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>row-reader</name>
+            <usage-description>
+            Contains the fully qualified name of the class that will be used as the RowReader implementation for materializing instances of the class.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>schema</name>
+            <usage-description>
+            Contains the database schema owning the table mapped to this class.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>table</name>
+            <usage-description>
+            Specifies the database table name. Default is the unqualified class name.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>class</level>
+        <name>ojb.object-cache</name>
+        <usage-description>
+        The ojb.object-cache tag specifies a class to be used for caching instances of the current class.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="class"/>
+        <parameter type="text">
+            <name>attributes</name>
+            <usage-description>
+            Contains attributes of the object cache as name-value pairs (e.g. attributes="name1=value1,name2=value2").
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>class</name>
+            <usage-description>The fully qualified name of the object cache class.</usage-description>
+            <mandatory>true</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Contains documentation on the object cache.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>class</level>
+        <name>ojb.extent-class</name>
+        <usage-description>
+        The ojb.extent-class tag specifies a sub type of the current class. The tag is only evaluated if the determine-extents attribute of the ojb.class tag is set to false.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="class"/>
+        <parameter type="text">
+            <name>class-ref</name>
+            <usage-description>The fully qualified name of the sub type.</usage-description>
+            <mandatory>true</mandatory>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>class</level>
+        <name>ojb.modify-inherited</name>
+        <usage-description>
+        Allows to override an the tag attributes for an inherited field (e.g. its ojb.field, ojb.reference, or ojb.collection tag).
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="class"/>
+        <parameter type="text">
+            <name>access</name>
+            <usage-description>
+            Overrides the access attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>readwrite</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>readonly</option>
+						<option>readwrite</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>attributes</name>
+            <usage-description>
+            Overrides the attributes attribute of the field/reference/collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>autoincrement</name>
+            <usage-description>
+            Overrides the autoincrement attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-delete</name>
+            <usage-description>
+            Overrides the auto-delete attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-retrieve</name>
+            <usage-description>
+            Overrides the auto-retrieve attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-update</name>
+            <usage-description>
+            Overrides the auto-update attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>class-ref</name>
+            <usage-description>
+            Overrides the class-ref attribute of the reference tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>collection-class</name>
+            <usage-description>
+            Overrides the collection-class attribute of the collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>column</name>
+            <usage-description>
+            Overrides the column attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>conversion</name>
+            <usage-description>
+            Overrides the conversion attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>default-fetch</name>
+            <usage-description>
+            Overrides the default-fetch attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Overrides the documentation attribute of the field/reference/collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>element-class-ref</name>
+            <usage-description>
+            Overrides the element-class-ref attribute of the collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>foreignkey</name>
+            <usage-description>
+            Overrides the foreignkey attribute of the reference or collection tag (if not using an indirection table).
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>id</name>
+            <usage-description>
+            Overrides the id attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>indexed</name>
+            <usage-description>
+            Overrides the indexed attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>jdbc-type</name>
+            <usage-description>
+            Overrides the jdbc-type attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>BIT</option>
+						<option>BOOLEAN</option>
+						<option>TINYINT</option>
+						<option>SMALLINT</option>
+						<option>INTEGER</option>
+						<option>BIGINT</option>
+						<option>DOUBLE</option>
+						<option>FLOAT</option>
+						<option>REAL</option>
+						<option>NUMERIC</option>
+						<option>DECIMAL</option>
+						<option>CHAR</option>
+						<option>VARCHAR</option>
+						<option>LONGVARCHAR</option>
+						<option>DATE</option>
+						<option>TIME</option>
+						<option>TIMESTAMP</option>
+						<option>BINARY</option>
+						<option>VARBINARY</option>
+						<option>LONGVARBINARY</option>
+						<option>CLOB</option>
+						<option>BLOB</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>length</name>
+            <usage-description>
+            Overrides the length attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>locking</name>
+            <usage-description>
+            Overrides the locking attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>name</name>
+            <usage-description>
+            Contains the name of the field whose tag attributes shall be modified.
+            </usage-description>
+            <mandatory>true</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>nullable</name>
+            <usage-description>
+            Overrides the nullable attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>orderby</name>
+            <usage-description>
+            Overrides the orderby attribute of the collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>otm-dependent</name>
+            <usage-description>
+            Overrides the otm-dependent attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>precision</name>
+            <usage-description>
+            Overrides the precision attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>primarykey</name>
+            <usage-description>
+            Overrides the primarykey attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>proxy</name>
+            <usage-description>
+            Overrides the proxy attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>proxy-prefetching-limit</name>
+            <usage-description>
+            Overrides the proxy-prefetching-limit attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>refresh</name>
+            <usage-description>
+            Overrides the refresh attribute of the reference or collection tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>scale</name>
+            <usage-description>
+            Overrides the scale attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>sequence-name</name>
+            <usage-description>
+            Overrides the sequence-name attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>table</name>
+            <usage-description>
+            Overrides the table attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>update-lock</name>
+            <usage-description>
+            Overrides the update-lock attribute of the field tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>class</level>
+        <name>ojb.index</name>
+        <usage-description>
+        Declares an index for the class.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="class"/>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Contains documentation on the index.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>fields</name>
+            <usage-description>
+            Contains the name of the fields that make up this index, separated by commas.
+            </usage-description>
+            <mandatory>true</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>name</name>
+            <usage-description>
+            Contains the name of this index.
+            </usage-description>
+            <mandatory>true</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>unique</name>
+            <usage-description>
+            Specifies whether the index is unique or not.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>field method</level>
+        <name>ojb.field</name>
+        <usage-description>
+        The ojb.field tag specifies a field that is persistent with OJB. The tag is applicable to both fields and methods, more specifically, accessor methods (get/set/is). In the latter case, the field descriptor is generated for the corresponding bean property.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="or">
+            <condition type="field"/>
+            <condition type="method"/>
+        </condition>
+        <parameter type="text">
+            <name>access</name>
+            <usage-description>
+            Specifies the accessibility of the field (readonly or modifiable).
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>readwrite</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>readonly</option>
+						<option>readwrite</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>attributes</name>
+            <usage-description>
+            Contains attributes of the field as name-value pairs (e.g. attributes="name1=value1,name2=value2").
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>autoincrement</name>
+            <usage-description>
+            Specifies whether the values for the persistent field are automatically generated by OJB/the database.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>column</name>
+            <usage-description>
+            Specifies the column the persistent classes field is mapped to. If not given, then the name of the field/property is used.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>conversion</name>
+            <usage-description>
+            Contains a fully qualified name of a class implementing org.apache.ojb.accesslayer.conversions.FieldConversion.	A FieldConversion can be used to implement conversions between Java-Types and database columns. Note that the conversion is only determined automatically by xdoclet when the default jdbc type is used. When a jdbc type is explicitly specified, then a conversion needs to specified if desired.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>default-fetch</name>
+            <usage-description>
+            Specifies whether the persistent attribute belongs to the JDO default fetch group. Is thus only relevant when using JDO with OJB.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Contains documentation on the field.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>id</name>
+            <usage-description>
+            If specified, it specifies the position of the field in the sequence of fields. Otherwise, OJB uses the order of appearance of fields. The order of the numbers for the fields must correspond to the order of columns in the mapped table.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>indexed</name>
+            <usage-description>
+            Specifies whether there is an index on the column for the field.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>jdbc-type</name>
+            <usage-description>
+            Specifies the JDBC type of the column. If not given, then the default mapping for the java type of the field is used.
+            </usage-description>
+            <mandatory>false</mandatory>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>BIT</option>
+						<option>TINYINT</option>
+						<option>SMALLINT</option>
+						<option>INTEGER</option>
+						<option>BIGINT</option>
+						<option>DOUBLE</option>
+						<option>FLOAT</option>
+						<option>REAL</option>
+						<option>NUMERIC</option>
+						<option>DECIMAL</option>
+						<option>CHAR</option>
+						<option>VARCHAR</option>
+						<option>LONGVARCHAR</option>
+						<option>DATE</option>
+						<option>TIME</option>
+						<option>TIMESTAMP</option>
+						<option>BINARY</option>
+						<option>VARBINARY</option>
+						<option>LONGVARBINARY</option>
+						<option>CLOB</option>
+						<option>BLOB</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>length</name>
+            <usage-description>
+            Can be used to specify a length setting if	required by the jdbc-type of the underlying database column.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>locking</name>
+            <usage-description>
+            Is set to true if the persistent attribute is used for optimistic locking. Can only be set for TIMESTAMP and INTEGER columns.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>name</name>
+            <usage-description>
+            Contains the name when this ojb.field tag is in the class' javadoc comment, i.e. if it specifies an anonymous field. Otherwise, the value of this attribute is ignored.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>nullable</name>
+            <usage-description>
+            Specifies whether the column for the field may contain null values.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>precision</name>
+            <usage-description>
+            Can be used to specify a precision setting if required by the jdbc-type of the underlying database column.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>primarykey</name>
+            <usage-description>
+            Specifies whether the column for the field is a primary key column.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>scale</name>
+            <usage-description>
+            Can be used to specify a scale setting if required by the jdbc-type of the underlying database column.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>sequence-name</name>
+            <usage-description>
+            Can be used to state explicitly a sequence name used by the sequence manager implementations (relevant when using autoincrement).
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>table</name>
+            <usage-description>
+            May specify a table different from the mapped table for the persistent class (currently not implemented in OJB).
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>update-lock</name>
+            <usage-description>
+            Is set to false if the persistent attribute is used for optimistic locking and the database should update the lock column itself. The default is true (when locking is true then OJB will update the locking fields). Note that this can only be set for TIMESTAMP and INTEGER columns.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>field method</level>
+        <name>ojb.reference</name>
+        <usage-description>
+        The ojb.reference tag specifies a 1:1 association to another OJB-persistent type. The tag is applicable to both fields and methods,
+        more specifically, accessor methods (get/set/is). In the latter case, a reference descriptor for the bean property is generated.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="or">
+            <condition type="field"/>
+            <condition type="method"/>
+        </condition>
+        <parameter type="text">
+            <name>attributes</name>
+            <usage-description>
+            Contains attributes of the reference as name-value pairs (e.g. attributes="name1=value1,name2=value2").
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>auto-delete</name>
+            <usage-description>
+            Specifies whether OJB automatically deletes this reference attribute on deleting the persistent object. This attribute must be set to false if using the OTM, ODMG or JDO layer.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-retrieve</name>
+            <usage-description>
+            Specifies whether OJB automatically retrieves this reference attribute on loading the persistent object. If set to false the reference attribute is set to null. In this case the user is responsible to fill the reference attribute.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-update</name>
+            <usage-description>
+            Specifies whether OJB automatically stores this reference attribute on storing the persistent object. This attribute must be set to false if using the OTM, ODMG or JDO layer.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>class-ref</name>
+            <usage-description>
+            Allows to explicitly specify which type is referenced (useful mostly when dealing with proxies). If not given then the type
+            of the member and subtypes of it are searched for the first type that has the ojb.class tag.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Contains documentation on the reference.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>foreignkey</name>
+            <usage-description>
+            Contains one or more foreignkeys (separated by commas) which are fields in the same class implementing the association.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>name</name>
+            <usage-description>
+            Contains the name when this ojb.reference tag is in the class' javadoc comment, i.e. if it specifies an anonymous reference. Otherwise, the value of this attribute is ignored.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>otm-dependent</name>
+            <usage-description>
+            Specifies whether the OTM layer automatically creates the referred object and deletes it if the reference field is set to null.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>proxy</name>
+            <usage-description>
+            Specifies that proxy based lazy loading should be used for this attribute. This pertains only to the reference, not to the referenced class itself (use the proxy attribute of the ojb.class tag to denote a proxied class).
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>proxy-prefetching-limit</name>
+            <usage-description>
+            if set to a value > 0, then loading of the reference for the first object of some collection causes loading of the references for the next proxy-prefetching-limit objects. Set this parameter to 0 (the default) to turn this feature off.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>refresh</name>
+            <usage-description>
+            Forces OJB to refresh object references on instance loading when set to true.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+      </tag>
+
+      <tag>
+        <level>field method</level>
+        <name>ojb.collection</name>
+        <usage-description>
+        Denotes a collection or array field that represents a persistent 1:n or m:n association.
+        </usage-description>
+        <unique>true</unique>
+        <condition-description>OJB</condition-description>
+        <condition type="or">
+            <condition type="field"/>
+            <condition type="method"/>
+        </condition>
+        <parameter type="text">
+            <name>attributes</name>
+            <usage-description>
+            Contains attributes of the collection as name-value pairs (e.g. attributes="name1=value1,name2=value2").
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>auto-delete</name>
+            <usage-description>
+            Specifies whether OJB automatically deletes this collection attribute on deleting the persistent object. This attribute must be set to false if using the OTM, ODMG or JDO layer.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-retrieve</name>
+            <usage-description>
+            Specifies whether OJB automatically retrieves this collection attribute on loading the persistent object. If set to false the reference attribute is set to null. In this case the user is responsible to fill the collection attribute.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>true</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>auto-update</name>
+            <usage-description>
+            Specifies whether OJB automatically stores this collection attribute on storing the persistent object. This attribute must be set to false if using the OTM, ODMG or JDO layer.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>collection-class</name>
+            <usage-description>
+            Specifies the collection type that this collection uses. If not given, then the xdoclet ojb module checks whether the type of the collection implements org.apache.ojb.broker.ManageableCollection.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>documentation</name>
+            <usage-description>
+            Contains documentation on the collection.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>element-class-ref</name>
+            <usage-description>
+            Contains the fully qualified class name of the elements of the collection. Note that the type must be OJB-persistent, e.g. it must have the ojb.class. If the field is an array, then the parameter can be omitted when the type of the array elements fulfills this requirement. For collections and arrays of non-OJB-persistent objects, the parameter is required.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>foreignkey</name>
+            <usage-description>
+            Contains one or more foreignkeys (separated by commas). If this collection implements an 1:n association, this is the field in the element class that implements the association. If the collection stands for an m:n association, this parameter contains information on foreign-key columns of the intermediary table.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>indirection-table</name>
+            <usage-description>
+            Specifies the name of the intermediary table if the persistent collection attribute implements a m:n association.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>orderby</name>
+            <usage-description>
+            Specifies the ordering to be used for this collection as name-value pairs, e.g. "column1=ASC,column2,column3=DESC" (the second column uses ascending sorting).
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>otm-dependent</name>
+            <usage-description>
+            Specifies whether the OTM layer automatically creates collection elements that were added to the collection and deletes collection elements that were removed from the collection.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>proxy</name>
+            <usage-description>
+            Specifies that proxy based lazy loading should be used for this attribute. This pertains only to the collection, not to the referenced class itself (use the proxy attribute of the ojb.class tag to denote a proxied class).
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>proxy-prefetching-limit</name>
+            <usage-description>
+            if set to a value > 0, then loading of the collection for the first object of some other collection causes loading of the collections for the next proxy-prefetching-limit objects. Set this parameter to 0 (the default) to turn this feature off.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>query-customizer</name>
+            <usage-description>
+            Defines the query customizer for this collection.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>query-customizer-attributes</name>
+            <usage-description>
+            Contains attributes for the query-customizer of this collection. Is ignored if no query-customizer is stated.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+        <parameter type="text">
+            <name>refresh</name>
+            <usage-description>
+            Forces OJB to refresh object and collection references on instance loading when set to true.
+            </usage-description>
+            <mandatory>false</mandatory>
+            <default>false</default>
+			<option-sets>
+				<option-set>
+					<options>
+						<option>true</option>
+						<option>false</option>
+					</options>
+				</option-set>
+			</option-sets>
+        </parameter>
+        <parameter type="text">
+            <name>remote-foreignkey</name>
+            <usage-description>
+            Contains one or more foreignkeys columns (separated by commas) in the indirection table pointing to the element type. This parameter should only be used if the element type does not have a collection that can be used to get these foreignkeys from.
+            </usage-description>
+            <mandatory>false</mandatory>
+        </parameter>
+      </tag>
+    </tags>
+  </namespace>
+</xdoclet>
+

@@ -1,0 +1,767 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: getting-started.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Getting Started</title>
+        <authors>
+            <person name="Brian McCallister" email="brian@skife.org"/>
+        </authors>
+    </header>
+
+    <body>
+		<p>
+    	    This document will guide you through the very first steps of setting up a project with OJB. To
+    	    make this easier, OJB comes with a blank project template called ojb-blank which you're
+    	    encouraged to use. You can download it <a href="ext:ojb/binaries-version">here</a>.
+    	</p>
+    	<p>
+    	    For the purpose of this guide, we'll be showing you how to setup the project for a
+    	    simple application that handles products and uses MySQL. This is continued later on
+    	    in the next <a href="site:documentation/tutorials/summary">tutorial parts</a>.
+    	</p>
+
+        <section>
+            <title>Acquiring ojb-blank</title>
+            <p>
+            	First off, OJB uses <a href="ext:ant">Ant</a> to build, so please install it prior
+            	to using OJB. In addition, please make sure that the environment variables
+            	<code>ANT_HOME</code> and <code>JAVA_HOME</code> are correctly set to the top-level folders
+            	of your Ant distribution and your JDK installation, respectively.
+            </p>
+            <p>
+                Next download the latest
+                <a href="ext:ojb/binaries-version">ojb-blank and OJB binary distributions</a>.
+                You can also start with the <a href="ext:ojb/source-version">source distribution </a>
+                rather than the binary as the unit tests provide excellent sample code and you can
+                build the ojb-blank project on your own with it.
+            </p>
+            <p>
+                The ojb-blank project contains all libraries necessary to get running. However, there may
+                be additional libraries required when you venture deeper into OJB's APIs. See
+                <a href="site:deployment/additional-jars">here</a> for a list of additional libraries.<br/>
+                Most notably, you'll probably want to add the jdbc driver for you database unless you
+                plan to use the embedded <a href="ext:sourceforge/hsqldb">Hsqldb database</a> for which the
+                ojb-blank project is pre-configured (including all necessary jars).
+            </p>
+        </section>
+
+        <section>
+            <title>Contents of ojb-blank</title>
+            <p>
+                Copy the <code>ojb-blank.jar</code> file to your project directory and unpack it via
+                the command
+            </p>
+            <source><![CDATA[
+jar xvf ojb-blank.jar
+]]></source>
+            <p>
+                This will unpack it into the <code>ojb-blank</code> directory under wherever you unpacked
+                it from. You can move things out of that directory into your project directory, or, more
+                simply, rename the <code>ojb-blank</code> directory to be whatever you want your project
+                directory to be named.<br/>
+                After you unpacked the jar, you'll get the following directory layout:
+            </p>
+            <source><![CDATA[
+\ojb-blank
+    .classpath
+    .project
+    build.properties
+    build.xml
+    \lib
+    \src
+        \java
+        \resources
+        \schema
+        \test
+]]></source>
+            <p>
+                Here's a quick rundown on what the individual directories and files are:
+            </p>
+            <dl>
+                <dt><strong>.classpath, .project</strong></dt>
+                <dd>
+                    An <a href="ext:eclipse">Eclipse</a> project for your convenience. You can simply
+                    import it into Eclipse via
+                    <strong>File -> Import... -> Existing Project into Workspace</strong>.
+                </dd>
+                <dt><strong>build.xml, build.properties</strong></dt>
+                <dd>
+                    The Ant build script and the build properties. These are described in more detail
+                    <a href="#build-files">below</a>.
+                </dd>
+                <dt><strong>lib</strong></dt>
+                <dd>
+                    Contains the libraries necessary to compile and run your project. If you want to
+                    use a different database than Hsqldb, then put the jars of your jdbc driver in here.
+                </dd>
+                <dt><strong>src/java</strong></dt>
+                <dd>
+                    Put your java source code here.
+                </dd>
+                <dt><strong>src/resources</strong></dt>
+                <dd>
+                    Contains the runtime configuration files for OJB. For more detail see
+                    <a href="#runtime-configuration-files">below</a>.
+                </dd>
+                <dt><strong>src/schema</strong></dt>
+                <dd>
+                    Here you will find a schema containing tables that are required by certain components
+                    of OJB such as clustered locking and OJB managed sequences. More information on these
+                    tables is available in the <a href="site:platform">platform documentation</a>.
+                    The schema is in a database-independent format that can be used by
+                    <a href="ext:torque">Torque</a> or
+                    <a href="ext:jakarta/commons-sql">commons-sql</a> to create the database.<br/>
+                    The ojb-blank project contains the runtime files of Torque 3.0.2, and provides a build
+                    target that can be invoked on your schema (see <a href="#build-actions">below</a>
+                    for details). Therefore, this directory also contains the build script of Torque, but
+                    you won't need to invoke it directly.
+                </dd>
+                <dt><strong>src/java</strong></dt>
+                <dd>
+                    Place your unit tests in here.
+                </dd>
+            </dl>
+            <section>
+                <title>Sample project</title>
+                <p>
+                    For our sample project, we should rename the directory to something more fitting,
+                    like <code>productmanager</code>.
+                </p>
+                <p>
+                    Also, since we're using MySQL, we put the MySQL jar of the
+                    <a href="ext:mysql/driver">jdbc driver</a>, which is called something like
+                    <code>mysql-connector-java-[version]-stable-bin.jar</code>, into the <code>lib</code>
+                    subdirectory.
+                </p>
+                <p>
+                    The only other thing missing is the source code, but since that's what the other
+                    tutorials are dealing with, we will silently assume that it is already present in the
+                    <code>src/java</code> subdirectory.<br/>
+                    If you don't want to write the code yourself, you can use the code from one of the
+                    <a href="site:documentation/tutorials/summary">tutorials</a> which you can
+                    download <a href="ext:ojb/binaries-version">here</a>.
+                </p>
+                <warning>
+                    Note that if you do not
+                    intent to use JDO, then you should delete the files in the
+                    <code>ojb.apache.ojb.tutorial5</code>, otherwise you'll get compilation errors.
+                </warning>
+            </section>
+        </section>
+
+        <anchor id="build-files"/>
+        <section>
+            <title>The build files</title>
+
+            <section>
+                <title>Configuration via <code>build.properties</code></title>
+                <p>
+                    The next step is to adapt the build files, especially the <code>build.properties</code>
+                    file to your environment. It basically contains two sets of information, the database
+                    settings and the build configuration. While you shouldn't have to change the latter,
+                    the database settings probably need to be adapted to suit your needs:
+                </p>
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>jcdAlias</td>
+                        <td>The name of the connection. You should leave the default value, which
+                            is <code>default</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>databaseName</td>
+                        <td>This is the name of the database, per default <code>ojb_blank</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>databaseUser</td>
+                        <td>The user name for accessing the database (default: <code>sa</code>). If you're
+                            using Torque to create the database, then this user also requires sufficient
+                            rights to create databases and tables.</td>
+                    </tr>
+                    <tr>
+                        <td>databasePassword</td>
+                        <td>Password for the user, per default empty.</td>
+                    </tr>
+                    <tr>
+                        <td>dbmsName</td>
+                        <td>The type of database, which is one of the following:<br/><strong>Db2</strong>,
+                            <strong>Firebird</strong>, <strong>Hsqldb</strong>, <strong>Informix</strong>,
+                            <strong>MaxDB</strong>, <strong>MsAccess</strong>, <strong>MsSQL</strong>,
+                            <strong>MySQL</strong>,<strong>Oracle</strong> (pre-9i versions),
+                            <strong>Oracle9i</strong>, <strong>WLOracle9i</strong> (Oracle 9i or above used
+                            from WebSphere), <strong>PostgreSQL</strong>, <strong>Sapdb</strong>,
+                            <strong>Sybase</strong> (generic), <strong>SybaseASA</strong>,
+                            <strong>SybaseASE</strong>.<br/>
+                            Please note that this setting is case-sensitive.<br/>
+                            Per default, <a href="ext:sourceforge/hsqldb">Hsqldb</a> is used, which is an embedded
+                            database. All files required for this database come with the ojb-blank project.</td>
+                    </tr>
+                    <tr>
+                        <td>jdbcRuntimeDriver</td>
+                        <td>The fully-qualified classname of the jdbc driver. For Hsqldb this is
+                            <code>org.hsqldb.jdbcDriver</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>jdbcLevel</td>
+                        <td>The jdbc level that the driver conforms to. Please check the documentation of
+                            your jdbc driver for this value, though most jdbc drivers conform to version 2.0 at
+                            least.<br/>
+                            For the Hsqldb jdbc driver this is 2.0.</td>
+                    </tr>
+                    <tr>
+                        <td>urlProtocol</td>
+                        <td>The protocol of the database url (see below), usually <code>jdbc</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>urlSubprotocol</td>
+                        <td>The sub-protocol of the database url which is database- and driver-specific.
+                            For Hsqldb, you're using <code>hsqldb</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>urlDbalias</td>
+                        <td>This is the address that points the jdbc driver to the database. For Hsqldb
+                            this is per default the database name.</td>
+                    </tr>
+                    <tr>
+                        <td>torque.database</td>
+                        <td>If you're using Torque to create the database, then you have to set the database
+                            here (again). Unfortunately, this value is different from the <code>dbmsName</code>
+                            which defines the database for OJB. Currently, these values are defined:<br/>
+                            <strong>axion</strong>, <strong>cloudscape</strong>, <strong>db2</strong>, 
+                            <strong>db2400</strong>, <strong>hypersonic</strong> (which is Hsqldb),
+                            <strong>interbase</strong> (use for Firebird), <strong>mssql</strong>,
+                            <strong>mysql</strong>, <strong>oracle</strong>, <strong>postgresql</strong>,
+                            <strong>sapdb</strong>, and <strong>sybase</strong>.<br/>
+                            Default value is <code>hypersonic</code> for use with Hsqldb.
+                            </td>
+                    </tr>
+                    <tr>
+                        <td>torque.database.createUrl</td>
+                        <td>This specifies the url that Torque will use in order to create the database.
+                            Depending on the database, this may be the same as the normal access url
+                            (the default value), but for some database this is different. Please
+                            check the manual of your database for this url.</td>
+                    </tr>
+                </table>
+                <p>
+                    If you know how the jdbc url for connecting to your database looks like, then you can
+                    derive the settings <code>databaseName</code>, <code>databaseName</code>,
+                    <code>databaseName</code> and <code>databaseName</code> easily:<br/>
+                    Assume this url is given as:
+                </p>
+                <source><![CDATA[jdbc:mysql://localhost:3306/myDatabase]]></source>
+                <p>
+                    then these properties are
+                </p>
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>databaseName</td>
+                        <td><code>myDatabase</code></td>
+                    </tr>
+                    <tr>
+                        <td>urlProtocol</td>
+                        <td><code>jdbc</code></td>
+                    </tr>
+                    <tr>
+                        <td>urlSubprotocol</td>
+                        <td><code>mysql</code></td>
+                    </tr>
+                    <tr>
+                        <td>urlDbalias</td>
+                        <td><code>//localhost/myDatabase</code></td>
+                    </tr>
+                </table>
+            </section>
+
+            <anchor id="build-actions"/>
+            <section>
+                <title>Building via <code>build.xml</code></title>
+                <p>
+                    After setting up the build you're probably eager to actually build the project.
+                    Here's the actions that you can perform using the Ant build file <code>build.xml</code>:
+                </p>
+                <table>
+                    <tr>
+                        <th>Action (target in the build.xml file)</th>
+                        <th>What it does</th>
+                    </tr>
+                    <tr>
+                        <td>clean</td>
+                        <td>Cleans up all files from the previous build.</td>
+                    </tr>
+                    <tr>
+                        <td>compile</td>
+                        <td>Compiles your java source files to <code>build/classes</code>. Usually, you
+                            don't run this target, but rather the next one which includes the
+                            compilation step.</td>
+                    </tr>
+                    <tr>
+                        <td>build</td>
+                        <td>Compiles your java sources files (using the compile action), and prepares
+                            the runtime configuration files using the settings that you specified in
+                            the <code>build.properties</code> file, most notably the
+                            <a href="ext:repository_database.xml"><code>repository_database.xml</code></a>
+                            which will be located in the <code>build/resources</code> directory after the
+                            build.<br/>                        
+                            After you run this action, your application is ready to go (if the action ran
+                            successfully, of course).</td>
+                    </tr>
+                    <tr>
+                        <td>jar</td>
+                        <td>A convenience action that packs your successfully build application
+                            into a jar.</td>
+                    </tr>
+                    <tr>
+                        <td>xdoclet</td>
+                        <td>Creates the runtime configuration files that describe the repository, from
+                            javadoc comments embedded in your java source files. Details on how to
+                            this are given in the <a href="site:documentation/tutorials/summary">tutorials</a>
+                            and in the documentation of the
+                            <a href="site:xdoclet-module">XDoclet OJB module</a>.</td>
+                    </tr>
+                    <tr>
+                        <td>setup-db</td>
+                        <td>Creates the database and tables from a database-independent schema using Torque.
+                            You'll find more info on this schema in the documentation of the
+                            <a href="site:xdoclet-module">XDoclet OJB module</a> and on the
+                            <a href="ext:torque">Torque homepage</a>.</td>
+                    </tr>
+                    <tr>
+                        <td>enhance-jdori</td>
+                        <td>This is a sample target that shows how a class meant to be persistent with JDO,
+                            is processed by the JDO bytecode enhancer from the
+                            <a href="ext:sun/jdo">JDO reference implementation</a>. It uses the
+                            <code>Product</code> class from the <a href="site:jdo-tutorial">JDO tutorial</a>
+                            (tutorial 5).</td>
+                    </tr>
+                </table>
+                <p>
+                    So, a typical build would be achieved with this Ant call:
+                </p>
+                <source><![CDATA[ant build]]></source>
+                <p>
+                    If you want to create the database as well, and you have javadoc comments in your source code
+                    that describe the repository, then you would call Ant this way:
+                </p>
+                <source><![CDATA[ant build setup-db]]></source>
+                <p>
+                    This will perform in that order the actions <code>build</code>, <code>xdoclet</code>
+                    (invoked automatically from the next action) and <code>setup-db</code>.<br/>
+                    Of course, you do not need to use Torque to setup your database, but it is a convenient
+                    way to do so.<br/>
+                </p>
+            </section>
+
+            <section>
+                <title>Sample project</title>
+                <p>
+                    First we change the database properties to these values (assuming that Torque will
+                    be used to setup the database):
+                </p>
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>jcdAlias</td>
+                        <td>We leave the default value of <code>default</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>databaseName</td>
+                        <td>Since the application manages products, we call the database
+                            <code>productmanager</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>databaseUser</td>
+                        <td>This depends on your setup. For the purposes of this guide, let's call him
+                            <code>steve</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>databasePassword</td>
+                        <td>Again depending on your setup. How about <code>secret</code> (you know that
+                            you should not use this password in reality ?!).</td>
+                    </tr>
+                    <tr>
+                        <td>dbmsName</td>
+                        <td><code>MySQL</code></td>
+                    </tr>
+                    <tr>
+                        <td>jdbcRuntimeDriver</td>
+                        <td>Its called <code>com.mysql.jdbc.Driver</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>jdbcLevel</td>
+                        <td>For the newer Mysql drivers this is 3.0.</td>
+                    </tr>
+                    <tr>
+                        <td>urlProtocol</td>
+                        <td>The default of <code>jdbc</code> will do.</td>
+                    </tr>
+                    <tr>
+                        <td>urlSubprotocol</td>
+                        <td>For MySQL, we're using <code>mysql</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>urlDbalias</td>
+                        <td>Assuming that the database runs locally on the default port, we have
+                            <code>//localhost/${databaseName}</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>torque.database</td>
+                        <td>We want to use Torque, so we put <code>mysql</code> here.</td>
+                    </tr>
+                    <tr>
+                        <td>torque.database.createUrl</td>
+                        <td>MySQL allows to create a database via jdbc. The url that we should use
+                            to do so, is the normal url used to access the database minus the database
+                            name. So the value here is:
+                            <code>${urlProtocol}:${urlSubProtocol}://localhost/</code>.
+                            Please note that the trailing slash is important.</td>
+                    </tr>
+                </table>
+                <p>
+                    Ok, now we have everything configured for building. The <code>build.properties</code>
+                    file now looks like this (the comments have been removed for brevity):
+                </p>
+                <source><![CDATA[
+jcdAlias=default
+databaseName=productmanager
+databaseUser=steve
+databasePassword=secret
+
+dbmsName=MySQL
+jdbcLevel=3.0
+jdbcRuntimeDriver=com.mysql.jdbc.Driver
+urlProtocol=jdbc
+urlSubprotocol=mysql
+urlDbalias=//localhost/${databaseName}
+
+torque.database=mysql
+torque.database.createUrl=${urlProtocol}:${urlSubprotocol}://localhost/
+
+jar.name=projectmanager.jar
+
+source.dir=src
+source.java.dir=${source.dir}/java
+source.resource.dir=${source.dir}/resources
+source.test.dir=${source.dir}/test
+source.schema.dir=${source.dir}/schema
+
+build.dir=build
+build.lib.dir=lib
+build.classes.dir=${build.dir}/classes/
+build.resource.dir=${build.dir}/resources/
+
+target.dir=target
+]]></source>
+                <p>
+                    Looks like we're ready for building. Again, we're assuming that the source code is
+                    already present. So we're invoking Ant now in the top-level folder
+                    <code>productmanager</code>:
+                </p>
+                <source><![CDATA[
+ant build setup-db
+]]></source>
+                <p>
+                    which should (assuming five java classes) produce an output like this
+                </p>
+                <source><![CDATA[
+Buildfile: build.xml
+
+compile:
+    [mkdir] Created dir: /home/steve/projects/productmanager/build
+    [mkdir] Created dir: /home/steve/projects/productmanager/build/classes
+    [javac] Compiling 5 source files to /home/steve/projects/productmanager/build/classes
+
+build:
+     [copy] Copying 10 files to /home/steve/projects/productmanager/build/resources
+
+xdoclet:
+[ojbdoclet] (XDocletMain.start                   47  ) Running <ojbrepository/>
+[ojbdoclet] Generating ojb repository descriptor (build/resources//repository_user.xml)
+[ojbdoclet] Type test.Project
+[ojbdoclet] Processed 5 types
+[ojbdoclet] Processed 5 types
+[ojbdoclet] (XDocletMain.start                   47  ) Running <torqueschema/>
+[ojbdoclet] Generating torque schema (build/resources//project-schema.xml)
+[ojbdoclet] Processed 5 types
+
+setup-db:
+
+check-use-classpath:
+
+check-run-only-on-schema-change:
+
+sql-check:
+
+sql:
+     [echo] +------------------------------------------+
+     [echo] |                                          |
+     [echo] | Generating SQL for YOUR Torque project!  |
+     [echo] | Woo hoo!                                 |
+     [echo] |                                          |
+     [echo] +------------------------------------------+
+
+sql-classpath:
+[torque-sql] Using contextProperties file:
+             /home/steve/projects/productmanager/build.properties
+[torque-sql] Using classpath
+[torque-sql] Generating to file
+             /home/steve/projects/productmanager/build/resources/report.productmanager.sql.generation
+[torque-sql] Parsing file: 'ojbcore-schema.xml'
+[torque-sql] (transform.DTDResolver               128 ) Resolver: used database.dtd from
+             org.apache.torque.engine.database.transform package
+[torque-sql] Parsing file: 'project-schema.xml'
+[torque-sql] (transform.DTDResolver               140 ) Resolver: used
+             http://jakarta.apache.org/turbine/dtd/database.dtd
+
+sql-template:
+
+create-db-check:
+
+create-db:
+[torque-data-model] Using classpath
+[torque-data-model] Generating to file
+                    /home/steve/projects/productmanager/build/resources/create-db.sql
+[torque-data-model] Parsing file: 'ojbcore-schema.xml'
+[torque-data-model] (transform.DTDResolver               128 ) Resolver: used database.dtd from
+                    org.apache.torque.engine.database.transform package
+[torque-data-model] Parsing file: 'project-schema.xml'
+[torque-data-model] (transform.DTDResolver               140 ) Resolver: used
+                    http://jakarta.apache.org/turbine/dtd/database.dtd
+     [echo]
+     [echo]       Executing the create-db.sql script ...
+     [echo]
+      [sql] Executing file:
+            /home/steve/projects/productmanager/build/resources/create-db.sql
+      [sql] 2 of 2 SQL statements executed successfully
+
+insert-sql:
+[torque-sql-exec] Our new url -> jdbc:mysql://localhost/productmanager
+[torque-sql-exec] Executing file:
+                  /home/steve/projects/productmanager/build/resources/project-schema.sql
+[torque-sql-exec] Executing file:
+                  /home/steve/projects/productmanager/build/resources/ojbcore-schema.sql
+[torque-sql-exec] 50 of 50 SQL statements executed successfully
+
+BUILD SUCCESSFUL]]></source>
+                <p>
+                    That was it. You now have your database setup properly. Go on, have a look:
+                </p>
+                <source><![CDATA[
+mysql -u steve productmanager
+
+mysql> show tables;
+]]></source>
+                <p>
+                    There, all tables for your project, as well as the tables required for some
+                    OJB functionality which we also used in the above process (you can recognize
+                    them by their names which start with <code>ojb_</code>).
+                </p>
+            </section>
+        </section>
+
+        <anchor id="runtime-configuration-files"/>
+        <section>
+            <title>The runtime configuration files</title>
+            <p>
+                The last thing missing for actually running your project is to adapt the runtime
+                configuration files used by OJB. There are basically three sets of configuration that need
+                to be provided: configuration of the OJB runtime, description of the database connection,
+                and description of the repository.
+            </p>
+
+            <section>
+                <title>Configuring the OJB runtime</title>
+                <p>
+                    With the <a href="site:ojb-properties">OJB.properties</a> file and
+                    <a href="site:logging">OJB-logging.properties</a> (both located in
+                    <code>src/resources</code>), you configure and finetune the runtime aspects of
+                    OJB. For a simple application you'll probably won't have to change anything
+                    in them, though.
+                </p>
+            </section>
+
+            <section>
+                <title>Configuring the database connection</title>
+                <p>
+                    For projects that use OJB, you configure the connections to the database via
+                    <a href="site:repository/jdbc-connection-descriptor">jdbc connection descriptors</a>.
+                    These are usually defined in a file called <code>repository_database.xml</code>
+                    (located in <code>src/resources</code>). In the ojb-blank project, the build file will
+                    setup this file for you and place it in the <code>build/resources</code> directory.
+                </p>
+            </section>
+
+            <section>
+                <title>Configuring the repository</title>
+                <p>
+                    Finally you need to configure the repository. It consists of descriptors that
+                    define which java classes are mapped in what way to which database tables, and
+                    it is typically contained in the <code>repository_user.xml</code> file. This is
+                    the most complicated configuration part which will be explained in much more
+                    detail in the rest of the <a href="site:documentation/tutorials/summary">tutorials</a>.<br/>
+                    An convenient way of creating the repository metadata is to use the
+                    <a href="site:xdoclet-module">XDoclet OJB module</a>. Basically, you put
+                    specific Javadoc comments into your source code, which are then processed by the
+                    build file (<code>xdoclet</code> and <code>setup-db</code> targets) and the
+                    repository metadata and the database schema are generated.
+                </p>
+            </section>
+
+            <section>
+                <title>Sample project</title>
+                <p>
+                    Actually, there is not much to do here. For our simple sample application
+                    the default properties of OJB work just fine, so we leave <code>OJB.properties</code>
+                    and <code>OJB-logging.properties</code> untouched.
+                </p>
+                <p>
+                    Also, the build file generated the connection descriptor for us, and we were using the
+                    XDoclet OJB module and Torque to generate the repository metadata and database for us.
+                    For instance, the processed connection descriptor (file
+                    <code>build/resources/repository_database.xml</code>) looks like this:
+                </p>
+                <source><![CDATA[
+<jdbc-connection-descriptor
+    jcd-alias="default"
+    default-connection="true"
+    platform="MySQL"
+    jdbc-level="3.0"
+    driver="com.mysql.jdbc.Driver"
+    protocol="jdbc"
+    subprotocol="mysql"
+    dbalias="//localhost/productmanager"
+    username="steve"
+    password="secret"
+    eager-release="false"
+    batch-mode="false"
+    useAutoCommit="1"
+    ignoreAutoCommitExceptions="false"
+>
+    <object-cache class="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl">
+        <attribute attribute-name="timeout" attribute-value="900"/>
+        <attribute attribute-name="autoSync" attribute-value="true"/>
+    </object-cache>
+    <connection-pool
+        maxActive="21"
+        validationQuery="" />
+    <sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+        <attribute attribute-name="grabSize" attribute-value="20"/>
+        <attribute attribute-name="autoNaming" attribute-value="true"/>
+        <attribute attribute-name="globalSequenceId" attribute-value="false"/>
+        <attribute attribute-name="globalSequenceStart" attribute-value="10000"/>
+    </sequence-manager>
+</jdbc-connection-descriptor>
+]]></source>
+                <p>
+                    If you're curious as to what this stuff means, check this
+                    <a href="site:jdbc-connection-descriptor">reference guide</a>.
+                </p>
+                <p>
+                    The repository metadata (file <code>build/resources/repository_user.xml</code>)
+                    starts like:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+    class="productmanager.Product"
+    table="Product"
+>
+    <field-descriptor
+        name="name"
+        column="name"
+        jdbc-type="VARCHAR"
+        length="32"
+    >
+    </field-descriptor>
+    <field-descriptor
+        name="price"
+        column="price"
+        jdbc-type="FLOAT"
+    >
+    </field-descriptor>
+    <field-descriptor
+        name="stock"
+        column="stock"
+        jdbc-type="INTEGER"
+    >
+    </field-descriptor>
+    <field-descriptor
+        name="id"
+        column="id"
+        jdbc-type="INTEGER"
+        primarykey="true"
+    >
+    </field-descriptor>
+</class-descriptor>
+...
+]]></source>
+                <p>
+                    Now you should be able to run your application:
+                </p>
+                <source><![CDATA[
+cd build/resources
+
+java productmanager.Main
+]]></source>
+                <p>
+                    Of course, you'll need to setup the <code>CLASSPATH</code> before running
+                    your application. You'll should add all jars from the <code>lib</code>
+                    folder except the ones for Torque (<code>torque-[version].jar</code>,
+                    <code>velocity-[version].jar</code> and <code>commons-collections-[version].jar</code>)
+                    and for the XDoclet OJB module (<code>xdoclet-[version].jar</code>,
+                    <code>xjavadoc-[version].jar</code> and <code>xdoclet-ojb-module-[version].jar</code>).
+                </p>
+                <p>
+                    It is important to note that OJB per default assumes the <code>OJB.properties</code>
+                    and <code>OJB-logging.properties</code> files in the directory where you're
+                    starting the application. Hence, we changed to the <code>build/resources</code>
+                    directory before running the application. This of course requires the compiled
+                    classes to be on the classpath, as well (directory <code>build/classes</code>).
+                </p>
+                <p>
+                    Per default, the same applies to the other configuration files
+                    (<code>repository*.xml</code>) but you can change this in the
+                    <code>OJB.properties</code> file.
+                </p>
+            </section>
+        </section>
+
+        <section>
+            <title>Learning More</title>
+            <p>
+                After you've have learned about building and configuring projects that use OJB,
+                you should check out the <a href="site:documentation/tutorials/summary">tutorials</a>
+                to learn how to specify your persistent classes and how to use OJB's APIs to
+                perform database operations. The <a href="site:mapping-tutorial">Mapping Tutorial</a>
+                in particular shows you how to map your classes to tables in an RDBMS.
+            </p>
+        </section>
+    </body>
+</document>

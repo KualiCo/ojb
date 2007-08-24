@@ -1,0 +1,930 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: howto-work-with-stored-procedures.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>HOWTO - Stored Procedure Support</title>
+        <authors>
+            <person name="Ron Gallagher" email="rongallagher@bellsouth.net"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>Introduction</title>
+            <p>
+                OJB supports the use of stored procedures to handle the basic DML
+                operations (INSERT, UPDATE, and DELETE).  This document will describe
+                the entries that you'll need to add to your repository in order to get
+                OJB to utilize stored procedures instead of 'traditional' INSERT, UPDATE
+                or DELETE statements.
+            </p>
+            <p>
+                Please note that there will be references to 'stored procedures'
+                throughout this document.  However, this is just a simplification for
+                the purposes of this document.  Any place you see a reference to
+                'stored procedure', you can assume that either a stored procedure or
+                function can be used.
+            </p>
+            <p>
+                Information presented in this document includes the following:
+            </p>
+            <ul>
+                <li>
+                    <a href="#Repository+entries">Basic repository entries</a>
+                </li>
+                <li>
+                    <a href="#Common+attributes">Common attributes for all procedure
+                        descriptors</a>
+                </li>
+                <li>An overview of the
+                    <a href="#insert-procedure">insert procedure</a>,
+                    <a href="#update-procedure">update procedure</a> and
+                    <a href="#delete-procedure">delete procedure</a> descriptors.
+                </li>
+                <li>Information about the
+                    <a href="#Argument+descriptors">argument descriptors</a>
+                    that are supported for all procedure
+                </li>
+                <li>A
+                    <a href="#A+simple+example">simple example</a> and a
+                    <a href="#A+complex+example">more complex example</a>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <title>Repository entries</title>
+            <p>
+                For any persistable class (i.e. "com.myproject.Customer") where you want to
+                utilize stored procedures to handle persistence operations instead of
+                traditional DML statements (i.e. INSERT, UPDATE or DELETE), you will need
+                to include one or more of the following descriptors within the
+                corresponding class-descriptor for the persistable class:
+            </p>
+            <ul>
+                <li>
+                    <code>insert-procedure</code> - identifies the stored procedure that
+                    is to be used whenever a class needs to be inserted into the database.
+                </li>
+                <li>
+                    <code>update-procedure</code> - identifies the stored procedure that
+                    is to be used whenever a class needs to be updated in the database.
+                </li>
+                <li>
+                    <code>delete-procedure</code> - identifies the stored procedure that
+                    is to be used whenever a class needs to be removed from the database.
+                </li>
+            </ul>
+            <p>
+                All of these descriptors must be nested within the class-descriptor that
+                they apply to.  Here is an example of a simple class-descriptor that
+                includes each of the procedure descriptors listed above:
+            </p>
+            <source><![CDATA[
+<class-descriptor  class="com.myproject.Customer" table="CUSTOMER">
+<field-descriptor column="ID" jdbc-type="DECIMAL" name="id" primarykey="true"/>
+<field-descriptor column="NAME" jdbc-type="VARCHAR" name="name"/>
+<insert-procedure name="CUSTOMER_PKG.ADD">
+    <runtime-argument field-ref="id" return="true"/>
+    <runtime-argument field-ref="name"/>
+</insert-procedure>
+<update-procedure name="CUSTOMER_PKG.CHG">
+    <runtime-argument field-ref="id"/>
+    <runtime-argument field-ref="name"/>
+</update-procedure>
+<delete-procedure name="CUSTOMER_PKG.CHG">
+    <runtime-argument field-ref="id"/>
+</delete-procedure>
+</class-descriptor>]]></source>
+        </section>
+
+        <section>
+            <title>Common attributes</title>
+            <p>
+                All three procedure descriptors have the following attributes in common:
+            </p>
+            <ul>
+                <li>
+                    <code>name</code> - This is the name of the stored procedure that is to
+                    be used to handle the specific persistence operation.
+                </li>
+                <li>
+                    <code>return-field-ref</code> - This identifies the field in the class
+                    where the return value from the stored procedure will be stored.  If this
+                    attribute is blank or not specified, then OJB will assume that the stored
+                    procedure does not return a value and will format the SQL command
+                    accordingly.
+                </li>
+            </ul>
+            <p>
+                The basic syntax that is used to call a procedure that has a return value
+                looks something like this:
+            </p>
+            <source><![CDATA[
+{?= call &lt;procedure-name&gt;[&lt;arg1&gt;,&lt;arg2&gt;, ...]}]]></source>
+
+            <p>
+                The basic syntax that is used to call a procedure that
+                <strong>does not</strong>
+                include a return value looks something like this:
+            </p>
+            <source><![CDATA[
+{call &lt;procedure-name&gt;[&lt;arg1&gt;,&lt;arg2&gt;, ...]}]]></source>
+            <p>
+                When OJB assembles the SQL to call a stored procedure, it will use the value
+                of the 'name' attribute in place of 'procedure-name' in these two examples.
+            </p>
+            <p>
+                In addition, if the procedure descriptor includes a value in the
+                'return-field-ref' attribute that is 'valid', then the syntax that OJB
+                builds will include the placeholder for the result parameter.
+            </p>
+            <p>
+                The previous section referred to the idea of a 'valid' value in the
+                'return-field-ref' attribute.  A value is considered to be 'valid' if it
+                meets the following criteria:
+            </p>
+            <ul>
+                <li>The value is not blank</li>
+                <li>There is a field-descriptor with a 'name' that matches the value
+                    in the 'return-field-ref' attribute.</li>
+            </ul>
+            <p>
+                If the 'return-field-ref' attribute is not 'valid', then the placeholder
+                for the result parameter will not be included in the SQL that OJB assembles.
+            </p>
+        </section>
+
+
+        <section>
+            <title>insert-procedure</title>
+            <p>
+                The insert-procedure descriptor identifies the stored procedure that should
+                be used whenever a class needs to be inserted into the database.  In
+                addition to the
+                <a href="#Common+attributes">common attributes</a> listed
+                earlier, the insert-procedure includes the following attribute:
+            </p>
+            <ul>
+                <li>
+                    <anchor id="include-all-fields"/>include-all-fields
+                </li>
+            </ul>
+            <p>
+                This attribute provides an efficient mechanism for passing all
+                attributes of a persistable class to a stored procedure.  If this
+                attribute is set to true, then OJB will ignore any nested
+                <a href="#Argument+descriptors">argument descriptors</a>. Instead,
+                OJB will assume that the argument list for the stored procedure
+                includes arguments for all attributes of the persistable class and that
+                those arguments appear in the same order as the field-descriptors for
+                the persistable class.
+            </p>
+            <p>
+                The default value for this attribute is 'false'.
+            </p>
+            <note>
+                If the field-descriptors in your repository do not 'align'
+                exactly with the argument list for the stored procedure, or you want to
+                maintain explicit control over the values that are passed to the stored
+                procedure, then either set the 'include-all-fields' attribute to 'false'
+                or leave it off the insert-procedure descriptor.
+            </note>
+        </section>
+
+
+        <section>
+            <title>update-procedure</title>
+            <p>
+                The update-procedure descriptor identifies the stored procedure that should
+                be used whenever a class needs to be updated in the database. In addition to
+                the
+                <a href="#Common+attributes">common attributes</a> listed earlier, the
+                update-procedure includes the following attribute:
+            </p>
+            <ul>
+                <li>include-all-fields</li>
+            </ul>
+            <p>
+                This attribute provides the same capabilities and has the same caveats as
+                the
+                <a href="#include-all-fields">include-all-fields</a> attribute on
+                the
+                <a href="#insert-procedure">insert-procedure</a> descriptor.
+            </p>
+        </section>
+
+
+        <section>
+            <title>delete-procedure</title>
+            <p>
+                The delete-procedure descriptor identifies the stored procedure that should
+                be used whenever a class needs to be deleted from the database.  In
+                addition to the
+                <a href="#Common+attributes">common attributes</a> listed
+                earlier, the delete-procedure includes the following attribute:
+            </p>
+            <ul>
+                <li>
+                    <anchor id="include-pk-only"/>include-pk-only
+                    <br/>
+                    <br/>
+                    This attribute provides an efficient mechanism for passing all of the
+                    attributes that make up the primary key for a persistable class to the
+                    specified stored procedure.  If this attribute is set to true, then OJB
+                    will ignore any nested
+                    <a href="#Argument+descriptors">argument
+                        descriptors</a>.  Instead,  OJB will assume that the argument list for
+                    the stored procedure includes arguments for all attributes that make up
+                    the primary key for the persistable class (i.e. those field-descriptors
+                    where the 'primary-key' attribute is set to 'true').  OJB will also assume
+                    that those arguments appear in the same order as the corresponding
+                    field-descriptors for the persistable class.
+                    <br/>
+                    <br/>
+                    The default value for this attribute is 'false'.
+                </li>
+            </ul>
+            <note>
+                If the field-descriptors in your repository that make up
+                the primary key for a persistable class do not 'align' exactly with the
+                argument list for the stored procedure, or you want to maintain explicit
+                control over the values that are passed to the stored procedure, then
+                either set the 'include-pk-only' attribute to 'false' or leave it off
+                the delete-procedure descriptor.
+            </note>
+        </section>
+
+        <section>
+            <title>Argument descriptors</title>
+            <p>
+                Argument descriptors are the mechanism that you will use to tell OJB two
+                things:
+            </p>
+            <ol>
+                <li>How many placeholders should be included in the argument list for a
+                    stored procedure?</li>
+                <li>What value should be passed for each of those arguments?</li>
+            </ol>
+            <p>
+                There are two types of argument descriptors that can be defined in the
+                repository:
+            </p>
+            <ul>
+                <li>
+                    <a href="#runtime-argument descriptors">runtime arguments</a>
+                    used to set a stored procedure argument equal to a value that is only
+                    known at runtime.
+                </li>
+                <li>
+                    <a href="#constant-argument descriptors">constant arguments</a>
+                    used to set a stored procedure argument equal to constant value.
+                </li>
+            </ul>
+            <p>
+                You may notice that there is no argument descriptor specifically designed
+                to pass  a
+                <em>null</em> value to the procedure.  This capability is provided by
+                the
+                <a href="#runtime-argument descriptors">runtime argument</a>
+                descriptor.
+            </p>
+            <p>
+                The argument descriptors are essentially the 'mappings' between stored
+                procedure arguments and their runtime values.  Each procedure descriptor
+                can include 0 or more argument descriptors in it's definition.
+            </p>
+            <p>
+                After reading that last comment, you may wonder why OJB allows you to
+                configure a procedure descriptor with no argument descriptors since the
+                primary focus of OJB is to handle object persistence.  How could OJB perform
+                any sort persistence operation using a stored procedure that did not involve
+                the passage of at least one value to the stored procedure?  To be honest, it
+                is extremely unlikely that you would ever set up a procedure descriptor with
+                no argument descriptors.  However, since there is no minimum number of
+                arguments required for a stored procedure, we did not want to implement
+                within OJB a requirement on the number of arguments that was more
+                restrictive than the limits imposed by most/all database systems.
+            </p>
+
+            <section>
+                <title>runtime-argument descriptors</title>
+                <p>
+                    A runtime-argument descriptor is used to set a stored procedure argument
+                    equal to a value that is only known at runtime.
+                </p>
+
+                <p>
+                    Two attributes can be specified for each runtime-argument descriptor:
+                </p>
+                <ul>
+                    <li>field-ref
+                        <br/>
+                        <br/>
+                        The 'field-ref' attribute identifies the specific field descriptor
+                        that will provide the argument's value.  If this attribute is not
+                        specified or does not resolve to a valid field-descriptor, then a
+                        null value will be passed to the stored procedure.
+                    </li>
+                    <li>return
+                        <br/>
+                        <br/>
+                        The 'return' attribute is used to determine if the argument is used
+                        by the stored procedure as an 'output' argument.
+                        <br/>
+                        <br/>
+                        If this attribute is set to true, then the corresponding argument
+                        will be registered as an output parameter.  After execution of the
+                        stored procedure, the value of the argument will be 'harvested' from
+                        the CallableStatement and stored in the attribute identified by the
+                        field-ref attribute.
+                        <br/>
+                        <br/>
+                        If this attribute is not specified or set to false, then OJB assumes
+                        that the argument is simply an 'input' argument, and it will do
+                        nothing special to the argument.
+                    </li>
+                </ul>
+            </section>
+
+            <section>
+                <title>constant-argument descriptors</title>
+                <p>
+                    A constant-argument descriptor is used to set a stored procedure argument
+                    equal to constant value.
+
+                </p>
+
+                <p>
+                    There is one attribute that can be specified for the constant-argument
+                    descriptor:
+                    </p>
+                    <ul>
+                        <li>value
+                        <br/>
+                        <br/>
+                            The 'value' attribute identifies the value for the argument.
+                        </li>
+                    </ul>
+            </section>
+        </section>
+
+
+        <section>
+            <title>A simple example</title>
+            <p>
+                This section provides background information and a simple example that
+                illustrates how OJB's support for stored procedures can be utilized.
+            </p>
+            <p>
+                The background information covers the following topics:
+            </p>
+            <ul>
+                <li>
+                    <a href="#The+basic+requirements">The basic requirements</a>
+                </li>
+                <li>
+                    <a href="#The+database+objects">The database objects</a>
+                    including the
+                    <a href="#The+table">table</a> that will be manipulated,
+                    the
+                    <a href="#The+sequence">sequence</a> that will be used by the stored
+                    procedures to assign primary key falues, the
+                    <a href="#The+insert+and+update+triggers">insert and update triggers</a>
+                    that maintain the four 'audit' columns and the
+
+                    <a href="#The+package">package</a> that provides the stored procedures that
+                    will handle the persistence operations.
+                </li>
+            </ul>
+            <p>
+                Click
+                <a href="#The+implementation">here</a> to skip the background information
+                and go straight to the implementation.
+            </p>
+            <section>
+                <title>The basic requirements</title>
+                <p>
+                    These are the requirements that must be satisfied by our example
+                </p>
+                <ol>
+                    <li>
+                        <p>
+                            All insert, update and delete operations are to be performed
+                            by stored procedures.
+                        </p>
+                    </li>
+                    <li>
+                        <p>
+                            All primary key values are to be by the stored procedure that handles
+                            the insert operation.  The value that is assigned should be reflected
+                            in the object that 'triggered' the insert operation.
+                        </p>
+                    </li>
+                    <li>
+                            For auditing purposes, all tables will include the following set of
+                            columns:
+                        <ul>
+                            <li>
+                                <code>USER_CREATED</code> - This will contain the id of the user
+                                who created the record
+                            </li>
+                            <li>
+                                <code>DATE_CREATED</code> - The date on which the record was created
+                                created
+                            </li>
+                            <li>
+                                <code>USER_UPDATED</code> - The id of the user who last modified the
+                                record
+                            </li>
+                            <li>
+                                <code>USER_UPDATED</code> - The date on which the record was last
+                                modified
+                            </li>
+                        </ul>
+                            In addition to the inclusion of these columns on each table, the
+                            following requirements related to these columns had to be supported:
+                        <ol>
+                            <li>
+                                    The values of the two date-related audit columns were to be
+                                    maintained at the database level via insert and update triggers.
+                                    <ul>
+                                        <li>
+                                            The insert trigger will set both
+                                            <code>DATE_CREATED</code> and
+                                            <code>DATE_UPDATED</code> to the current system date.
+                                        </li>
+                                        <li>
+                                            The update trigger will set
+                                            <code>DATE_UPDATED</code> to the
+                                            current system date.  The update trigger will also ensure that
+                                            the original value of
+                                            <code>DATE_CREATED</code> is never
+                                            modified.
+                                        </li>
+                                    </ul>
+                            </li>
+                            <li>
+                                    The values of the two user-related audit columns are to be
+                                    maintained at the database level via insert and update triggers.
+                                    <ul>
+                                        <li>
+                                            The insert and update triggers will ensure that
+                                            <code>USER_CREATED</code> and
+                                            <code>USER_UPDATED</code> are
+                                            appropriately populated.
+                                        </li>
+                                        <li>
+                                            The update trigger will ensure that the original value of
+                                            <code>USER_CREATED</code> is never modified.
+                                        </li>
+                                    </ul>
+                            </li>
+                            <li>
+                                    Any changes that are made by the insert or update triggers to any of
+                                    the four 'audit' columns had to be reflected in the object that
+                                    caused the insert or update operation to occur.
+                            </li>
+                        </ol>
+                    </li>
+                </ol>
+            </section>
+
+            <section>
+                <title>The database objects</title>
+                <p>
+                    The database objects that are described in this section utilize Oracle
+                    specific syntax.  However, you should not infer from this that the
+                    stored procedure support provided by OJB can only be used to access data
+                    that is stored in an Oracle database.  In reality, stored procedures can
+                    be used for persistence operations in any database that supports stored
+                    procedures.
+
+                </p>
+
+                <ul>
+                    <li>The
+                        <a href="#The+CUSTOMER+table">table</a> that will be manipulated,
+                    </li>
+                    <li>The
+                        <a href="#The+sequence">sequence</a> that will be used by the stored
+                        procedures to assign primary key values
+                    </li>
+
+                    <li>The
+                        <a href="#The+insert+and+update+triggers">insert and update
+                            triggers</a> that maintain the four 'audit' columns
+                    </li>
+                    <li>The
+                        <a href="#The+package">package</a> that provides the stored
+                        procedures that will handle the persistence operations.
+                    </li>
+                </ul>
+
+                <p>
+                    Click
+                    <a href="#The+implementation">here</a> to skip the information about
+                    the database objects and go straight to the implementation.
+                </p>
+            </section>
+
+            <section>
+                <title>The CUSTOMER table</title>
+                <p>
+                    This example will deal exclusively with persistence operations related
+                    to the a table named 'CUSTOMER' that is built using the following DDL:
+                </p>
+                <source><![CDATA[
+CREATE TABLE CUSTOMER
+( ID NUMBER(18) NOT NULL
+, NAME VARCHAR2(50) NOT NULL
+, USER_CREATED VARCHAR2(30)
+, DATE_CREATED DATE
+, USER_UPDATED VARCHAR2(30)
+, DATE_UPDATED DATE
+, CONSTRAINT PK_CUSTOMER PRIMARY KEY (ID)
+);]]></source>
+
+            </section>
+
+            <section>
+                <title>The sequence</title>
+                <p>
+                    This sequence will be used to assign unique values to
+                    <code>CUSTOMER.ID</code>.
+                </p>
+                <source><![CDATA[
+              CREATE SEQUENCE CUSTOMER_SEQ;]]></source>
+            </section>
+
+            <section>
+                <title>The insert and update triggers</title>
+                <p>
+                    These two triggers will implement all of the requirements listed
+                    above that are related to the four audit columns:
+                </p>
+                <source><![CDATA[
+CREATE OR REPLACE TRIGGER CUSTOMER_ITR
+BEFORE INSERT ON CUSTOMER
+FOR EACH ROW
+BEGIN
+--
+-- Populate the audit dates
+--
+SELECT SYSDATE, SYSDATE
+INTO :NEW.DATE_CREATED, :NEW.DATE_UPDATED
+FROM DUAL;
+--
+-- Make sure the user created column is populated.
+--
+IF :NEW.USER_CREATED IS NULL
+THEN
+SELECT SYS_CONTEXT('USERENV','TERMINAL')
+  INTO :NEW.USER_CREATED
+  FROM DUAL;
+END IF;
+--
+-- Make sure the user updated column is populated.
+--
+IF :NEW.USER_UPDATED IS NULL
+THEN
+SELECT SYS_CONTEXT('USERENV','TERMINAL')
+  INTO :NEW.USER_UPDATED
+  FROM DUAL;
+END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER CUSTOMER_UTR
+BEFORE UPDATE ON CUSTOMER
+FOR EACH ROW
+BEGIN
+--
+-- Populate the date updated
+--
+SELECT SYSDATE
+INTO :NEW.DATE_UPDATED
+FROM DUAL;
+--
+-- Make sure the user updated column is populated.
+--
+IF :NEW.USER_UPDATED IS NULL
+THEN
+SELECT SYS_CONTEXT('USERENV','TERMINAL')
+  INTO :NEW.USER_UPDATED
+  FROM DUAL;
+END IF;
+--
+-- Make sure the date/user created are never changed
+--
+SELECT :OLD.DATE_CREATED, :OLD.USER_CREATED
+INTO :NEW.DATE_CREATED, :NEW.USER_CREATED
+FROM DUAL;
+END;
+/]]></source>
+            </section>
+
+            <section>
+                <title>The package</title>
+                <p>
+                    This Oracle package will handle all INSERT, UPDATE and DELETE operations
+                    involving the
+                    <code>CUSTOMER</code> table.
+                </p>
+                <source><![CDATA[
+CREATE OR REPLACE PACKAGE CUSTOMER_PKG AS
+--
+-- This procedure should be used to add a record to the CUSTOMER table.
+--
+PROCEDURE ADD ( AID           IN OUT CUSTOMER.ID%TYPE
+            , ANAME         IN     CUSTOMER.NAME%TYPE
+            , AUSER_CREATED IN OUT CUSTOMER.USER_CREATED%TYPE
+            , ADATE_CREATED IN OUT CUSTOMER.DATE_CREATED%TYPE
+            , AUSER_UPDATED IN OUT CUSTOMER.USER_UPDATED%TYPE
+            , ADATE_UPDATED IN OUT CUSTOMER.DATE_UPDATED%TYPE );
+--
+-- This procedure should be used to change a record on the CUSTOMER table.
+--
+PROCEDURE CHANGE ( AID           IN     CUSTOMER.ID%TYPE
+               , ANAME         IN     CUSTOMER.NAME%TYPE
+               , AUSER_CREATED IN OUT CUSTOMER.USER_CREATED%TYPE
+               , ADATE_CREATED IN OUT CUSTOMER.DATE_CREATED%TYPE
+               , AUSER_UPDATED IN OUT CUSTOMER.USER_UPDATED%TYPE
+               , ADATE_UPDATED IN OUT CUSTOMER.DATE_UPDATED%TYPE );
+--
+-- This procedure should be used to delete a record from the CUSTOMER table.
+--
+PROCEDURE DELETE ( AID IN CUSTOMER.ID%TYPE );
+END CUSTOMER_PKG;
+/
+CREATE OR REPLACE PACKAGE BODY CUSTOMER_PKG AS
+--
+-- This procedure should be used to add a record to the CUSTOMER table.
+--
+PROCEDURE ADD ( AID           IN OUT CUSTOMER.ID%TYPE
+            , ANAME         IN     CUSTOMER.NAME%TYPE
+            , AUSER_CREATED IN OUT CUSTOMER.USER_CREATED%TYPE
+            , ADATE_CREATED IN OUT CUSTOMER.DATE_CREATED%TYPE
+            , AUSER_UPDATED IN OUT CUSTOMER.USER_UPDATED%TYPE
+            , ADATE_UPDATED IN OUT CUSTOMER.DATE_UPDATED%TYPE )
+IS
+  NEW_SEQUENCE_1 CUSTOMER.ID%TYPE;
+BEGIN
+  SELECT CUSTOMER_SEQ.NEXTVAL
+    INTO NEW_SEQUENCE_1
+    FROM DUAL;
+  INSERT INTO CUSTOMER ( ID, NAME, USER_CREATED, USER_UPDATED )
+     VALUES ( NEW_SEQUENCE_1, ANAME, AUSER_CREATED, AUSER_UPDATED )
+    RETURNING ID, USER_CREATED, DATE_CREATED, USER_UPDATED, DATE_UPDATED
+         INTO AID, AUSER_CREATED, ADATE_CREATED, AUSER_UPDATED, ADATE_UPDATED;
+END ADD;
+--
+-- This procedure should be used to change a record on the CUSTOMER table.
+--
+PROCEDURE CHANGE ( AID           IN     CUSTOMER.ID%TYPE
+               , ANAME         IN     CUSTOMER.NAME%TYPE
+               , AUSER_CREATED IN OUT CUSTOMER.USER_CREATED%TYPE
+               , ADATE_CREATED IN OUT CUSTOMER.DATE_CREATED%TYPE
+               , AUSER_UPDATED IN OUT CUSTOMER.USER_UPDATED%TYPE
+               , ADATE_UPDATED IN OUT CUSTOMER.DATE_UPDATED%TYPE )
+IS
+BEGIN
+  UPDATE CUSTOMER
+     SET NAME         = ANAME
+       , USER_CREATED = USER_CREATED
+       , USER_UPDATED = AUSER_UPDATED
+   WHERE ID           = AID
+    RETURNING USER_CREATED, DATE_CREATED, USER_UPDATED, DATE_UPDATED
+         INTO AUSER_CREATED, ADATE_CREATED, AUSER_UPDATED, ADATE_UPDATED;
+END CHANGE;
+--
+-- This procedure should be used to delete a record from the CUSTOMER table.
+--
+PROCEDURE DELETE ( AID IN CUSTOMER.ID%TYPE )
+IS
+BEGIN
+  DELETE
+    FROM CUSTOMER
+   WHERE ID    = AID;
+END DELETE;
+END CUSTOMER_PKG;
+/]]></source>
+                <p>
+                    Please note the following about the structure of the
+                    <code>CUSTOMER_PKG</code> package:
+                </p>
+                <ul>
+                    <li>
+                        The
+                        <code>AID</code> argument that is passed to the the
+                        <code>ADD</code> procedure is defined as
+                        <code>IN OUT</code>.  This
+                        allows the procedure to return the newly assigned
+                        <code>ID</code> to the caller.
+                    </li>
+                    <li>
+                        In the
+                        <code>ADD</code> and
+                        <code>CHANGE</code> procedures, the
+                        arguments that correspond to the four 'audit' columns are defined as
+                        <code>IN OUT</code>.  This allows the procedure to return the current
+                        value of these columns to the 'caller'.
+                    </li>
+                </ul>
+            </section>
+
+            <section>
+                <title>The implementation</title>
+                <p>
+                    Getting OJB to utilize the stored procedures described earlier in this
+                    document is as simple as adding a few descriptors to the repository.  Here
+
+                    is a class-descriptor related to the
+                    <code>CUSTOMER</code> table that
+                    includes all of the necessary descriptors.
+                </p>
+                <source><![CDATA[
+<class-descriptor class="com.myproject.Customer" table="CUSTOMER">
+    <field-descriptor column="ID" jdbc-type="DECIMAL" name="id" primarykey="true"/>
+    <field-descriptor column="NAME" jdbc-type="VARCHAR" name="name"/>
+    <field-descriptor column="USER_CREATED" jdbc-type="VARCHAR" name="userCreated"/>
+    <field-descriptor column="DATE_CREATED" jdbc-type="TIMESTAMP" name="dateCreated"/>
+    <field-descriptor column="USER_UPDATED" jdbc-type="VARCHAR" name="userUpdated"/>
+    <field-descriptor column="DATE_UPDATED" jdbc-type="TIMESTAMP" name="dateUpdated"/>
+    <insert-procedure name="CUSTOMER_PKG.ADD">
+      <runtime-argument field-ref="id" return="true"/>
+      <runtime-argument field-ref="name"/>
+      <runtime-argument field-ref="userCreated" return="true"/>
+      <runtime-argument field-ref="dateCreated" return="true"/>
+      <runtime-argument field-ref="userUpdated" return="true"/>
+      <runtime-argument field-ref="dateUpdated" return="true"/>
+    </insert-procedure>
+    <update-procedure name="CUSTOMER_PKG.CHG">
+      <runtime-argument field-ref="id"/>
+      <runtime-argument field-ref="name"/>
+      <runtime-argument field-ref="userCreated" return="true"/>
+      <runtime-argument field-ref="dateCreated" return="true"/>
+      <runtime-argument field-ref="userUpdated" return="true"/>
+      <runtime-argument field-ref="dateUpdated" return="true"/>
+    </update-procedure>
+    <delete-procedure name="CUSTOMER_PKG.CHG">
+      <runtime-argument field-ref="id"/>
+    </delete-procedure>
+</class-descriptor>]]></source>
+                <p>
+                    Some things to note about this class-descriptor:
+                </p>
+                <ol>
+                    <li>
+                        In the insert-procedure descriptor, the first runtime-argument descriptor
+                        correspnds to the "AID" argument that is passed to the CUSTOMER_PKG.ADD
+                        routine.  The "return" attribute on this runtime-argument is set to
+                        "true".  With this configuration, OJB will 'harvest' the value that is
+                        returned by the CUSTOMER_PKG.ADD stored procedure and store the value in
+                        the "id" attribute on the com.myproject.Customer class.
+                    </li>
+                    <li>
+                        In both the insert-procedure and update-procedure descriptors, the
+                        runtime-argument descriptors that correspond to the four 'audit' columns
+                        all have the "return" argument set to "true".  This allows any updates that
+                        are made by the procedure or the insert/update triggers to be reflected in
+                        the "Customer" object that caused the insert/update operation to occur.
+                    </li>
+                </ol>
+            </section>
+        </section>
+
+        <section>
+            <title>A complex example</title>
+            <p>
+                This example builds upon the
+                <a href="#A+simple+example">simple example</a>
+                that was presented earlier by introducing some additional requirements
+                beyond those that were specified in the simple example.  Some of these
+                additional requirements may seem a little contrived.  To be honest, they
+                are.  The only purpose of these additional requirements is to create
+                situations that illustrate how the additional capabilities provided by OJB's
+                support for stored procedures can be utilized.
+            </p>
+            <p>
+                The additional requirements for this example include the following:
+            </p>
+            <ul>
+                <li>
+                    All procedures will include two additional arguments.  These two new
+                    arguments will be added to the end of the argument list for all existing
+                    procedures.
+                    <ul>
+                        <li>
+                            <code>ASOURCE_SYSTEM</code> - identifies the system that initiated the
+                            persistence operation.  This will provide a higher level of audit
+                            tracking capability.  In our example, this will always be "SAMPLE".
+                        </li>
+                        <li>
+                            <code>ACOST_CENTER</code> - identifies the 'cost center' that should
+                            be charged for the persistence operation.  In our example, this argument
+                            will always be null.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    For all "ADD" and "CHG" stored procedures, the value that was assigned to
+                    the "DATE_UPDATED" column will no longer be returned to the caller via an
+                    "IN OUT" argument.  Instead, it will be returend to the caller via the
+                    procedure's return value.
+                </li>
+            </ul>
+            <p>
+                Based on these new requirements, the class-descriptor for the
+                "com.myproject.Customer" class will look like this.  The specific changes
+                are detailed below.
+            </p>
+            <source><![CDATA[
+<class-descriptor class="com.myproject.Customer" table="CUSTOMER">
+    <field-descriptor column="ID" jdbc-type="DECIMAL" name="id" primarykey="true"/>
+    <field-descriptor column="NAME" jdbc-type="VARCHAR" name="name"/>
+    <field-descriptor column="USER_CREATED" jdbc-type="VARCHAR" name="userCreated"/>
+    <field-descriptor column="DATE_CREATED" jdbc-type="TIMESTAMP" name="dateCreated"/>
+    <field-descriptor column="USER_UPDATED" jdbc-type="VARCHAR" name="userUpdated"/>
+    <field-descriptor column="DATE_UPDATED" jdbc-type="TIMESTAMP" name="dateUpdated"/>
+    <insert-procedure name="CUSTOMER_PKG.ADD"
+          return-field-ref="dateUpdated"> <!-- See note 1 -->
+      <runtime-argument field-ref="id" return="true"/>
+      <runtime-argument field-ref="name"/>
+      <runtime-argument field-ref="userCreated" return="true"/>
+      <runtime-argument field-ref="dateCreated" return="true"/>
+      <runtime-argument field-ref="userUpdated" return="true"/>
+      <runtime-argument field-ref="dateUpdated"/> <!-- See note 2 -->
+      <constant-argument value="SAMPLE"/> <!-- See note 3 -->
+      <runtime-argument/> <!-- See note 4 -->
+    </insert-procedure>
+    <update-procedure name="CUSTOMER_PKG.CHG"
+          return-field-ref="dateUpdated"> <!-- See note 1 -->
+      <runtime-argument field-ref="id"/>
+      <runtime-argument field-ref="name"/>
+      <runtime-argument field-ref="userCreated" return="true"/>
+      <runtime-argument field-ref="dateCreated" return="true"/>
+      <runtime-argument field-ref="userUpdated" return="true"/>
+      <runtime-argument field-ref="dateUpdated"/> <!-- See note 2 -->
+      <constant-argument value="SAMPLE"/> <!-- See note 3 -->
+      <runtime-argument/> <!-- See note 4 -->
+    </update-procedure>
+    <delete-procedure name="CUSTOMER_PKG.CHG">
+      <runtime-argument field-ref="id"/>
+      <constant-argument value="SAMPLE"/> <!-- See note 3 -->
+      <runtime-argument/> <!-- See note 4 -->
+    </delete-procedure>
+</class-descriptor>]]></source>
+            <p>
+                Here are an explanation of each modification:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Note 1:</strong>
+                        The value that is returned by the "ADD" and "CHG" stored procedures will
+                        now be stored in the "dateUpdated" attribute on the
+                        "com.myproject.Customer" class.
+                    </li>
+                    <li>
+                        <strong>Note 2:</strong>
+                        Since the ADATE_UPDATED argument is no longer defined as an "IN OUT"
+                        argument, we have removed the "return" attribute from the corresponding
+                        runtime-argument descriptor.
+                    </li>
+                    <li>
+                        <strong>Note 3:</strong>
+                        This is the first of two new arguments that were added to the argument
+                        list of each procedure.  This argument represents the 'source system',
+                        the system that initiated the persistence operation.  In our example,
+                        we will always pass a value of 'SAMPLE'.
+                    </li>
+                    <li>
+                        <strong>Note 4:</strong>
+                        This is the second of two new arguments that were added to the argument
+                        list of each procedure.  This argument represents the 'cost center' that
+                        should be charged for the persistence operation.  In our example, we
+                        have no cost center, so we need to pass a null value.  This is
+                        accomplished by including a 'runtime-argument' descriptor that has
+                        no 'field-ref' specified.
+                    </li>
+                </ul>
+        </section>
+    </body>
+</document>

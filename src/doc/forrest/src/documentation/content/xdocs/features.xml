@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: features.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>OJB - Features</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <ul>
+            <li>
+                Supports both standard- and non-standard APIs:
+                <ul>
+                    <li>PB API (non-standard)</li>
+                    <li>ODMG API (standard)</li>
+                    <li>OTM API (non-standard)</li>
+                    <li>JDO API (standard)</li>
+                </ul>
+            </li>
+            <li>
+                The PersistenceBroker kernel API and all top-level APIs (ODMG, OTM, JDO) allows Java
+                Programmers to store and retrieve Java Objects in/from (any) JDBC-compliant RDBMS
+            </li>
+            <li>
+                Transparent persistence: classes does not have to inherit from any OJB base class
+                nor implement a special interface.
+                OJB delivers pure transparent persistence for POJOs.
+            </li>
+            <li>
+                Scalable architecture that allows to build
+                massively distributed and clustered systems.
+            </li>
+            <li>
+                <a href="site:basic-technique">Configurable persistence by reachability</a>:
+                All Objects associated to a persistent object by references can made persitent too.
+            </li>
+            <li>
+                Extremly flexible design with pluggable implementation of most
+                service classes like <em>PersistenceBroker</em>, <em>ObjectCache</em>,
+                <em>SequenceManager</em>, <em>RowReader</em>, <em>ConnectionFactory</em>,
+                <em>ConnectionManager</em>, <em>IndirectionHandler</em>, <em>SQLGenerator</em>,
+                <em>JdbcAccess</em>, ... and so on.
+            </li>
+            <li>
+                Quality assurance taken seriously: More than <strong>800</strong>
+                <a href="site:test-suite"><em>JUnit Test Cases</em></a> for
+                regression tests. JUnit tests are integrated into the build scripts and
+                used as quality assurance for daily development.
+            </li>
+            <li>
+                Mapping support for 1:1, 1:n and m:n
+                <a href="site:basic-technique">associations</a>.
+            </li>
+            <li>
+                Configurable collection queries to control loading of relationships. See
+                <a href="site:advanced-technique">QueryCustomizer</a>.
+            </li>
+            <li>
+                <a href="site:basic-technique/cascading">Automatic</a> and
+                <a href="site:basic-technique/linking">manual</a>
+                assignment of foreign key values.
+            </li>
+            <li>
+                The Object / Relational mapping is defined in an XML Repository. The
+                mapping is completely dynamic and can be
+                <a href="site:metadata">manipulated at runtime</a>
+                for maximum flexibility
+            </li>
+            <li>
+                Easy use of <a href="site:faq/multiple-databases">multiple databases</a>.
+            </li>
+            <li>
+                Configurable Lazy Materialization through
+                <a href="site:basic-technique/using-proxy">Proxy
+                </a> support in the
+                PersistenceBroker. The user can implement specific Proxy classes or let
+                OJB generate dynamic Proxies.
+            </li>
+            <li>
+                Support for
+                <a href="site:advanced-technique/polymorphism">Polymorphism and Extents</a>.
+                You can use Interface-types and
+                abstract classes as attribute types in your persistent classes. Queries
+                are also aware of extents: A query against a baseclass or interface will
+                return matches from derived classes, even if they are mapped to different
+                DB-tables
+            </li>
+            <li>
+                Support for Java Array- and Collection-attributes in persistent classes.
+                The
+                <a href="site:advanced-technique/types-for-associations">attribute-types
+                </a>
+                can be Arrays, java.util.Collection or may be user defined collections that implement the interface
+                <code>ojb.broker.ManageableCollection</code>.
+            </li>
+            <li>
+                <a href="site:sequence-manager">Sequence-Managing
+                </a>. The SequenceManager is aware of "extents" and maintains uniqueness of ids accross
+                any number of tables. Sequence Numbering can be declared in the mappping repository.
+                <br/>
+                Native Database based Sequence Numbering is also supported.
+            </li>
+            <li>
+                Reusing Prepared Statements, internal <a href="site:connection">connection pooling</a>.
+            </li>
+            <li>
+                Integrates smoothly in controlled environments like
+                <a href="site:deployment/j2ee-server">EJB containers</a>
+            </li>
+            <li>
+                Full JTA and JCA (in progress) Integration.
+            </li>
+            <li>
+                Support for
+                <a href="site:query/prefetched-relationships">prefetched relationships</a>
+                to minimize the number of queries.
+            </li>
+            <li>
+                ODMG compliant API, <a href="site:odmg-tutorial">a Tutorial</a>, and TestCases are included.
+            </li>
+            <li>
+                JDO 1.0.1 compliant API (based on jdori, native implementation in progress),
+                <a href="site:jdo-tutorial">a Tutorial</a>, and TestCases are included.
+            </li>
+            <li>
+                The
+                <a href="site:lock-manager">Lockmanagement</a>
+                supporting four pessimistic
+                Transaction Isolation Levels (uncommited or &quot;dirty&quot; reads,
+                commited reads, repeatable reads, serializable transactions) - distributed locking is possible.
+            </li>
+            <li>
+                <a href="site:lock-manager/optimistic-locking">Optimistic locking</a> support.
+                Users may declare
+                <code>int</code> or <code>long</code> fields as version attributes or
+                <code>java.sql.Timestamp</code> fields as timestamp attributes.
+            </li>
+            <li>
+                Support for persistent object caching. Different caching strategies and
+                <a href="site:object-cache/distributed-cache">distributed caches</a>.
+            </li>
+            <li>
+                Comes along with fully functional demo applications running against
+                HSQLDB.
+            </li>
+            <li>
+                Provides <a href="ext:commons-logging">Commons-Logging</a> and <a href="ext:log4j">Log4J</a> logging facilities.
+            </li>
+            <li>
+                100%: pure Java, Open Source, Apache License
+            </li>
+        </ul>
+        <note>
+            - OQL is currently not fully implemented (Aggregations and Method Invocations)
+            <br/>
+            - ODMG implicit locking is partly implemented but does
+            currently not maintain transaction isolation
+            properly. To achieve safe transaction isolation client applications
+            must use explicit lock acquisition.
+        </note>
+    </body>
+</document>

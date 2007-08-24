@@ -1,0 +1,1926 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: repository.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Repository File</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Daren Drummond" email="daren@softwarearena.com"/>
+            <person name="Brian McCallister" email="brianm@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Thomas Dudziak" email="tomdz@apache.org"/>
+            <person name="Martin Kalén" email="mkalen@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <anchor id="introduction"/>
+        <section>
+            <title>Introduction - repository syntax</title>
+            <p>
+                The syntax of the OJB repository xml files is defined by the
+                <em>repository.dtd</em>.
+                <br/>
+                An overview of all <a href="site:repository-html"><em>repository.dtd</em>-elements can be found here</a>.
+                The <a href="ext:ojb/repository.dtd">repository.dtd can be found here</a>.
+            </p>
+
+            <p>
+                The actual repository metadta declaration is split up into several separate
+                files, here is an excerpt of the most important files:
+            </p>
+            <ol>
+                <li>
+                    <a href="ext:ojb/repository.xml">the repository.xml</a>.
+                    Main file for metadata declaration. This file is split into several sub files
+                    using xml-Entity references.
+                </li>
+                <li>
+                    <a href="ext:ojb/repository_database.xml">the repository_database.xml</a>.
+                    This file contains the mapping information for database/connection handling.
+                </li>
+                <li>
+                    <a href="ext:ojb/repository_internal.xml">the repository_internal.xml</a>.
+                    This file contains the mapping information for the OJB internal tables.
+                    These tables are used for implementing SequenceManagers and
+                    persistent collections.
+                </li>
+                <li>
+                    <a href="ext:ojb/repository_user.xml">the repository_user.xml</a>.
+                    This file contains mappings for the tutorial applications
+                    and may be used to hold further user defined class mappings.
+                </li>
+                <li>
+                    <a href="ext:ojb/repository_junit.xml">the repository_junit.xml</a>.
+                    This file contains mapping information for common OJB JUnit regression
+                    test suite. In production environments these tables are not needed.
+                </li>
+                <li>
+                    other repository_junit_XYZ.xml
+                    <br/>
+                    More specific junit test mapping. In production environments these tables are not needed.
+                </li>
+                <li>
+                    There are some more files, for more information see comment in appropriate
+                    xml-file.
+                </li>
+            </ol>
+
+        </section>
+
+
+            <anchor id="descriptor-repository"/>
+            <section>
+                <title>descriptor-repository</title>
+                <p>
+                    The
+                    <em>descriptor-repository</em> is the root element of a repository.xml file.
+                    It consists of one or more
+                    <em>jdbc-connection-descriptor</em> and at least one
+                    <em>class-descriptor</em> element. But it's also possible to startup OJB without
+                    any of these elements and <a href="site:metadata/without-repository">add them at runtime</a>.
+                </p>
+
+                <section>
+                    <title>Elements</title>
+                    <source><![CDATA[
+<!ELEMENT descriptor-repository (documentation?, attribute*,
+        jdbc-connection-descriptor*, class-descriptor*)>]]></source>
+                    <p>
+                        The
+                        <em>documentation</em> element can be used to store arbitrary information.
+                    </p>
+                    <p>
+                        The
+                        <em>attribute</em> element allows to add
+                        <a href="#custom-attribute">custom attributes</a>,
+                        e.g. for passing arbitrary properties.
+                    </p>
+                    <p>
+                        The
+                        <em>jdbc-connection-descriptor</em> element specifies a jdbc connection for the repository.
+                    </p>
+                    <p>
+                        The
+                        <em>class-descriptor</em> element specify o/r mapping information for persistent class.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT descriptor-repository (
+    documentation?,
+    attribute*,
+    jdbc-connection-descriptor*,
+    class-descriptor* )
+>]]></source>
+                </section>
+
+                <section>
+                    <title>Attributes</title>
+                    <p>
+                        The
+                        <em>version</em> attribute is
+                        used to bind a repository.xml file to a given version of this dtd.
+                        A given OJB release will work properly only with the repository version
+                        shipped with that relase.
+                        This strictness maybe inconvenient but it does help to avoid the
+                        most common version conflicts.
+                    </p>
+                    <p>
+                        The <em>isolation-level</em> attribute defines the default locking isolation level used
+                        by OJB's <a href="site:lock-manager/pessimistic-locking">pessimistic locking</a> api. All jdbc-connection-descriptor or class-descriptor
+                        that do not define a specific isolation level will use this.
+                        <br/>Note: This does NOT touch the jdbc-level of the connection.
+                    </p>
+                    <p>
+                        The
+                        <em>proxy-prefetching-limit</em>
+                        attribute specifies a default value to be applied to all proxy instances. If none
+                        is specified a default value of 50 is used. Proxy prefetching specifies how many
+                        instances of a proxied class should be loaded in a single query when the proxy is
+                        first accessed.
+                    </p>
+                        <source><![CDATA[
+<!ATTLIST descriptor-repository
+	version (1.0) #REQUIRED
+	isolation-level (read-uncommitted | read-committed | repeatable-read |
+	                 serializable | optimistic | none) "read-uncommitted"
+	proxy-prefetching-limit CDATA "50"
+>]]></source>
+                </section>
+            </section>
+
+
+            <anchor id="jdbc-connection-descriptor"/>
+            <section>
+                <title>jdbc-connection-descriptor</title>
+                <p>
+                    The
+                    <em>jdbc-connection-descriptor</em> element specifies a jdbc
+                    connection for the repository. It is allowed to define more than one
+                    <em>jdbc-connection-descriptor</em>. All
+                    <em>class-descriptor</em> elements are independent from the
+                    <em>jdbc-connection-descriptor</em>s. More info about
+                    <a href="site:connection">connection handling here</a>.
+                </p>
+                <section>
+                    <title>Elements</title>
+                    <p>
+                        The
+                        <em>object-cache</em> element specifies the
+                        <a href="site:object-cache">object-cache implementation</a>
+                        class associated with this class.
+                    </p>
+                    <p>
+                        A
+                        <em>connection-pool</em> element may be used to define connection pool
+                        properties for the specified JDBC connection.
+                    </p>
+                    <p>
+                        Further a
+                        <em>sequence-manager</em> element may be used to
+                        define which sequence manager implementation should be used within
+                        the defined connection.
+                    </p>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>custom-attribute</em>
+                        </a> element to pass
+                        implementation specific properties.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT jdbc-connection-descriptor (documentation?, attribute*,
+                object-cache?, connection-pool?, sequence-manager?)>]]></source>
+                </section>
+
+                <anchor id="jcd-attributes"/>
+                <section>
+                    <title>Attributes</title>
+                    <p>
+                        The
+                        <em>jdbc-connection-descriptor
+                        </em> element contains a bunch
+                        of required and implied attributes:
+                    </p>
+                    <p>
+                        The
+                        <em>jcdAlias</em>
+                        attribute is a shortcut name for the defined connection descriptor. OJB
+                        uses the jcd alias as key for the defined connections.
+                    </p>
+                    <p>
+                        The
+                        <em>default-connection</em>
+                        attribute used to define if this connection should used as default
+                        connection with OJB. You could define only one connection as default
+                        connection. It is also possible to set the default connection at runtime
+                        using
+                        <em>PersistenceBrokerFactory#setDefaultKey(...)</em> method.
+                        If set
+                        <em>true</em> you can use a PB-api <a href="site:pb-guide/lookup-pb">shortcut-method</a>
+                        of the <em>PersistenceBrokerFactory</em> to lookup PersistenceBroker instances.
+                    </p>
+                    <note>
+                        If <em>default-connection</em> is not set at runtime, it is mandatory
+                        that <a href="#username"><em>username</em> and <em>password</em></a>
+                        is set in repository file.
+                    </note>
+                    <p>
+                        The
+                        <em>platform</em>
+                        attribute is used to define the specific RDBMS Platform. This attribute
+                        corresponds to a
+                        <em>org.apache.ojb.broker.platforms.PlatformXXXImpl</em> class.
+                        Supported databases
+                        <a href="#jcd.db">see here</a>.
+                        Default is <em>Hsqldb</em>.
+                    </p>
+                    <p>
+                        The
+                        <em>jdbc-level</em> attribute is used to specify the Jdbc compliance
+                        level of the used Jdbc driver. Allowed values are:
+                        <em>1.0</em>,
+                        <em>2.0</em>,
+                        <em>3.0</em>.
+                        Default is
+                        <em>1.0</em>.
+                    </p>
+                    <p>
+                        <em>DEPRECATED!</em>. The
+                        <em>eager-release</em>
+                        attribute is used to solve a problem that occurs when using OJB within JBoss
+                        (3.0 &lt;= version &lt; 3.2.2, seems to be fixed in jboss 3.2.2 and higher).
+                        Only use within JBoss.
+                        <em>DEPRECATED</em> attribute.
+                    </p>
+                    <p>
+                        The
+                        <em>batch-mode</em>
+                        attribute allow to enable JDBC connection batch support
+                        (if supported by used database), 'true' value allows to enable per-session
+                        batch mode, whereas 'false' prohibits it.
+                        <em>PB.serviceConnectionManager.setBatchMode(...)
+                        </em> method can be used
+                        to switch on/off batch modus, if batch-mode is enabled. On PB.close()
+                        OJB switches off batch modus, thus you have to do
+                        '...setBatchMode(true)' on each obtained PB instance again.
+                    </p>
+                    <note>
+                        OJB 1.0.4 and earlier:
+                        <br/>
+                        When using <a href="site:sequence-manager/identity-columns">database identity columns</a>
+                        it's not allowed to enable <em>batch mode</em> for insert operations.
+                        <br/>
+                        When using <a href="site:lock-manager/optimistic-locking">optimistic locking</a> the
+                        version check will always succeed for update operations when <em>batch-mode</em>
+                        is enabled - take care!!.
+                        <br/>
+                        <br/>
+                        This will be fixed and automatically handled by OJB till next major release.
+                    </note>
+                    <p>
+                        The
+                        <em>useAutoCommit</em>
+                        attribute allow to set how OJB uses the autoCommit state of the used
+                        connections. The default mode is 1. When using mode 0 or 2 with the
+                        PB-api, you must use PB transaction demarcation.
+                    </p>
+                    <ul>
+                        <li>
+                            0 - OJB ignores the autoCommit setting of the connection and does not
+                            try to change it. This mode could be helpful if the connection won't
+                            let you set the autoCommit state (e.g. using datasources within an
+                            application server).
+                        </li>
+                        <li>
+                            1 - [default mode] set the connection's <em>autoCommit</em> state temporary to
+                            'false' if needed (when using transaction demarcation in non-managed environment)
+                            and restore the 'old' state after use.
+                            <br/>
+                            In versions before <em>OJB 1.0.4</em> the autoCommit state was
+                            explicit set 'true' when connection was created, now OJB expect that
+                            this is done by the jdbc-driver/DataSource configuration. To enable the old
+                            behavior set a <a href="#custom-attribute">custom attribute</a>
+                            <em>initializationCheck</em> to 'true'.
+                            <source><![CDATA[
+<attribute attribute-name="initializationCheck"
+    attribute-value="false" />]]></source>
+                            Then OJB set the <em>autoCommit</em> state explicitly to 'true' when
+                            the connection is created by the <a href="site:connection">ConnectionFactory</a>.
+                        </li>
+                        <li>
+                            2 - Set the connection's <em>autoCommit</em> explicitly to
+                            <em>false</em> when a connection is created.
+                        </li>
+                    </ul>
+                    <p>
+                        If the
+                        <em>ignoreAutoCommitExceptions</em>
+                        attribute is set to
+                        <em>true</em>, all exceptions caused by setting
+                        autocommit state, will be ignored. Default mode is
+                        <em>false</em>.
+                    </p>
+                    <p>
+                        If a
+                        <em>jndi-datasource-name</em>
+                        for JNDI based lookup of Jdbc connections is specified, the following four attributes
+                        <em>driver</em>,
+                        <em>protocol</em>,
+                        <em>subprotocol</em>, and
+                        <em>dbalias</em> used for Jdbc DriverManager based construction
+                        of Jdbc Connections must not be declared.
+                        <br/>
+                        If a <em>jndi-datasource-name</em> is specified, OJB always assume that a
+                        JNDI based datasource connection lookup was expected (so take care that this attribute is
+                        empty or absent on <em>driver based</em> connection handling).
+                    </p>
+                    <p>
+                        The
+                        <em>username</em> and
+                        <em>password</em>
+                        attributes are used as credentials for obtaining a jdbc connections.
+                        <br/>
+                        If users don't want to keep user/password information in the
+                        repository.xml file, they can pass user/password
+                        using a
+                        <em>PBKey</em> to obtain a PersistenceBroker. More info
+                        <a href="site:faq">see FAQ</a>.
+                    </p>
+                    <anchor id="jcd.db"/>
+                    <source><![CDATA[
+<!ATTLIST jdbc-connection-descriptor
+    jcd-alias CDATA #REQUIRED
+    default-connection (true | false) "false"
+    platform (  Db2 | Hsqldb | Informix | MsAccess | MsSQLServer |
+                MySQL | Oracle | PostgreSQL | Sybase | SybaseASE |
+                SybaseASA | Sapdb | Firebird | Axion | NonstopSql |
+                Oracle9i | MaxDB ) "Hsqldb"
+    jdbc-level (1.0 | 2.0 | 3.0) "1.0"
+    eager-release (true | false) "false"
+    batch-mode (true | false) "false"
+    useAutoCommit (0 | 1 | 2) "1"
+    ignoreAutoCommitExceptions (true | false) "false"
+
+    jndi-datasource-name CDATA #IMPLIED
+
+    driver CDATA #IMPLIED
+    protocol CDATA #IMPLIED
+    subprotocol CDATA #IMPLIED
+    dbalias CDATA #IMPLIED
+
+    username CDATA #IMPLIED
+    password CDATA #IMPLIED
+>]]></source>
+                </section>
+
+                <anchor id="jdbc-connection-descriptor-custom-attributes"/>
+                <section>
+                    <title>Custom attributes</title>
+                    <p>
+                        The <em>JdbcConnectionDescriptor</em> supports specific configuration properties
+                        via <a href="#custom-attribute"><em>custom-attributes</em></a>.
+                    </p>
+                    <p>
+                        Attribute <em>initializationCheck</em> is an attribute to support backward
+                        compatibility with OJB versions before 1.0.4.
+                        <br/>
+                        In older versions OJB change the 'autoCommit' state dependent of the used 'useAutoCommit'
+                        attribute setting at connection initialization. This doesn't work in all
+                        situations/environments, thus for useAutoCommit="1" the ConnectionFactory does
+                        no longer set autoCommit to <em>true</em> on connection creation.
+                        <br/>
+                        To use the old behavior (OJB version 1.0.3 or earlier) set this property
+                        to <em>true</em>, then OJB change the 'autoCommit' state (if needed) of
+                        new obtained connections at connection initialization.
+                        <br/>
+                        If <em>false</em> or this property is removed, OJB dosen't try to change connection
+                        'autoCommit' state at connection initialization.
+                    </p>
+                    <p>
+                        Usage example of supported custom attributes:
+                    </p>
+                    <source><![CDATA[
+<jdbc-connection-descriptor
+    ...
+ >
+
+    <attribute attribute-name="initializationCheck"
+        attribute-value="false" />
+    ...
+</jdbc-connection-descriptor>]]></source>
+                    </section>
+            </section>
+
+
+            <anchor id="connection-pool"/>
+            <section>
+                <title>connection-pool</title>
+                <p>
+                    The <em>connection-pool</em> element specifies the connection pooling
+                    and low-level JDBC driver parameters. Read more about OJB
+                    <a href="site:connection">connection handling</a>.
+                </p>
+                <section>
+                    <title>Elements</title>
+                    <p>
+                        The
+                        <em>documentation</em> element can be used to store arbitrary information.
+                    </p>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>attribute</em></a> element to set
+                        JDBC-level properties or to enable DBCP PreparedStatement pooling
+                        if your JDBC driver does not have a PreparedStatement cache already.
+                    </p>
+                    <p>
+                        See section
+                        <a href="#connection-pool-custom-attributes">custom attributes</a>
+                        below for more information.
+                    </p>
+                    <note>
+                        When using an external DataSource, OJB cannot configure any JDBC-properties.
+                    </note>
+                    <source><![CDATA[
+<!ELEMENT connection-pool ( documentation?, attribute* )>]]></source>
+                </section>
+
+                <section>
+                    <title>Attributes</title>
+                    <p>
+                        <em>maxActive</em> (default=21)
+        The maximum number of active connections that can be allocated from this
+        pool at the same time, or zero for no limit.
+                    </p>
+                    <p>
+                        <em>maxIdle</em> (default=-1)
+        The maximum number of active connections that can remain idle in the pool,
+        without extra ones being released, or zero for no limit.
+                    </p>
+                    <p>
+                        <em>minIdle</em> (Since OJB 1.0.4, default=0)
+        The minimum number of active connections that can remain idle in the pool,
+        without extra ones being created, or zero to create none.
+                    </p>
+                    <p>
+                        <em>maxWait</em> (default=5000)
+        The maximum number of milliseconds that the pool will wait (when there
+        are no available connections) for a connection to be returned before
+        throwing an exception, or -1 to wait indefinitely.
+                        <br/>
+        Must be > 0 for timeout to actually happen in DBCP PoolingDataSource.
+                    </p>
+                    <p>
+                        <em>whenExhaustedAction</em> (default=0)
+                    </p>
+                    <ul>
+                        <li>0 - fail when pool is exhausted</li>
+                        <li>1 - block when pool is exhausted</li>
+                        <li>2 - grow when pool is exhausted</li>
+                    </ul>
+                    <p>
+                        <em>validationQuery</em> (default=not specified)
+        The SQL query that will be used to validate connections from this pool
+        according to testOnBorrow/testOnReturn/testWhileIdle.
+        If specified, this query <strong>must</strong> be an SQL SELECT statement
+        that returns at least one row.
+                        <br/>
+                        If not specified, only <em>connection.isClosed()</em> checks
+                        will be performed according to testOnBorrow/testOnReturn/testWhileIdle.
+                    </p>
+                    <note>
+                        Many database servers will discard idle connections after some time
+                        of inactivity. This timespan is usually configurable by the DBA and
+                        can range from anything between one hour and several days.
+                        <br/>
+                        Consider specifying a validation query that fits your database server
+                        and set at least testOnBorrow=true.
+                        <br/>
+                    </note>
+                    <p>
+                        Example validation queries:
+                    </p>
+                    <source>
+    Oracle      SELECT 1 FROM DUAL
+    PostgreSQL  SELECT 1
+    MySQL       SELECT 1
+                    </source>
+                    <p>
+                        <em>testOnBorrow</em> (default=true)
+                        The indication of whether connections will be validated before being
+                        borrowed from the pool. If the connection fails to validate, it will
+                        be dropped from the pool, and OJB will attempt to borrow another.
+                    </p>
+                    <p>
+                        <em>testOnReturn</em> (default=false)
+                        The indication of whether connections will be validated before being
+                        returned to the pool.
+                    </p>
+                    <p>
+                        <em>testWhileIdle</em> (default=false)
+                        The indication of whether connections will be validated by the idle
+                        object evictor (if any). If a connection fails to validate, it will be
+                        dropped from the pool.
+                    </p>
+                    <p>
+                        <em>timeBetweenEvictionRunsMillis</em> (default=-1)
+                        The number of milliseconds to sleep between runs of the idle
+                        object evictor thread. When non-positive, no idle object evictor thread
+                        will be run.
+                    </p>
+                    <p>
+                        <em>numTestsPerEvictionRun</em> (default=10)
+                        The number of objects to examine during each run of the idle object
+                        evictor thread (if any).
+                        <br/>
+                        Has no meaning if timeBetweenEvictionRunsMillis is non-positive.
+                    </p>
+                    <p>
+                        <em>minEvictableIdleTimeMillis</em> (default=1800000)
+                        The minimum amount of time a connection may sit idle in the pool before
+                        it is eligable for eviction by the idle object evictor (if any).
+                        <br/>
+                        When non-positive, no connection will be dropped from the pool due to
+                        idle time alone.
+                        <br/>
+                        Has no meaning if timeBetweenEvictionRunsMillis is non-positive.
+                    </p>
+                    <p>
+                        <em>removeAbandoned</em> [ConnectionFactoryDBCPImpl] (default=false)
+                        Flag to remove abandoned connections if they exceed the
+                        removeAbandonedTimout.
+                        If set to true a connection is considered abandoned and eligible for
+                        removal if it has been idle longer than the removeAbandonedTimeout.
+                        Setting this to true can recover db connections from poorly written
+                        applications which fail to close a connection.
+                        <br/>
+                        If you have enabled "removeAbandoned" then it is possible that a
+                        connection is reclaimed by the pool because it is considered to be
+                        abandoned. This mechanism is triggered on borrowObject (ie in OJB when
+                        a PersistenceBroker gets a Connection) when:
+                        <br/>
+                            <code><![CDATA[(numIdle < 2) and (numActive > maxActive - 3)]]></code>
+                        <br/>
+                        For example maxActive=20, 18 active connections and 1 idle connection
+                        would trigger the "removeAbandoned". But only the active connections
+                        that aren't used for more then <em>removeAbandonedTimeout</em> seconds
+                        are removed. Traversing a resultset doesn't count as being used.
+                        <br/>
+                        The abandoned object eviction takes place before normal borrowObject
+                        logic (there is no asynch evictor thread like for testWhileIdle).
+                    </p>
+                    <p>
+                        <em>removeAbandonedTimeout</em> [ConnectionFactoryDBCPImpl] (default=300)
+                        Timeout in seconds before an abandoned connection can be removed.
+                        <br/>
+                        Has no meaning if removeAbandoned is false.
+                    </p>
+                    <p>
+                        <em>logAbandoned</em> [ConnectionFactoryDBCPImpl] (default=false)
+                        Flag to log stack traces for application code which abandoned a
+                        Statement or Connection.
+                    </p>
+                    <note>
+                        Logging of abandoned Statements and Connections adds overhead for every
+                        Connection open or new Statement because a stack trace has to be
+                        generated.
+                    </note>
+                    <source><![CDATA[
+<!ATTLIST connection-pool
+    maxActive                       CDATA #IMPLIED
+    minIdle                         CDATA #IMPLIED
+    maxIdle                         CDATA #IMPLIED
+    maxWait                         CDATA #IMPLIED
+    minEvictableIdleTimeMillis      CDATA #IMPLIED
+    numTestsPerEvictionRun          CDATA #IMPLIED
+    testOnBorrow                    ( true | false ) #IMPLIED
+    testOnReturn                    ( true | false ) #IMPLIED
+    testWhileIdle                   ( true | false ) #IMPLIED
+    timeBetweenEvictionRunsMillis   CDATA #IMPLIED
+    whenExhaustedAction             ( 0 | 1 | 2 ) #IMPLIED
+    validationQuery                 CDATA #IMPLIED
+
+    removeAbandoned                 ( true | false ) #IMPLIED
+    removeAbandonedTimeout          CDATA #IMPLIED
+    logAbandoned                    ( true | false ) #IMPLIED
+>]]></source>
+                </section>
+
+                <anchor id="connection-pool-custom-attributes"/>
+                <section>
+                    <title>Custom attributes</title>
+                    <p>
+                        OJB itself and the <em>ConnectionFactory</em> implementation classes support specific
+                        connection configuration properties, these properties can be set by using
+                        <a href="#custom-attribute"><em>custom-attributes</em></a>.
+                    </p>
+                    <p>
+                        Usage example of supported custom attributes:
+                    </p>
+                    <source><![CDATA[
+<connection-pool
+    maxActive="30"
+    validationQuery="@VALIDATION_QUERY@"
+    testOnBorrow="@TEST_ON_BORROW@"
+    testOnReturn="@TEST_ON_RETURN@"
+    whenExhaustedAction="0"
+    maxWait="10000">
+
+    <!-- Set fetchSize to 0 to use driver's default. -->
+    <attribute attribute-name="fetchSize" attribute-value="0"/>
+
+    <!-- Attributes with name prefix "jdbc." are passed directly to the JDBC driver. -->
+    <!-- Example setting (used by Oracle driver when Statement batching is enabled) -->
+    <attribute attribute-name="jdbc.defaultBatchValue" attribute-value="5"/>
+
+    <!-- Attributes determining if ConnectionFactoryDBCPImpl
+         should also pool PreparedStatement. This is programmatically disabled
+         when using platform=Oracle9i since Oracle statement caching will conflict
+         with DBCP ObjectPool-based PreparepdStatement caching (ie setting true
+         here has no effect for Oracle9i platform). -->
+    <attribute attribute-name="dbcp.poolPreparedStatements" attribute-value="true"/>
+    <attribute attribute-name="dbcp.maxOpenPreparedStatements" attribute-value="60"/>
+    <!-- Attribute determining if the Commons DBCP connection wrapper will allow
+         access to the underlying concrete Connection instance from the JDBC-driver
+         (normally this is not allowed, like in J2EE-containers using wrappers). -->
+    <attribute attribute-name="dbcp.accessToUnderlyingConnectionAllowed"
+          attribute-value="false"/>
+</connection-pool>]]></source>
+                    <section>
+                        <title>jdbc.*</title>
+                        <p>
+                            Since OJB 1.0.4, custom attributes with names starting with "jdbc."
+                            will be passed (without the "jdbc." prefix) to the
+                            JDBC DriverManager when creating new Connection objects.
+                        </p>
+                        <p>
+                            Use this attribute to set driver-specific customized tuning options.
+                            For example, to set Oracle-batching to 5 statements:
+                        </p>
+                        <source>
+<![CDATA[<attribute attribute-name="jdbc.defaultBatchValue" attribute-value="5"/>]]>
+                        </source>
+                    </section>
+                    <section>
+                        <title>fetchSize</title>
+                        <p>
+                            <code>(default=0, unspecified)</code> Sets a hint in the JDBC
+                            driver not to fetch more than specified number of rows per server
+                            roundtrip for any ResultSet.
+                            <br/>
+                            Setttings different than the default (0) are especially
+                            useful to reduce memory footprint when using drivers
+                            that default to not using server-side cursors and
+                            retrieves all rows to the JDBC client-side driver buffer.
+                            PostgreSQL JDBC driver is a well-known example of this.
+                        </p>
+                        <note>
+                            * Many JDBC drivers will silently ignore the <em>fetchSize</em> hint.
+                            <br/>
+                            * Also note that <em>fetchSize</em> has nothing to do with max rows
+                            returned by a ResultSet, only number of rows retrieved per JDBC-
+                            driver network roundtrip to the database server
+                            (if the driver cares about the hint at all, that is).
+                        </note>
+                    </section>
+                    <section>
+                        <title>dbcp.poolPreparedStatements</title>
+                        <p>
+                            <em>Only valid for ConnectionFactoryDBCPImpl</em>
+                            <code>(default=false)</code> Enable prepared statement pooling.
+                        </p>
+                        <note>
+                            PreparedStatement pooling with Commons DBCP is programmatically
+                            disabled when using <code>platform=Oracle9i</code> in OJB, since
+                            the platform implementation activates Oracle-specific statement
+                            caching that conflicts with DBCP ObjectPool-based caching.
+                            Ie, for a descriptor with platform="Oracle9i" there is no effect
+                            in setting:
+                        </note>
+                        <source><![CDATA[
+<attribute attribute-name="dbcp.poolPreparedStatements" attribute-value="true"/>]]></source>
+                    </section>
+                    <section>
+                        <title>dbcp.maxOpenPreparedStatements</title>
+                        <p>
+                            <em>Only valid for ConnectionFactoryDBCPImpl</em>
+                            <code>(default=0, unlimited)</code> The maximum number of open
+                            statements that can be allocated from the statement pool at the
+                            same time, or zero for no limit.
+                        </p>
+                    </section>
+                    <section>
+                        <title>dbcp.accessToUnderlyingConnectionAllowed</title>
+                        <p>
+                            <em>Only valid for ConnectionFactoryDBCPImpl</em>
+                            <code>(default=false)</code>
+                            Controls if the DBCP "PoolGuard" connection wrapper allows access
+                            to the underlying Connection instance from the JDBC-driver.
+                        </p>
+                        <p>
+                            <em>Only use when you need direct access to driver-specific
+                            extentions. It is generally <strong>not</strong> needed to change
+                            this setting in OJB.</em>
+                        </p>
+                        <note>
+                            * Do not close the underlying connection, only the original one.
+                            <br/>
+                            * If using P6Spy, the underlying connection in DBCP will still be
+                            wrapped by P6Spy and you will have to continue unwrapping to the
+                            innermost delegate and Connection of JDBC-driver specific class.
+                        </note>
+                    </section>
+                </section>
+            </section>
+
+            <anchor id="sequence-manager"/>
+            <section>
+                <title>sequence-manager</title>
+                <p>
+                    The
+                    <em>sequence-manager</em> element specifies the sequence manager
+                    implementation used for key generation. All sequence manager
+                    implementations shipped with OJB can be found in the
+                    <em>org.apache.ojb.broker.util.sequence</em> package.
+                    If no sequence manager is defined, OJB uses the default one. More
+                    info about
+                    <a href="site:sequence-manager">sequence key generation here</a>.
+                </p>
+                <section>
+                    <title>Elements</title>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                        implementation specific properties.
+                    </p>
+                <source><![CDATA[
+<!ELEMENT sequence-manager (
+    documentation?,
+    attribute* )
+>]]></source>
+                </section>
+                <section>
+                    <title>Attributes</title>
+                    <p>
+                        The
+                        <em>className</em> attribute
+                        represents the full qualified class name of the desired sequence manager
+                        implementation - it is mandatory when using the sequence-manager element.
+                        All sequence manager implementations you find will under
+                        <em>org.apache.ojb.broker.util.sequence</em> package named as
+                        <em>SequenceManagerXXXImpl</em>
+                    </p>
+                    <p>
+                        More info about the usage of the Sequence Manager implementations
+                        <a href="site:sequence-manager">can be found here.
+                        </a>
+                    </p>
+                    <source><![CDATA[
+<!ATTLIST sequence-manager
+    className CDATA #REQUIRED>]]></source>
+                </section>
+                <anchor id="sequence-manager-custom-attributes"/>
+                <section>
+                    <title>Custom Attributes</title>
+                    <p>
+                        The <em>SequenceManager</em> implementation classes support specific configuration
+                        properties, these properties can be set by using
+                        <a href="#custom-attribute"><em>custom-attributes</em></a>.
+                    </p>
+                    <p>
+                        The description of the properties can be found in
+                        <a href="site:sequence-manager">sequence manager docs</a>.
+                        <br/>
+                        Usage example of supported custom attributes:
+                    </p>
+                    <source><![CDATA[
+<sequence-manager className="org.apache.ojb.broker.util.sequence.SequenceManagerHighLowImpl">
+    <!-- attributes supported by SequenceManagerHighLowImpl,
+    SequenceManagerInMemoryImpl, SequenceManagerNextValImpl
+    please see "Sequence Manager" guide or/and javadoc of class for more information -->
+    <attribute attribute-name="seq.start" attribute-value="200000"/>
+    <attribute attribute-name="autoNaming" attribute-value="true"/>
+
+    <!-- attributes supported by SequenceManagerHighLowImpl
+    please see "Sequence Manager" guide or/and javadoc of classes for more information -->
+    <attribute attribute-name="grabSize" attribute-value="20"/>
+
+    <!-- optional attributes supported by SequenceManagerNextValImpl (support depends
+    on the used database), please see "Sequence Manager" guide or/and javadoc of
+    classes for more information -->
+    <!-- attribute attribute-name="seq.as" attribute-value="INTEGER"/ -->
+    <!-- attribute attribute-name="seq.incrementBy" attribute-value="1"/ -->
+    <!-- attribute attribute-name="seq.maxValue" attribute-value="999999999999999999999999999"/ -->
+    <!-- attribute attribute-name="seq.minValue" attribute-value="1"/ -->
+    <!-- attribute attribute-name="seq.cycle" attribute-value="false"/ -->
+    <!-- attribute attribute-name="seq.cache" attribute-value="20"/ -->
+    <!-- attribute attribute-name="seq.order" attribute-value="false"/ -->
+</sequence-manager>]]></source>
+                </section>
+            </section>
+
+            <anchor id="object-cache"/>
+            <section>
+                <title>object-cache</title>
+                <p>
+                    The
+                    <em>object-cache</em> element can be used to specify the
+                    <a href="site:object-cache">ObjectCache</a>
+                    implementation used by OJB. There are three levels of declaration:
+                </p>
+                <ul>
+                    <li>in
+                        <a href="ext:ojb/ojb.properties">OJB.properties</a> file, to declare the standard (default)
+                        ObjectCache implementation
+                    </li>
+                    <li>
+                        on jdbc-connection-descriptor level, to declare ObjectCache implementation
+                        on a per connection/user level
+                    </li>
+                    <li>
+                        on class-descriptor level, to declare ObjectCache implementation
+                        on a per class level
+                    </li>
+                </ul>
+                <note>
+                    The priority of the declared object-cache elements are:
+                    <br/>
+                    per class > per jdbc descriptor > standard
+                </note>
+                <p>
+                    E.g. if you declare ObjectCache implementation 'my.cacheDef' as standard, set
+                    ObjectCache implementation 'my.cacheA' in class-descriptor for class A and class B
+                    does not declare an object-cache element. Then OJB use 'my.cacheA' as ObjectCache
+                    for class A and 'my.cacheDef' for class B.
+                </p>
+                <section>
+                    <title>Elements</title>
+                    <p>
+                    Use the <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                    implementation specific properties.
+                    </p>
+                <source><![CDATA[
+<!ELEMENT object-cache (documentation?, attribute*)>]]></source>
+                </section>
+                <section>
+                    <title>Attributes</title>
+                    <p>
+                    Attribute 'class' specifies the full qualified class name of
+                    the used ObjectCache implementation.
+                    </p>
+                <source><![CDATA[
+<!ATTLIST object-cache class  CDATA  #REQUIRED>]]></source>
+               </section>
+                <section>
+                    <title>Custom Attributes</title>
+                    <p>
+                        Many <em>ObjectCache</em> implementation classes support specific configuration
+                        properties, these properties can be set by using
+                        <a href="#custom-attribute"><em>custom-attributes</em></a>.
+                    </p>
+                    <p>
+                        The description of the properties can be found in
+                        <a href="site:object-cache">object cache docs</a>.
+                        <br/>
+                        Usage example of supported custom attributes:
+                    </p>
+                    <source><![CDATA[
+<object-cache class="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl">
+    <!-- meaning of attributes, please see docs section "Caching" -->
+    <!-- common attributes -->
+    <attribute attribute-name="cacheExcludes" attribute-value=""/>
+
+    <!-- ObjectCacheTwoLevelImpl attributes -->
+    <attribute attribute-name="applicationCache"
+        attribute-value="org.apache.ojb.broker.cache.ObjectCacheDefaultImpl"/>
+    <attribute attribute-name="copyStrategy"
+        attribute-value="org.apache.ojb.broker.cache.ObjectCacheTwoLevelImpl$CopyStrategyImpl"/>
+    <attribute attribute-name="forceProxies" attribute-value="false"/>
+
+    <!-- ObjectCacheDefaultImpl attributes -->
+    <attribute attribute-name="timeout" attribute-value="900"/>
+    <attribute attribute-name="autoSync" attribute-value="true"/>
+    <attribute attribute-name="cachingKeyType" attribute-value="0"/>
+    <attribute attribute-name="useSoftReferences" attribute-value="true"/>
+</object-cache>]]></source>
+                </section>
+            </section>
+
+
+            <anchor id="custom-attribute"/>
+            <section>
+                <title>custom attribute</title>
+                <p>
+                    An
+                    <em>attribute</em> element allows arbitrary name/value pairs to
+                    be represented in the repository. See the <a href="ext:ojb/repository.dtd">repository.dtd</a>
+                    for details on which elements support it (e.g. <a href="#class-descriptor">class-descriptor</a>,
+                    <a href="#object-cache">object-cache</a>, ...).
+                </p>
+                <source><![CDATA[
+<!ELEMENT attribute EMPTY>]]></source>
+                <p>
+                    The <em>attribute-name </em> identifies the name of the attribute.
+                    <br/>
+                    The <em>attribute-value</em> identifies the value of the attribute.
+                </p>
+                <source><![CDATA[
+<!ATTLIST attribute
+    attribute-name CDATA #REQUIRED
+    attribute-value CDATA #REQUIRED
+>]]></source>
+                <p>
+                    To get access of the definied attribute use methods of
+                    <code>org.apache.ojb.broker.metadata.AttributeContainer</code>. All
+                    classes supporting <em>custom attributes</em> have to implement this interface.
+                </p>
+                <p>
+                    Here you can see an example how to define an <em>custom attribute</em> within
+                    the <a href="#class-descriptor">class-descriptor</a> element:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+        class="my.TestClass"
+        table="OJB_TEST_CLASS"
+    >
+      <field-descriptor
+         name="id"
+         column="ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+      />
+      ...
+      <attribute attribute-name="myAttribute" attribute-value="myValue"/>
+</class-descriptor>]]></source>
+                <p>
+                    To access the attribute you have to know the associated <code>AttributeContainer</code>
+                    class. Here it was <a href="ext:api/class-descriptor">ClassDescriptor</a>. To read
+                    the attribute at runtime do:
+                </p>
+                <source><![CDATA[
+// get the ClassDescriptor
+ClassDescriptor cld = broker.getClassDescriptor(TestClass.class);
+String value = cld.getAttribute("myAttribute");]]></source>
+            </section>
+
+
+            <anchor id="class-descriptor"/>
+            <section>
+                <title>class-descriptor</title>
+                <p>
+                    A <em>class-descriptor</em> and the associated java class
+                    <a href="ext:api/class-descriptor">ClassDescriptor</a> encapsulate metadata
+                    information of an interface, abstract or concrete class.
+                </p>
+                <section>
+                    <title>Elements</title>
+                <p>
+                    For <em>interfaces</em> or <em>abstract</em> classes a
+                    <em>class-descriptor</em> holds a sequence
+                    of <em>extent-class </em> elements which specify the
+                    <a href="site:advanced-technique/extents">types extending this class</a>.
+                    <br/>
+                    Concrete base classes may specify a sequence of extent-class elements,
+                    naming the derived classes.
+                </p>
+                <p>
+                    For <em>concrete</em> classes it must have
+                    <em>field-descriptor</em>s that describe primitive typed instance variables.
+                    References to other persistent entity classes are specified by
+                    <em>reference-descriptor</em> elements.
+                    Collections or arrays attributes that contain other persistent entity classes are specified by
+                    <em>collection-descriptor</em> elements
+                    <br/>
+                    A class-descriptor may contain user defined custom attribute elements.
+                </p>
+                <p>
+                    Use the <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                    implementation specific properties.
+                </p>
+                <source><![CDATA[
+<!ELEMENT class-descriptor (
+    (
+        documentation?,
+        extent-class+,
+        attribute* ) |
+    (
+        documentation?,
+        object-cache?,
+        extent-class*,
+        field-descriptor+,
+        reference-descriptor*,
+        collection-descriptor*,
+        index-descriptor*,
+        attribute*,
+        insert-procedure?,
+        update-procedure?,
+        delete-procedure? )
+    )
+>]]></source>
+                </section>
+                <section>
+                    <title>Attributes</title>
+                <p>
+                    The <em>class</em> attribute contains the full qualified name of the specified class. As this
+                    attribute is of the XML type ID there can only be one <em>class-descriptor </em> per class.
+                </p>
+                <p>
+                    The <em>isolation-level</em> attribute defines the locking isolation level of the
+                    specified class (used by OJB's <a href="site:lock-manager/pessimistic-locking">pessimistic locking</a> api).
+                </p>
+                <note>
+                    The <em>isolation-level</em> does not touch the jdbc-connection isolation level. It's completely
+                    independend from the database connection setting and only important when
+                    <a href="site:lock-manager/pessimistic-locking">pessimistic locking</a> was used.
+                </note>
+                <p>
+                    If the <em>proxy</em> attribute is set, proxies are used for all loading operations of instances of this
+                    class. If set to <em>dynamic</em>, dynamic proxies are used.
+                    If set to another value this value is interpreted as the full-qualified name of the proxy class to use.
+                    More info about <a href="site:basic-technique/using-proxy">using of proxies here</a>.
+                </p>
+                <p>
+                    The <em>proxy-prefetching-limit</em> attribute specifies a limit to the number of elements loaded on a
+                    proxied reference. When the first proxied element is loaded, a number up to the
+                    proxy-prefetch-limit will be loaded in addition.
+                </p>
+                <p>
+                    The <em>schema</em> attribute may contain the database schema owning the table mapped to this class.
+                </p>
+                <p>
+                    The <em>table</em> attribute speciefies the table name this class is mapped to.
+                </p>
+                <p>
+                    The <em>row-reader</em> attribute may contain a full qualified class name. This class will be
+                    used as the <a href="site:advanced-technique/using-rowreader">RowReader</a> implementation used
+                    to materialize instances of the persistent class.
+                </p>
+                <p>
+                    The <em>extends</em> attribute is <strong>deprecated</strong> and will be removed
+                    or reintroduced with changed funcitonality in future. DON'T USE IT!
+                </p>
+                <p>
+                    The <em>accept-locks</em> attribute specifies whether implicit locking should propagate to this class.
+                    Currently relevant for the ODMG layer only.
+                </p>
+                <p>
+                    The optional <em>initialization-method </em> specifies a no-argument instance method that is
+                    invoked after reading an instance from a database row. It can be used to do initialization
+                    and validations.
+                </p>
+                <p>
+                    The optional <em>factory-class</em> specifies a factory class that that is to be used instead of a no
+                    argument constructor when new objects are created. If the factory class is specified, then the
+                    <em>factory-method</em> also must be defined. It refers to a static no-argument method of the factory
+                    class that returns a new instance.
+                </p>
+                <p>
+                    The <em>refresh</em> attribute can be set to <em>true</em> to force OJB to refresh instances
+                    when loaded from cache. Means all field values (except references) will be replaced by values
+                    retrieved from the database. It's set to <em>false</em> by default.
+                </p>
+                <source><![CDATA[
+<!ATTLIST class-descriptor
+    class ID #REQUIRED
+    isolation-level (read-uncommitted | read-committed |
+        repeatable-read | serializable | optimistic | none) "read-uncommitted"
+    proxy CDATA #IMPLIED
+    proxy-prefetching-limit CDATA #IMPLIED
+    schema CDATA #IMPLIED
+    table CDATA #IMPLIED
+    row-reader CDATA #IMPLIED
+    extends IDREF #IMPLIED
+    accept-locks (true | false) "true"
+    initialization-method CDATA #IMPLIED
+    factory-class CDATA #IMPLIED
+    factory-method CDATA #IMPLIED
+    refresh (true | false) "false"
+>]]></source>
+            </section>
+        </section>
+
+        <anchor id="extent-class"/>
+        <section>
+            <title>extent-class</title>
+            <p>
+                An extent-class element is used to specify an implementing class or a
+                derived class that belongs to the extent of all instances of the
+                interface or base class.
+            </p>
+            <source><![CDATA[
+<!ELEMENT extent-class EMPTY>]]></source>
+            <p>
+                The <em>class-ref</em> attribute must contain a fully qualified classname and
+                the repository file must contain a class-descriptor for this class.
+            </p>
+            <source><![CDATA[
+<!ATTLIST extent-class class-ref IDREF #REQUIRED>]]></source>
+        </section>
+
+
+            <anchor id="field-descriptor"/>
+            <section>
+                <title>field-descriptor</title>
+                <p>
+                    A field descriptor contains mapping info for a primitive typed attribute of a persistent class.
+                    <br/>
+                    A field descriptor may contain <a href="#custom-attribute">custom attribute</a> elements.
+                </p>
+                <p>
+                    Use the <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                    implementation specific properties.
+                </p>
+                <source><![CDATA[
+<!ELEMENT field-descriptor (documentation?, attribute*)>]]></source>
+                <p>
+                    <strong>The <em>id</em> attribute is optional.
+                    </strong> If not specified, OJB internally
+                    sorts field-descriptors according to their order of appearance in the
+                    repository file.
+                    <br/>
+                    If a different sort order is intended the id attribute may be used to
+                    hold a unique number identifying the decriptors position in the sequence of
+                    field-descriptors.
+                </p>
+                <note>
+                    The order of the numbers for the field-descriptors must correspond to
+                    the order of columns in the mapped table.
+                </note>
+                <p>
+                    The <em>name</em> attribute holds the name of the persistent classes attribute.
+                    More info about <a href="site:advanced-technique/persistent-field">persistent field handling</a>.
+                </p>
+                <p>
+                    The <em>table</em> attribute may specify a table different from the mapped
+                    table for the persistent class. (<strong>currently not implemented</strong>).
+                </p>
+                <p>
+                    The <em>column</em> attribute specifies the column the persistent classes field
+                    is mapped to.
+                </p>
+                <p>
+                    The <em>jdbc-type</em> attribute specifies the JDBC type of the column.
+                    If not specified OJB tries to identify the JDBC type by inspecting the
+                    Java attribute by reflection - OJB use the java/jdbc mapping desribed
+                    <a href="site:jdbc-types">here</a>.
+                </p>
+                <anchor id="primary-key"/>
+                <p>
+                    The <em>primarykey</em> specifies if the column is a primary key column, default
+                    value is <em>false</em>. It's possible to auto assign primary key fields, more
+                    info see <a href="#autoincrement">autoincrement section</a>
+                </p>
+                <p>
+                    The <em>nullable</em> attribute specifies if the column may contain null values.
+                </p>
+                <p>
+                    The <em>indexed</em> attribute specifies if there is an index on this column
+                </p>
+                <anchor id="autoincrement"/>
+                <p>
+                    The <em>autoincrement</em> attribute specifies if the values for the persistent
+                    attribute should be automatically generated by OJB. More info about
+                    <a href="site:sequence-manager">sequence key generation here</a>.
+                </p>
+                <p>
+                    The <em>sequence-name</em> attribute can be used to state explicitly a sequence
+                    name used by the sequence manager implementations. Check the <a href="ext:javadoc">javadocs</a>
+                    of the used sequence manager implementation to get information if this
+                    is a mandatory attribute. OJB standard sequence manager implementations
+                    build a sequence name by its own, if the attribute is not set.
+                    More info about
+                    <a href="site:sequence-manager">sequence key generation here</a>.
+                </p>
+                <p>
+                    The <em>locking</em> attribute is set to <em>true</em> if the persistent attribute is
+                    used for <em>optimistic locking</em>. More about
+                    <a href="site:faq/optimistic-locking">optimistic locking</a>. The default value is
+                    <em>false</em>.
+                </p>
+                <p>
+                    The <em>updatelock</em> attribute is set to <em>false</em> if the persistent attribute is
+                    used for optimistic locking AND the dbms should update the lock column
+                    itself. The default is <em>true</em> which means that when locking is true then
+                    OJB will update the locking fields. Can only be set for TIMESTAMP and INTEGER
+                    columns.
+                </p>
+                <p>
+                    The <em>default-fetch</em> attribute specifies whether the persistent attribute
+                    belongs to the JDO default fetch group.
+                </p>
+                <p>
+                    The <em>conversion</em> attribute contains a fully qualified class name.
+                    This class must implement the interface <code>org.apache.ojb.accesslayer.conversions.FieldConversion</code>.
+                    A FieldConversion can be used to implement conversions between Java-
+                    attributes and database columns. More about
+                    <a href="site:jdbc-types/field-conversion">field conversion</a>.
+                </p>
+                <p>
+                    The <em>length</em> attribute can be used to specify a length setting if
+                    required by the jdbc-type of the underlying database column.
+                </p>
+                <p>
+                    The <em>precision</em> attribute can be used to specify a precision setting, if
+                    required by the jdbc-type of the underlying database column.
+                </p>
+                <p>
+                    The <em>scale</em> attribute can be used to specify a sclae setting, if
+                    required by the jdbc-type of the underlying database column.
+                </p>
+                <p>
+                    The <em>access</em> attribute specifies the accessibility of the field.
+                    Fields marked as <em>readonly</em> are not to modified. <em>readwrite</em> marks
+                    fields that may be read and written to. <em>anonymous</em> marks anonymous fields.
+                    <br/>
+                    An anonymous field has a database representation (column) but no
+                    corresponding Java attribute. Hence the name of such a field does not
+                    refer to a Java attribute of the class, but is used as a unique
+                    identifier only. More info about <a href="site:anonymous-keys">anonymous keys here</a>.
+                </p>
+                <source><![CDATA[
+<!ATTLIST field-descriptor
+    id CDATA #IMPLIED
+    name CDATA #REQUIRED
+    table CDATA #IMPLIED
+    column CDATA #REQUIRED
+    jdbc-type (BIT | TINYINT | SMALLINT | INTEGER | BIGINT | DOUBLE |
+               FLOAT | REAL | NUMERIC | DECIMAL | CHAR | VARCHAR |
+               LONGVARCHAR | DATE | TIME | TIMESTAMP | BINARY |
+               VARBINARY | LONGVARBINARY | CLOB | BLOB) #REQUIRED
+    primarykey (true | false) "false"
+    nullable (true | false) "true"
+    indexed (true | false) "false"
+    autoincrement (true | false) "false"
+    sequence-name CDATA #IMPLIED
+    locking (true | false) "false"
+    update-lock (true | false) "true"
+    default-fetch (true | false) "false"
+    conversion CDATA #IMPLIED
+    length CDATA #IMPLIED
+    precision CDATA #IMPLIED
+    scale CDATA #IMPLIED
+    access (readonly | readwrite | anonymous) "readwrite"
+>]]></source>
+            </section>
+
+
+            <anchor id="reference-descriptor"/>
+            <section>
+                <title>reference-descriptor</title>
+                <p>
+                    A reference-descriptor contains mapping info for an attribute of a
+                    persistent class that is not primitive but references another
+                    persistent entity Object. More about
+                    <a href="site:basic-technique/one-to-one">1:1 references here</a>.
+                </p>
+                <p>
+                    A <em>foreignkey</em> element contains information on foreign key columns that
+                    implement the association on the database level.
+                </p>
+                <source><![CDATA[
+<!ELEMENT reference-descriptor ( foreignkey+)>]]></source>
+                <p>
+                    The <em>name</em> attribute holds the name of the persistent classes attribute.
+                    Depending on the used <a href="site:advanced-technique/persistent-field">PersistendField</a>
+                    implementation, there must be e.g. an attribute in the persistent class with this name or
+                    a JavaBeans compliant property of this name.
+                </p>
+                <p>
+                    The <em>class-ref</em> attribute contains a fully qualified class name.
+                    This class is the Object type of the persistent reference attribute.
+                    As this is an IDREF there must be a class-descriptor for this class
+                    in the repository too.
+                </p>
+                <p>
+                    The <em>proxy</em> attribute can be set to <em>true</em> to specify that proxy based
+                    lazy loading should be used for this attribute.
+                </p>
+                <p>
+                    The <em>proxy-prefetch-limit</em> attribute specifies a limit to the number of
+                    elements loaded on a proxied reference. When the first proxied
+                    element is loaded, a number up to the proxy-prefetch-limit will
+                    be loaded in addition.
+                </p>
+                <p>
+                    The <em>refresh</em> attribute can be set to <em>true</em> to force OJB to refresh
+                    the object reference when the object is loaded from cache. If <em>true</em> OJB try to retrieve
+                    the reference (dependent on the
+                    <a href="site:basic-technique/cascading">auto-xxx settings</a>) again when the main object
+                    is loaded from cache (normally only make sense for 1:n and m:n relations).
+                    <br/>
+                    This could be useful if the <a href="site:object-cache">ObjectCache implementation</a>
+                    cache full object graphs without synchronize the referenced objects.
+                </p>
+                <note>
+                    This does not mean that all referenced objects will be read from database. It only
+                    means that the reference will be refreshed, the objects itself may provided by the cache.
+                    To refresh the object fields itself set the <em>refresh</em> attribute in
+                    <a href="#class-descriptor">class-descriptor</a> of the referenced object or disable
+                    <a href="site:object-cache">caching</a> (to always read objects from the persistent storage).
+                </note>
+                <p>
+                    The <em>auto-retrieve</em> attribute specifies whether OJB automatically retrieves
+                    this reference attribute on loading the persistent object.
+                    If set to <em>false</em> the reference attribute is set to null. In this case the
+                    user is responsible to fill the reference attribute.
+                    <br/>
+                    More info about <a href="site:basic-technique/auto-retrieve">auto-retrieve here</a>.
+                </p>
+                <p>
+                    The <em>auto-update</em> attribute specifies whether OJB automatically stores
+                    this reference attribute on storing the persistent object.
+                    <br/>
+                    More info about the <a href="site:basic-technique/cascading">auto-XXX settings here</a>.
+                </p>
+                <note>
+                    This attribute must be set to <em>false</em> if using the OTM or JDO layer.
+                    <br/> For ODMG-api <em>none</em> is mandatory (since OJB 1.0.2).
+                </note>
+                <p>
+                    The <em>auto-delete</em> attribute specifies whether OJB automatically deletes
+                    this reference attribute on deleting the persistent object.
+                    <br/>
+                    More info about the <a href="site:basic-technique/cascading">auto-XXX settings here</a>.
+                </p>
+                <note>
+                    This attribute must be set to <em>false</em> if using the OTM or JDO layer.
+                    <br/> For ODMG-api <em>none</em> is mandatory (since OJB 1.0.2).
+                </note>
+                <p>
+                    The <em>otm-dependent</em> attribute specifies whether the OTM layer automatically
+                    creates the referred object or deletes it if the reference field is set to null.
+                    Also otm-dependent references behave as if auto-update and auto-delete
+                    were set to true, but the auto-update and auto-delete attributes themself
+                    must be always set to false for use with OTM layer.
+                </p>
+                <source><![CDATA[
+<!ATTLIST reference-descriptor
+	name CDATA #REQUIRED
+	class-ref IDREF #REQUIRED
+
+	proxy (true | false) "false"
+	proxy-prefetching-limit CDATA #IMPLIED
+	refresh (true | false) "false"
+
+	auto-retrieve (true | false) "true"
+	auto-update (none | link | object | true | false) "false"
+	auto-delete (none | link | object | true | false) "false"
+	otm-dependent (true | false) "false"
+>]]></source>
+            </section>
+
+
+            <section>
+                <title>foreignkey</title>
+                <p>
+                    A <em>foreignkey</em> element contains information on a foreign-key persistent
+                    attribute that implement the association on the database level.
+                </p>
+                <source><![CDATA[
+<!ELEMENT foreignkey EMPTY>]]></source>
+                <p>
+                    The <em>field-ref</em> and <em>field-id-ref</em> attributes contain
+                    the name and the id attributes of the field-descriptor
+                    used as a foreign key.
+                </p>
+                <note>
+                    Exactly one of these attributes must be specified.
+                </note>
+                <source><![CDATA[
+<!ATTLIST foreignkey
+    field-id-ref CDATA #IMPLIED
+    field-ref CDATA #IMPLIED
+>]]></source>
+            </section>
+
+
+            <anchor id="collection-descriptor"/>
+            <section>
+                <title>collection-descriptor</title>
+                <p>
+                    A collection-descriptor contains mapping info for a Collection- or
+                    Array-attribute of a persistent class that contains persistent
+                    entity Objects. See more about <a href="site:basic-technique/one-to-n">1:n</a>
+                    and <a href="site:basic-technique/m-to-n">m:n</a> references.
+                </p>
+                <p>
+                    The <a href="#orderby"><em>orderby</em></a> element(s) allow to specify
+                    the order the collection objects. It's allowed to specify multiple order fields.
+                </p>
+                <p>
+                    The <em>inverse-foreignkey</em> elements contains information on foreign-key
+                    attributes that implement the association on the database level.
+                </p>
+                <p>
+                    The <em>fk-pointing-to-this-class</em> and <em>fk-pointing-to-element-class</em> elements
+                    are only needed if the Collection or array implements a m:n association.
+                    In this case they contain information on the foreign-key columns of
+                    the intermediary table.
+                </p>
+                <p>
+                    Use the
+                    <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                    implementation specific properties.
+                </p>
+                <source><![CDATA[
+<!ELEMENT collection-descriptor (
+    documentation?,
+    orderby*,
+    inverse-foreignkey*,
+    fk-pointing-to-this-class*,
+    fk-pointing-to-element-class*,
+    attribute*)> ]]></source>
+                <p>
+                    The <em>name</em> attribute holds the name of the persistent classes attribute.
+                    More info about <a href="site:advanced-technique/persistent-field">persistent field handling</a>.
+                </p>
+                <p>
+                    The <em>collection-class</em> may hold a fully qualified class name.
+                    This class must be the Java type of the Collection attribute.
+                    This attribute must only specified if the attribute type is not
+                    a <code>java.util.Collection</code> (or subclass) or Array type. It is
+                    also possible to use non Collection or Array type user defined "collection"
+                    classes. More info see section
+                    <a href="site:advanced-technique/manageable-collection">manageable collection</a>.
+                </p>
+                <p>
+                    The <em>element-class-ref</em> attribute contains a fully qualified class name.
+                    This class is the Object type of the elements of persistent collection
+                    or Array attribute.
+                    As this is an IDREF there must be a class-descriptor for this class
+                    in the repository too.
+                </p>
+                <p>
+                    DEPRECATED, please use the '<a href="#orderby">orderby</a>'-element.
+                    The <em>orderby</em> attribute may specify a field of the element class.
+                    The Collection or Array will be sorted according to the specified attribute.
+                    The sort attribute may be used to specify ascending or descending order for
+                    this operation.
+                </p>
+                <p>
+                    The <em>indirection-table</em> must specify the name of an intermediary table,
+                    if the persistent collection attribute implements a m:n association.
+                </p>
+                <p>
+                    The <em>proxy</em> attribute can be set to true to specify that proxy based
+                    lazy loading should be used for this attribute.
+                    More about <a href="site:basic-technique/using-proxy">using proxy here</a>.
+                </p>
+                <p>
+                    The <em>proxy-prefetch-limit</em> attribute specifies a limit to the number of
+                    elements loaded on a proxied reference. When the first proxied
+                    element is loaded, a number up to the proxy-prefetch-limit will
+                    be loaded in addition.
+                </p>
+                <p>
+                    The <em>refresh</em> attribute can be set to <em>true</em> to force OJB to refresh
+                    the object reference when the object is loaded from cache. If <em>true</em> OJB try to retrieve
+                    the reference (dependent on the
+                    <a href="site:basic-technique/cascading">auto-xxx settings</a>) again when the main object
+                    is loaded from cache (normally only make sense for 1:n and m:n relations).
+                    <br/>
+                    This could be useful if the <a href="site:object-cache">ObjectCache implementation</a>
+                    cache full object graphs without synchronize the referenced objects.
+                </p>
+                <note>
+                    This does not mean that all referenced objects will be read from database. It only
+                    means that the reference will be refreshed, the objects itself may provided by the cache.
+                    To refresh the object fields itself set the <em>refresh</em> attribute in
+                    <a href="#class-descriptor">class-descriptor</a> of the referenced object or disable
+                    <a href="site:object-cache">caching</a> (to always read objects from the persistent storage).
+                </note>
+
+                <p>
+                    The <em>auto-retrieve</em> attribute specifies whether OJB automatically retrieves
+                    this reference attribute on loading the persistent object.
+                    If set to <em>false</em> the reference attribute is set to null. In this case the
+                    user is responsible to fill the reference attribute.
+                    <br/>
+                    More info about <a href="site:basic-technique/auto-retrieve">auto-retrieve here</a>.
+                </p>
+                <p>
+                    The <em>auto-update</em> attribute specifies whether OJB automatically stores
+                    this reference attribute on storing the persistent object.
+                    <br/>
+                    More info about the <a href="site:basic-technique/cascading">auto-XXX settings here</a>.
+                </p>
+                <note>
+                    This attribute must be set to <em>false</em> if using the OTM or JDO layer.
+                    <br/> For ODMG-api <em>none</em> is mandatory (since OJB 1.0.2).
+                </note>
+                <p>
+                    The <em>auto-delete</em> attribute specifies whether OJB automatically deletes
+                    this reference attribute on deleting the persistent object.
+                    <br/>
+                    More info about the <a href="site:basic-technique/cascading">auto-XXX settings here</a>.
+                </p>
+                <note>
+                    This attribute must be set to <em>false</em> if using the OTM or JDO layer.
+                    <br/> For ODMG-api <em>none</em> is mandatory (since OJB 1.0.2).
+                </note>
+                <p>
+                    The <em>otm-dependent</em> attribute specifies whether the OTM layer automatically
+                    creates collection elements that were included into the collection,
+                    and deletes collection elements that were removed from the collection.
+                    Also otm-dependent references behave as if auto-update and auto-delete
+                    were set to true, but the auto-update and auto-delete attributes themself
+                    must be always set to false for use with OTM layer.
+                </p>
+                <source><![CDATA[
+<!ATTLIST collection-descriptor
+	name CDATA #IMPLIED
+	collection-class CDATA #IMPLIED
+	element-class-ref IDREF #REQUIRED
+	orderby CDATA #IMPLIED
+	sort (ASC | DESC) "ASC"
+
+	indirection-table CDATA #IMPLIED
+
+	proxy (true | false) "false"
+	proxy-prefetching-limit CDATA #IMPLIED
+	refresh (true | false) "false"
+
+	auto-retrieve (true | false) "true"
+	auto-update (none | link | object | true | false) "false"
+	auto-delete (none | link | object | true | false) "false"
+	otm-dependent (true | false) "false"
+>]]></source>
+            </section>
+
+
+            <anchor id="orderby"/>
+            <section>
+                <title>order-by</title>
+                <p>
+                    A <em>order-by</em> element contains an attribute name and a sort order.
+                </p>
+                <source><![CDATA[
+<!ELEMENT orderby (documentation?)>]]></source>
+                <p>
+                    The <em>name</em> attribute specifies the field or the column (full qualified
+                    column name) the order based on. The <em>sort</em> attribute specifies
+                    the order direction.
+                </p>
+                <source><![CDATA[
+<!ATTLIST orderby
+	name CDATA #REQUIRED
+	sort (ASC | DESC) "ASC"
+>]]></source>
+                <p>
+                    Here is an examples of how to use ordering for one side
+                    of a m:n reference:
+                </p>
+                <source><![CDATA[
+<collection-descriptor
+    name="actors"
+    collection-class="org.apache.ojb.broker.util.collections.ManageableArrayList"
+    element-class-ref="org.apache.ojb.broker.M2NTest$Actor"
+    auto-retrieve="false"
+    auto-update="false"
+    auto-delete="false"
+    indirection-table="M2N_ROLE"
+>
+    <!-- Check the use of order by element for fields and plain columns -->
+    <orderby name="name" sort="ASC"/>
+    <orderby name="M2N_ROLE.MOVIE_ID_INT" sort="DESC"/>
+
+    <fk-pointing-to-this-class column="MOVIE_ID_INT"/>
+    <fk-pointing-to-this-class column="MOVIE_ID2_INT"/>
+    <fk-pointing-to-this-class column="MOVIE_ID_STR"/>
+    <fk-pointing-to-element-class column="ACTOR_ID"/>
+    <fk-pointing-to-element-class column="ACTOR_ID2"/>
+</collection-descriptor>]]></source>
+
+            </section>
+
+
+            <section>
+                <title>inverse-foreignkey</title>
+                <p>
+                    A <em>inverse-foreignkey</em> element contains information on a foreign-key
+                    persistent attribute that implement the association on the database level.
+                </p>
+                <source><![CDATA[
+<!ELEMENT inverse-foreignkey EMPTY>]]></source>
+                <p>
+                    The <em>field-ref</em> and <em>field-id-ref</em> attributes contain
+                    the name and the id attributes of the field-descriptor
+                    used as a foreign key.
+                    Exactly one of these attributes must be specified.
+                </p>
+                <source><![CDATA[
+<!ATTLIST inverse-foreignkey
+    field-id-ref CDATA #IMPLIED
+    field-ref CDATA #IMPLIED
+>]]></source>
+            </section>
+
+
+            <section>
+                <title>fk-pointing-to-this-class</title>
+                <p>
+                    A <em>fk-pointing-to-this-class</em> element contains information on a foreign-key
+                    column of an intermediary table in a m:n scenario.
+                </p>
+                <source><![CDATA[
+<!ELEMENT fk-pointing-to-this-class EMPTY>]]></source>
+                <p>
+                    The <em>column</em> attribute specifies the foreign-key column in the intermediary
+                    table that points to the class holding the collection.
+                </p>
+                <source><![CDATA[
+<!ATTLIST fk-pointing-to-this-class
+    column CDATA #REQUIRED
+> ]]></source>
+            </section>
+
+
+            <section>
+                <title>fk-pointing-to-element-class</title>
+                <p>
+                    A <em>fk-pointing-to-element-class</em> element contains information on a foreign-key
+                    column of an intermediary table in a m:n scenario.
+                </p>
+                <source><![CDATA[
+<!ELEMENT fk-pointing-to-element-class EMPTY>]]></source>
+                <p>
+                    The <em>column</em> attribute specifies the foreign-key column in the intermediary
+                    table that points to the class of the collection elements.
+                </p>
+                <source><![CDATA[
+<!ATTLIST fk-pointing-to-element-class
+    column CDATA #REQUIRED
+>]]></source>
+            </section>
+
+
+            <section>
+                <title>query-customizer</title>
+                <p>
+                    A query enhancer element to enhance the 1:n query, e.g. to modify
+                    the result objects of a query. More info about
+                    <a href="site:advanced-technique/query-customizer">customizing collection queries</a>.
+                </p>
+                <p>
+                    Use the
+                    <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                    implementation specific properties.
+                </p>
+                <source><![CDATA[
+<!ELEMENT query-customizer (
+    documentation?,
+    attribute*)>
+
+<!ATTLIST query-customizer
+    class CDATA #REQUIRED
+>]]></source>
+            </section>
+
+
+            <section>
+                <title>index-descriptor</title>
+                <p>
+                    An <em>index-descriptor</em> describes an index by listing its columns.  It may be
+                    unique or not.
+                </p>
+                <source><![CDATA[
+<!ELEMENT index-descriptor (documentation?, index-column+)>
+
+<!ATTLIST index-descriptor
+    name CDATA #REQUIRED
+    unique (true | false) "false">]]></source>
+            </section>
+
+
+            <section>
+                <title>index-column</title>
+                <p>
+                    An <em>index-column</em> is just the name of a column in an index.
+                </p>
+                <source><![CDATA[
+<!ELEMENT index-column (documentation?)>
+
+<!ATTLIST index-column
+    name CDATA #REQUIRED>]]></source>
+            </section>
+
+            <section>
+                <title>Stored Procedure Support</title>
+                <p>
+                    OJB supports stored procedures for insert, update and delete operations.
+                    <a href="site:stored-procedures">How to use stored procedures within OJB can be found here</a>.
+                </p>
+
+                <section>
+                    <title>insert-procedure</title>
+                    <p>
+                        Identifies the procedure/function that should be used to handle
+                        insertions for a specific class-descriptor.
+                    </p>
+                    <p>
+                        The nested <em>argument</em> elements define the argument list for the
+                        procedure/function as well as the source for each argument.
+                    </p>
+                    <p>
+                        Use the <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                        implementation specific properties.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT insert-procedure
+    (documentation?, (runtime-argument | constant-argument)?, attribute*)>]]></source>
+                    <p>
+                        The <em>name</em> attribute identifies the name of the procedure/function to use
+                    </p>
+                    <p>
+                        The <em>return-field-ref</em> identifies the field-descriptor that will receive
+                        the value that is returned by the procedure/function.  If the procedure/
+                        function does not include a return value, then do not specify a value
+                        for this attribute.
+                    </p>
+                    <p>
+                        The <em>include-all-fields</em> attribute indicates if all field-descriptors in
+                        the corresponding class-descriptor are to be passed to the procedure/
+                        function.  If include-all-fields is 'true', any nested 'argument'
+                        elements will be ignored.  In this case, values for all field-descriptors
+                        will be passed to the procedure/function.  The order of values that are
+                        passed to the procedure/function will match the order of field-descriptors
+                        on the corresponding class-descriptor.  If include-all-fields is false,
+                        then values will be passed to the procedure/function based on the
+                        information in the nested 'argument' elements.
+                    </p>
+                    <source><![CDATA[
+<!ATTLIST insert-procedure
+    name CDATA #REQUIRED
+    return-field-ref CDATA #IMPLIED
+    include-all-fields (true | false) "false"
+>]]></source>
+                </section>
+
+                <section>
+                    <title>update-procedure</title>
+                    <p>
+                        Identifies the procedure/function that should be used to handle
+                        updates for a specific class-descriptor.
+                    </p>
+                    <p>
+                        The nested <em>argument</em> elements define the argument list for the
+                        procedure/function as well as the source for each argument.
+                    </p>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>custom-attribute</em>
+                        </a> element to pass
+                        implementation specific properties.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT update-procedure
+    (documentation?, (runtime-argument | constant-argument)?, attribute*)>]]></source>
+                    <p>
+                        The <em>name</em> attribute identifies the name of the procedure/function to use
+                    </p>
+                    <p>
+                        The <em>return-field-ref</em> identifies the field-descriptor that will receive
+                        the value that is returned by the procedure/function.  If the procedure/
+                        function does not include a return value, then do not specify a value
+                        for this attribute.
+                    </p>
+                    <p>
+                        The <em>include-all-fields</em> attribute indicates if all field-descriptors in
+                        the corresponding class-descriptor are to be passed to the procedure/
+                        function.  If include-all-fields is 'true', any nested 'argument'
+                        elements will be ignored.  In this case, values for all field-descriptors
+                        will be passed to the procedure/function.  The order of values that are
+                        passed to the procedure/function will match the order of field-descriptors
+                        on the corresponding class-descriptor.  If include-all-fields is false,
+                        then values will be passed to the procedure/function based on the
+                        information in the nested 'argument' elements.
+                    </p>
+                    <source><![CDATA[
+<!ATTLIST update-procedure
+    name CDATA #REQUIRED
+    return-field-ref CDATA #IMPLIED
+    include-all-fields (true | false) "false"
+>]]></source>
+                </section>
+
+
+                <section>
+                    <title>delete-procedure</title>
+                    <p>
+                        Identifies the procedure/function that should be used to handle
+                        deletions for a specific class-descriptor.
+                    </p>
+                    <p>
+                        The nested <em>runtime-argument</em> and <em>constant-argument</em> elements define
+                        the argument list for the procedure/function as well as the source
+                        for each argument.
+                    </p>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>custom-attribute</em></a> element to pass
+                        implementation specific properties.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT delete-procedure
+    (documentation?, (runtime-argument | constant-argument)?, attribute*)>]]></source>
+                    <p>
+                        The <em>name</em> attribute identifies the name of the procedure/function to use
+                    </p>
+                    <p>
+                        The <em>return-field-ref</em> identifies the field-descriptor that will receive
+                        the value that is returned by the procedure/function.  If the procedure/
+                        function does not include a return value, then do not specify a value
+                        for this attribute.
+                    </p>
+                    <p>
+                        The <em>include-pk-only</em> attribute indicates if all field-descriptors in
+                        the corresponding class-descriptor that are identified as being part of
+                        the primary key are to be passed to the procedure/function.  If
+                        include-pk-only is 'true', any nested 'argument' elements will be
+                        ignored.  In this case, values for all field-descriptors that are identified
+                        as being part of the primary key will be passed to the procedure/function.
+                        The order of values that are passed to the procedure/function will match
+                        the order of field-descriptors on the corresponding class-descriptor.
+                        If include-pk-only is false, then values will be passed to the procedure/
+                        function based on the information in the nested 'argument' elements.
+                    </p>
+                    <source><![CDATA[
+<!ATTLIST delete-procedure
+    name CDATA #REQUIRED
+    return-field-ref CDATA #IMPLIED
+    include-pk-only (true | false) "false"
+>]]></source>
+                </section>
+
+
+                <section>
+                    <title>runtime-argument</title>
+                    <p>
+                        Defines an argument that is passed to a procedure/function.  Each argument
+                        will be set to a value from a field-descriptor or null.
+                    </p>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>custom-attribute</em>
+                        </a> element to pass
+                        implementation specific properties.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT runtime-argument
+    (documentation?, attribute*)>]]></source>
+                    <p>
+                        The <em>field-ref</em> attribute identifies the field-descriptor in the corresponding
+                        class-descriptor that provides the value for this argument.  If this attribute
+                        is unspecified, then this argument will be set to null.
+                    </p>
+                    <source><![CDATA[
+<!ATTLIST runtime-argument
+    field-ref CDATA #IMPLIED
+    return (true | false) "false"
+>]]></source>
+                </section>
+
+
+                <section>
+                    <title>constant-argument</title>
+                    <p>
+                        Defines a constant value that is passed to a procedure/function.
+                    </p>
+                    <p>
+                        Use the
+                        <a href="#custom-attribute"><em>custom-attribute</em>
+                        </a> element to pass
+                        implementation specific properties.
+                    </p>
+                    <source><![CDATA[
+<!ELEMENT constant-argument
+    (documentation?, attribute*)>]]></source>
+                    <p>
+                        The <em>value</em> attribute identifies the value that is passed to the procedure/
+                        function.
+                    </p>
+                    <source><![CDATA[
+<!ATTLIST constant-argument
+    value CDATA #REQUIRED
+>]]></source>
+                </section>
+            </section>
+    </body>
+</document>

@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: platforms.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Platforms</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>How to use OJB with a specific relational database</title>
+            <p>
+                OJB has been designed to smoothly integrate with any relational
+                database that provides JDBC support. OJB can be configured to use only JDBC 1.0 API calls
+                to avoid problems with restrictions of several JDBC drivers.
+                <br/>It
+                uses a limited SQL subset to avoid problems with restrictions of
+                certain RDBMS. This design allows to keep the OJB code generic and
+                free from database specifics.
+            </p>
+            <p>
+                This document explains basic concepts and shows how OJB can be
+                configured to run against a specific RDBMS.
+            </p>
+            <p>
+                If you not already have done so, then you also might want to have a
+                look at the <a href="site:getting-started">Getting Started</a>
+                section which presents a sample skeleton project.
+            </p>
+        </section>
+        <section>
+            <title>Basic Concepts</title>
+
+            <anchor id="internal-tables"/>
+            <section>
+                <title>OJB internal tables</title>
+                <p>
+                    For certain features OJB relies on several internal tables that must be present in the
+                    target RDBMS to allow a proper functioning. The associated internal object
+                    <a href="site:mapping-tutorial">metadata mapping</a>
+                    of these internal used tables can be found in
+                    <a href="ext:repository_internal.xml">repository_internal.xml</a> file.
+                    <br/>
+                    If those features are not needed/used OJB can be safely run without any internal tables
+                    and metadata mapping.
+                </p>
+                <p>
+                    The following table
+                    lists all tables and their specific purpose.
+                </p>
+
+                <table>
+                    <tr>
+                        <th>Table</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_HL_SEQ</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_HL_SEQ" description="HIGH/LOW SequenceManager table">
+    <column name="TABLENAME" required="true" primaryKey="true"
+        type="VARCHAR" size="250"/>
+    <column name="MAX_KEY" type="BIGINT"/>
+    <column name="GRAB_SIZE" type="INTEGER"/>
+    <column name="VERSION" type="INTEGER"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            Table for the high/low sequence manager. The column <em>TABLENAME</em> was used
+                            to persist the sequence name (may be re-named in further versions of OJB).
+                            <br/>
+                            If the built-in OJB sequence manager is not used, this table is not needed.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_NRM</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_NRM" description="OJB NAMED ROOTS Table">
+    <column name="NAME" required="true" primaryKey="true"
+        type="VARCHAR" size="250"/>
+    <column name="OID_" type="LONGVARBINARY"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>The &quot;Named Roots Map&quot;. ODMG allows to bind
+                                persistent objects to an user defined name - called
+                                <a href="site:odmg-guide/named-objects"><em>named objects</em></a>.
+                                <br/>The Named roots
+                                map is used to store these bindings. It has NAME (String of
+                                arbitrary length) as primary key and keeps the serialized OID of
+                                a persistent object or an arbitrary serialized object in the
+                                field OID (String of arbitrary length).
+                                <br/>
+                                If <code>Database.bind(...)</code> and <code>Database.lookup(...)</code>
+                                are not used in client apps, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_DLIST</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_DLIST" description="DLIST IMPLEMENTATION">
+    <column name="ID" required="true" primaryKey="true"
+        type="INTEGER"/>
+    <column name="SIZE_" type="INTEGER"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>The table used for the ODMG persistent DList collections.
+                                <br/>
+                                If ODMG DLists are not used, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_DLIST_ENTRIES</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_DLIST_ENTRIES" description="DList entry table">
+    <column name="ID" required="true" primaryKey="true"
+        type="INTEGER"/>
+    <column name="DLIST_ID" required="true" type="INTEGER"/>
+    <column name="POSITION_" type="INTEGER"/>
+    <column name="OID_" type="LONGVARBINARY"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>stores the entries of DLists (a wrapper to objects stored in
+                                the DList)
+                                <br/>
+                                If ODMG DLists are not used, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_DSET</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_DSET" description="DSET IMPLEMENTATION">
+    <column name="ID" required="true" primaryKey="true"
+        type="INTEGER"/>
+    <column name="SIZE_" type="INTEGER"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>The table used to store ODMG persistent DSET collections
+                                <br/>
+                                If ODMG DSets are not used, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_DSET_ENTRIES</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_DSET_ENTRIES" description="DSet entry table">
+    <column name="ID" required="true" primaryKey="true"
+        type="INTEGER"/>
+    <column name="DLIST_ID" required="true" type="INTEGER"/>
+    <column name="POSITION_" type="INTEGER"/>
+    <column name="OID_" type="LONGVARBINARY"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>This table stores the entries of DSets.
+                                <br/>
+                                If ODMG DSets are not used, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_DMAP</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_DMAP" description="DMap table">
+    <column name="ID" required="true" primaryKey="true"
+        type="INTEGER"/>
+    <column name="SIZE_" type="INTEGER"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>The table use to store the ODMG persistent DMap tables
+                                <br/>
+                                If ODMG DMaps are not used, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>OJB_DMAP_ENTRIES</code>
+                            <br/>
+                            <source><![CDATA[
+<table name="OJB_DMAP_ENTRIES" description="DMap entry table">
+    <column name="ID" required="true" primaryKey="true"
+        type="INTEGER"/>
+    <column name="DMAP_ID" required="true" type="INTEGER"/>
+    <column name="KEY_OID" type="VARBINARY"/>
+    <column name="VALUE_OID" type="VARBINARY"/>
+</table>]]></source>
+                        </td>
+                        <td>
+                            <p>The table containing the DMap entries. The Keys and Values of
+                                the map can be arbitrary persistent objects.
+                                <br/>
+                                If ODMG DMaps are not used, this table is not needed.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p>
+                    OJB uses
+                    <a href="ext:torque">Torque</a>
+                    to create all required tables and data.
+                    Thus there is no SQL DDL file, but an XML file describing the
+                    tables in format readable by Torque.
+
+                    The Torque DDL information for the internal tables resides in the
+                    file
+                    <code>src/schema/ojbcore-schema.xml</code>.
+                </p>
+                <p>
+                    The o/r mappings for these tables are contained in the file
+                    <code>repository_internal.xml</code>.
+                </p>
+                <p>
+                    If you want to have a look at how these files could be used,
+                    have a look at the the <a href="site:getting-started">ojb-blank</a>
+                    sample project which is already prepared to use these files.
+                </p>
+
+            </section>
+            <section>
+                <title>Tables for the regression testbed</title>
+                <p>
+                    It is recommended to run the <a href="site:test-suite">OJB test-suite</a>
+                    against your target database.
+                    Thus you will have to provide several more tables, filled with the proper
+                    testdata.
+                </p>
+                <p>
+                    The DDL information for these tables resides in the
+                    file
+                    <code>src/schema/ojbtest-schema.xml</code>.
+                </p>
+                <p>
+                    The testdata is defined in the
+                    file
+                    <code>src/schema/ojbtest-data.xml</code>.
+                </p>
+                <p>
+                    The o/r mappings for these tables are contained in the file
+                    <code>repository_junit.xml</code>.
+                </p>
+            </section>
+
+            <section>
+                <title>Tables for the tutorial applications</title>
+                <p>
+                    If you intend to run the OJB tutorial applications
+                    against your target database
+                    you will have to provide one extra table.
+                </p>
+                <p>
+                    The DDL information for this table also resides in the
+                    file
+                    <code>src/schema/ojbtest-schema.xml</code>.
+                </p>
+                <p>
+                    The testdata is also defined in the
+                    file
+                    <code>src/schema/ojbtest-data.xml</code>.
+                </p>
+                <p>
+                    The o/r mappings for this table is contained in the file
+                    <code>repository_user.xml</code>.
+                </p>
+            </section>
+
+        </section>
+
+
+        <section>
+            <title>The setup process</title>
+            <p>
+                OJB provides a setup routine to generate the target database and to fill it
+                with the required testdata.
+                This routine is based on Torque scripts and is driven from the build.xml file.
+                This section describes how to use it.
+            </p>
+            <anchor id="select-profile"/>
+            <section>
+                <title>Selecting a platform profile</title>
+                <p>
+                    OJB ships with support for several popular database platforms.
+                    The target platform is selected by the switch
+                    <code>profile</code>
+                    in the file build.properties.
+                    You can choose one out of the predefined profiles:
+                </p>
+                <source><![CDATA[
+# With the 'profile' property you can choose the RDBMS platform OJB is using
+# implemented profiles:
+#
+profile=hsqldb
+# use the mssqldb-JSQLConnect profile for Microsoft SQL Server and
+# you will automatically JSQLConnect driver, from http://www.j-netdirect.com/
+# MBAIRD: This is my driver of preference for MS SQL Server, I find the OEM'd
+# MS driver to have some problems.
+#profile=mssqldb-JSQLConnect
+#profile=mssqldb-Opta2000
+#profile=mssqldb-ms
+#profile=mysql
+#profile=db2
+#profile=oracle
+#profile=oracle9i
+#profile=oracle9i-Seropto
+#profile=msaccess
+#profile=postgresql
+#profile=informix
+#profile=sybase
+#profile=sapdb
+#profile=maxdb]]></source>
+                <p>
+                    The profile switch activated in
+                    <code>build.properties</code> is used to
+                    select a profile file from the
+                    <code>profile</code> directory.
+                    <br/>
+                    If you set
+                    <code>profile=db2</code>, then the file
+                    <code>profile/db2.profile</code>
+                    is selected.
+                    <br/>
+                    This file is used by the Torque scripts to set platform specific
+                    properties and to perform platform specific SQL operations.
+                </p>
+            </section>
+
+            <section>
+                <title>editing the profile to point to your target db</title>
+                <p>
+                    The platform specific file
+                    <code>profile/xxx.profile</code>
+                    contains lots of information used by Torque.
+                    You can ignore most of it.
+                    The only important part in this file is the section where
+                    the url to the target db is assembled, here is an snip of the
+                    DB2 profile:
+                </p>
+                <source><![CDATA[
+# ----------------------------------------------------------------
+#
+#  D A T A B A S E  S E T T I N G S
+#
+# ----------------------------------------------------------------
+# JDBC connection settings. This is used by the JDBCToXML task
+# that will create an XML database schema from JDBC metadata.
+# These settings are also used by the SQL Ant task to initialize
+# your Turbine system with the generated SQL.
+# ----------------------------------------------------------------
+
+dbmsName = Db2
+jdbcLevel = 1.0
+urlProtocol = jdbc
+urlSubprotocol = db2
+urlDbalias = OJB
+
+createDatabaseUrl = ${urlProtocol}:${urlSubprotocol}:${urlDbalias}
+buildDatabaseUrl = ${urlProtocol}:${urlSubprotocol}:${urlDbalias}
+databaseUrl = ${urlProtocol}:${urlSubprotocol}:${urlDbalias}
+databaseDriver = COM.ibm.db2.jdbc.app.DB2Driver
+databaseUser = admin
+databasePassword = db2
+databaseHost = 127.0.0.1  ]]></source>
+                <p>
+                    These settings result in a database URL
+                    <code>jdbc:db2:OJB</code>.
+                    If your production database is registered with the name
+                    <code>MY_PRODUCTION_DB</code> you have to edit the entry
+                    <code>urlDBalias</code> to:
+                    <br/>
+                    <code>urlDbalias = MY_PRODUCTION_DB</code>.
+                </p>
+                <p>
+                    In this section you can also set application user name and password.
+                    You can also enter a different jdbc driver class, to activate a different
+                    driver.
+                </p>
+                <p>
+                    Before progressing, please check that the jdbc driver class, named
+                    in the
+                    <code>databaseDriver</code> entry is located on the classpath!
+                    You can either edit the global environment variable
+                    <code>CLASSPATH</code>
+                    or place the jdbc driver jar file into the
+                    <code>jakarta-ojb-xxx/lib</code>
+                    directory.
+                </p>
+            </section>
+
+
+            <section>
+                <title>Executing the build script</title>
+                <p>
+                    Now everything should be prepared to launch the setup routine.
+                    This routine can be invoked by calling
+                    <strong>
+                        <code>ant prepare-testdb</code>
+                    </strong>.
+                </p>
+                <p>
+                    If you are prompted with a
+                    <code>BUILD SUCCESSFUL</code> message after
+                    some time, everything is OK.
+                </p>
+                <p>
+                    If you are prompted with a
+                    <code>BUILD FAILED</code> message after
+                    some time, something went wrong.
+                    This may have several reasons:
+                    </p>
+                    <ul>
+                        <li>
+                            You entered some incorrect settings. Please check the
+                            log messages to see what went wrong.
+                        </li>
+                        <li>
+                            Torque does not work properly against your target database.
+                            Torque is very flexible and should be able to work against
+                            a wide range of databases. But the code templates for each
+                            database may not be accurate.
+                            Please check the ojb-user mailinglist archive if there are
+                            any failure reports for your specific database.
+                            Please also check if some contributed a fix already.
+                            If you don't find anything please post your problem to the ojb user-list.
+                        </li>
+                    </ul>
+                <p>
+                    As a last resort you can try the following:
+                    Switch back to the default hsqldb profile and execute
+                    <code>ant prepare-testdb</code>
+                    This will setup the default hsqldb database.
+                    And it will also generate SQL scripts that you may use to generate your
+                    database manually.
+                </p>
+                <p>
+                    The SQL scripts are generated to
+                    <code>jakarta-ojb-xxx/target/src/sql</code>.
+                    You can touch these scripts to match your database specifics and
+                    execute them manually against your platform.
+                </p>
+            </section>
+
+
+            <section>
+                <title>Verifying the installation</title>
+                <p>
+                    Now everything is setup to run the junit regression tests against
+                    your target database.
+                </p>
+                <p>
+                    Execute
+                    </p>
+                   <source><![CDATA[
+ant junit]]></source>
+                    <p>
+                        to see if everything works as expected.
+                        more information about the <a href="site:test-suite">OJB Test Suite here</a>.
+                    If you did not manage to set up the target database with the
+                    <code>ant prepare-testdb</code> you can use
+                    <br/>
+                    <strong>
+                        <code>ant junit-no-compile-no-prepare</code>
+                    </strong> to run the testsuite without generation of the test database.
+                </p>
+                </section>
+        </section>
+    </body>
+</document>
+
+
+
+
+
+
+

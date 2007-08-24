@@ -1,0 +1,1682 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: basic-technique.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Basic O/R Mapping Technique</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+            <person name="Jakob Braeuchli" email="brj@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <anchor id="one-to-one"/>
+        <section>
+            <title>Mapping 1:1 associations</title>
+            <p>
+                As a sample for a simple association we take the reference from an
+                article to its productgroup.
+                <br/>
+                This association is navigable only
+                from the article to its productgroup. Both classes are modelled in
+                the following class diagram. This diagram does not show methods, as
+                only attributes are relevant for the O/R mapping process.
+            </p>
+            <p>
+                <img src="images/1-1.gif" alt="1:1 association"/>
+            </p>
+            <p>
+                The association is implemented by the attribute
+                <code>productGroup</code>.
+                To automatically maintain this reference OJB relies on foreignkey
+                attributes. The foreign key containing the
+                <code>groupId</code>
+                of the referenced
+                <code>productgroup</code>
+                is stored in the attribute
+                <code>productGroupId</code>. To avoid FK attribute in persistent object class
+                see section about <a href="site:advanced-technique/anonymous-keys">anonymous keys</a>.
+            </p>
+            <p>
+                This is the DDL of the underlying tables:
+            </p>
+            <source><![CDATA[
+CREATE TABLE Artikel
+(
+    Artikel_Nr         INT NOT NULL PRIMARY KEY,
+    Artikelname        VARCHAR(60),
+    Lieferanten_Nr     INT,
+    Kategorie_Nr       INT,
+    Liefereinheit      VARCHAR(30),
+    Einzelpreis        FLOAT,
+    Lagerbestand       INT,
+    BestellteEinheiten INT,
+    MindestBestand     INT,
+    Auslaufartikel     INT
+)
+
+CREATE TABLE Kategorien
+(
+    Kategorie_Nr       INT NOT NULL PRIMARY KEY,
+    KategorieName      VARCHAR(20),
+    Beschreibung       VARCHAR(60)
+)]]></source>
+            <p>
+                To declare the foreign key mechanics of this reference attribute we
+                have to add a reference-descriptor to the class-descriptor of the
+                Article class. This descriptor contains the following information:
+            </p>
+            <ul>
+                <li>
+                    The attribute implementing the association (
+                    <code>name="productGroup"</code>)
+                    is productGroup.
+                </li>
+                <li>
+                    The referenced object is of type (
+                    <code>class-ref="org.apache.ojb.broker.ProductGroup"</code>)
+                    <code>org.apache.ojb.broker.ProductGroup</code>.
+                </li>
+                <li>
+                    A reference-descriptor contains one or more foreignkey elements.
+                    These elements define foreign key attributes.
+                    The element
+                <source><![CDATA[
+                <foreignkey field-ref="productGroupId"/>]]></source>
+                    contains the name of the field-descriptor describing the
+                    foreignkey fields.
+                    The FieldDescriptor with the name "productGroupId" describes the foreignkey attribute
+                    productGroupId:
+                    <source><![CDATA[
+                <field-descriptor
+                    name="productGroupId"
+                    column="Kategorie_Nr"
+                    jdbc-type="INTEGER"
+                />]]></source>
+                </li>
+            </ul>
+            <p>
+                See the following extract from the repository.xml file containing
+                the Article ClassDescriptor:
+            </p>
+            <source><![CDATA[
+<!-- Definitions for org.apache.ojb.ojb.broker.Article -->
+<class-descriptor
+    class="org.apache.ojb.broker.Article"
+    proxy="dynamic"
+    table="Artikel"
+>
+    <extent-class class-ref="org.apache.ojb.broker.BookArticle" />
+    <extent-class class-ref="org.apache.ojb.broker.CdArticle" />
+    <field-descriptor
+       name="articleId"
+       column="Artikel_Nr"
+       jdbc-type="INTEGER"
+       primarykey="true"
+       autoincrement="true"
+    />
+    <field-descriptor
+       name="articleName"
+       column="Artikelname"
+       jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+       name="supplierId"
+       column="Lieferanten_Nr"
+       jdbc-type="INTEGER"
+    />
+    <field-descriptor
+       name="productGroupId"
+       column="Kategorie_Nr"
+       jdbc-type="INTEGER"
+    />
+      ...
+    <reference-descriptor
+       name="productGroup"
+       class-ref="org.apache.ojb.broker.ProductGroup"
+    >
+       <foreignkey field-ref="productGroupId"/>
+    </reference-descriptor>
+</class-descriptor>]]></source>
+            <p>
+                This example provides unidirectional navigation only. Bidirectional
+                navigation may be added by including a reference from a ProductGroup to a
+                single Article (for example, a sample article for the productgroup). To accomplish
+                this we need to perform the following steps:
+            </p>
+            <ol>
+                <li>
+                    Add a private Article attribute named
+                    <code>sampleArticle</code>
+                    to the class
+                    <code>ProductGroup</code>.
+                </li>
+                <li>
+                    Add a private int attribute named
+                    <code>sampleArticleId</code>
+                    to the
+                    <em>ProductGroup</em> class representing the foreign key.
+                    To avoid FK attribute in persistent object class see section about
+                    <a href="site:advanced-technique/anonymous-keys">anonymous keys</a>.
+                </li>
+                <li>
+                    Add a column
+                    <code>SAMPLE_ARTICLE_ID
+                        INT</code> to the table
+                    <code>Kategorien</code>.
+                </li>
+                <li>
+                    Add a FieldDescriptor for the foreignkey attribute to the
+                    ClassDescriptor of the Class ProductGroup:
+                </li>
+            </ol>
+            <source><![CDATA[
+<field-descriptor
+  name="sampleArticleId"
+  column="SAMPLE_ARTICLE_ID"
+  jdbc-type="INTEGER"
+/>]]></source>
+            <ol>
+                <li>Add a ReferenceDescriptor to the ClassDescriptor of the Class
+                    ProductGroup:</li>
+            </ol>
+            <source><![CDATA[
+<reference-descriptor
+    name="sampleArticle"
+    class-ref="org.apache.ojb.broker.Article"
+>
+    <foreignkey field-ref="sampleArticleId""/>
+</reference-descriptor>]]></source>
+            <note>
+                When using primitive primary key fields, please pay attention on
+                <a href="site:faq/primitive-null">how OJB manage <code>null</code> for primitive PK/FK</a>
+            </note>
+
+            <section>
+                <title>1:1 auto-xxx setting</title>
+                <p>
+                    General info about the
+                    <code>auto-xxx</code> and
+                    <code>proxy</code> attributes can be
+                    found
+                    <a href="#cascading">here</a>
+                </p>
+
+                <p>
+                    <strong>auto-retrieve</strong>
+                    <br/>
+                    See
+                    <a href="#auto-retrieve">here</a>
+                </p>
+
+                <p>
+                    <strong>auto-update</strong>
+                    <br/>
+                </p>
+                <ul>
+                    <li>
+                        <strong>none</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced object will NOT be updated by default.The reference will not be
+                        <em>inserted</em> or
+                        <em>updated</em>, the link to the reference (foreign key value to the reference) on the main object
+                        will not be assigned automatically. The user has to link the main object and to store the reference
+                        <em>before</em>
+                        the main object to avoid violation of referential integrity.
+                    </li>
+                    <li>
+                        <strong>link</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the FK assignment on the main object was done automatic. OJB reads the PK from the referenced object and sets these
+                        values as FK in main object. But the referenced object remains untouched. If no referenced object is found, the FK
+                        will be nullified. (On insert it is allowed to set the FK without populating the referenced object)
+                    </li>
+                    <li>
+                        <strong>object</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced object will be stored first, then OJB does the same as in
+                        <em>link</em>.
+                    </li>
+                    <li>
+                        <strong>false</strong>
+                        Is equivalent to
+                        <em>link</em>.
+                    </li>
+                    <li>
+                        <strong>true</strong>
+                        Is equivalent to
+                        <em>object</em>.
+                    </li>
+                </ul>
+
+                <p>
+                    <strong>auto-delete</strong>
+                </p>
+                <ul>
+                    <li>
+                        <strong>none</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> the referenced object will
+                        NOT be touched.
+                    </li>
+                    <li>
+                        <strong>link</strong>
+                        Is equivalent to
+                        <em>none</em>.
+                    </li>
+                    <li>
+                        <strong>object</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> the referenced object will be
+                        deleted too.
+                    </li>
+                    <li>
+                        <strong>false</strong>
+                        Is equivalent to
+                        <em>none</em>.
+                    </li>
+                    <li>
+                        <strong>true</strong>
+                        Is equivalent to
+                        <em>object</em>.
+                    </li>
+                </ul>
+            </section>
+        </section>
+
+
+        <anchor id="one-to-n"/>
+        <section>
+            <title>Mapping 1:n associations</title>
+            <p>
+                We will take a different perspective from the previous exmaple for
+                a 1:n association. We will associate multiple Articles with a
+                single ProductGroup.
+                This association is navigable only from the
+                ProductGroup to its Article instances. Both classes are modelled in the
+                following class diagram. This diagram does not show methods, as only
+                attributes are relevant for the O/R mapping process.
+                <br/>
+                <br/>
+                <br/>
+            </p>
+            <p>
+                <img src="images/1-n.gif" alt="1:n association"/>
+            </p>
+            <p>
+                The
+                association is implemented by the
+                <code>Vector</code>
+                attribute
+                <code>allArticlesInGroup</code> on the ProductGroup class.
+                As in the previous example, the Article class contains a foreignkey
+                attribute named productGroupId that identifies an Article's ProductGroup.
+                The Database table are the same as above.
+            </p>
+            <p>
+                To declare the foreign key mechanics of this collection attribute
+                we must add a CollectionDescriptor to the ClassDescriptor of the
+                ProductGoup class. This descriptor contains the following
+                information:
+            </p>
+            <ol>
+                <li>
+                    The attribute implementing the association (
+                    <code>name="allArticlesInGroup"</code>)
+                </li>
+                <li>
+                    The class of the elements in the collection
+                    (
+                    <code>element-class-ref="org.apache.ojb.broker.Article"</code>)
+                </li>
+                <li>
+                    The name of field-descriptor of the element class
+                    used as foreign key attributes are defined in inverse-foreignkey elements:
+                    <source><![CDATA[
+<inverse-foreignkey field-ref="productGroupId"/>]]></source>
+                    This is again pointing to the field-descriptor for the attribute
+                    <code>productGoupId</code> in class Article.
+                </li>
+                <li>
+                    optional attributes to define the sort order of the retrieved collection:
+                    <code>orderby="articleId" sort="DESC"</code>.
+                </li>
+            </ol>
+            <p>See the following extract from the repository.xml file containing
+                the ProductGoup ClassDescriptor:</p>
+            <source><![CDATA[
+<!-- Definitions for org.apache.ojb.broker.ProductGroup -->
+ <class-descriptor
+    class="org.apache.ojb.broker.ProductGroup"
+    table="Kategorien"
+ >
+    <field-descriptor
+       name="groupId"
+       column="Kategorie_Nr"
+       jdbc-type="INTEGER"
+       primarykey="true"
+       autoincrement="true"
+    />
+    <field-descriptor
+       name="groupName"
+       column="KategorieName"
+       jdbc-type="VARCHAR"
+    />
+    <field-descriptor
+       name="description"
+       column="Beschreibung"
+       jdbc-type="VARCHAR"
+    />
+    <collection-descriptor
+       name="allArticlesInGroup"
+       element-class-ref="org.apache.ojb.broker.Article"
+       orderby="articleId"
+       sort="DESC"
+    >
+       <inverse-foreignkey field-ref="productGroupId"/>
+    </collection-descriptor>
+ </class-descriptor>]]></source>
+            <p>
+                With the mapping shown above OJB has two possibilities to load the Articles belonging
+                to a ProductGroup:
+            </p>
+            <ol>
+                <li>
+                    loading all Articles of the ProductGroup immediately after loading the ProductGroup.
+                    This is done with
+                    <strong>two</strong> SQL-calls: one for the ProductGroup and one for all Articles.
+                </li>
+                <li>
+                    if Article is a proxy (
+                    <a href="#using-proxy">using proxy classes</a>),
+                    OJB will only load the keys of the Articles after the ProductGroup. When
+                    accessing an Article-proxy OJB will have to materialize it with another
+                    SQL-Call. Loading the ProductGroup and all it's Articles will thus produce
+                    <strong>n+2</strong> SQL-calls: one for the ProductGroup, one for keys of the Articles
+                    and one for each Article.
+                </li>
+            </ol>
+            <p>
+                Both approaches have their benefits and drawbacks:
+            </p>
+            <ul>
+                <li>
+                    <strong>A.</strong> is suitable for a small number of related objects that are easily
+                    instantiated. It's efficient regarding DB-calls. The major drawback is
+                    the amount of data loaded. For example to show a list of ProductGroups
+                    the Articles may not be needed.
+                </li>
+                <li>
+                    <strong>B.</strong> is best used for a large number of related heavy objects. This solution
+                    loads the objects when they are needed (&quot;lazy loading&quot;). The price
+                    to pay is a DB-call for each object.
+                </li>
+            </ul>
+            <p>
+                Further down a third solution
+                <a href="#collection-proxy">using a single proxy for a whole collection</a> will be
+                presented to circumvent the described drawbacks.
+            </p>
+
+            <p>
+                OJB supports different Collection types to implement 1:n and m:n associations. OJB
+                detects the used type automatically, so there is no need to declare it in
+                the repository file. But in some cases the <em>default</em> behaviour of OJB is undesired.
+                Please <a href="site:advanced-technique/which-collection-type">read here for more information</a>.
+            </p>
+            <note>
+                When using primitive primary key fields, please pay attention on
+                <a href="site:faq/primitive-null">how OJB manage <code>null</code> for primitive PK/FK</a>
+            </note>
+
+            <section>
+                <title>1:n auto-xxx setting</title>
+                <p>
+                    General info about the
+                    <em>auto-xxx</em> and
+                    <em>proxy</em> attributes can be
+                    found
+                    <a href="#cascading">here</a>.
+                </p>
+
+                <p>
+                    <strong>auto-retrieve</strong>
+                    <br/>
+                    See
+                    <a href="#auto-retrieve">here</a>
+                </p>
+
+                <p>
+                    <strong>auto-update</strong>
+                </p>
+                <ul>
+                    <li>
+                        <strong>none</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced objects are NOT updated by default. The referenced objects will not be
+                        <em>inserted</em> or
+                        <em>updated</em>, the referenced objects will not be linked (foreign key assignment on referenced objects)
+                        to the main object automatically.
+                        The user has to link and to store the referenced objects
+                        <em>after</em> storing the main object
+                        to avoid violation of referential integrity.
+                    </li>
+                    <li>
+                        <strong>link</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced objects are NOT updated by default. The referenced objects will not be
+                        <em>inserted</em> or
+                        <em>updated</em>, but the referenced objects will be linked automatically (FK assignment) the main object.
+                    </li>
+                    <li>
+                        <strong>object</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced objects will be linked and stored automatically.
+                    </li>
+                    <li>
+                        <strong>false</strong>
+                        Is equivalent to
+                        <em>link</em>.
+                    </li>
+                    <li>
+                        <strong>true</strong>
+                        Is equivalent to
+                        <em>object</em>.
+                    </li>
+                </ul>
+
+                <p>
+                    <strong>auto-delete</strong>
+                </p>
+                <ul>
+                    <li>
+                        <strong>none</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> the referenced objects are
+                        NOT touched. This may lead to violation of referential integrity if the referenced objects
+                        are childs of the main object. In this case the referenced objects have to be deleted manually first.
+                    </li>
+                    <li>
+                        <strong>link</strong>
+                        Is equivalent to
+                        <em>none</em>.
+                    </li>
+                    <li>
+                        <strong>object</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> the referenced objects will be
+                        deleted too.
+                    </li>
+                    <li>
+                        <strong>false</strong>
+                        Is equivalent to
+                        <em>none</em>.
+                    </li>
+                    <li>
+                        <strong>true</strong>
+                        Is equivalent to
+                        <em>object</em>.
+                    </li>
+                </ul>
+            </section>
+
+        </section>
+
+
+        <anchor id="m-to-n"/>
+        <section>
+            <title>Mapping m:n associations</title>
+            <p>
+                OJB provides support for manually decomposed m:n associations as
+                well as an automated support for non decomposed m:n associations.
+            </p>
+            <section>
+                <title>Manual decomposition into two 1:n associations</title>
+                <p>
+                    Have a look at the following class diagram:
+                </p>
+                <p>
+                    <img src="images/m2n_automatic.gif" alt="m:n association"/>
+                    <br/>
+                    We see a two classes with a m:n association. A Person can work for an
+                    arbitrary number of Projects. A Project may have any number of
+                    Persons associated to it.
+                    <br/>Relational databases don't support m:n
+                    associations. They require to perform a manual decomposition by means
+                    of an intermediary table. The DDL looks like follows:
+                </p>
+                <source><![CDATA[
+CREATE TABLE PERSON (
+    ID          INT NOT NULL PRIMARY KEY,
+    FIRSTNAME   VARCHAR(50),
+    LASTNAME    VARCHAR(50)
+  );
+
+CREATE TABLE PROJECT (
+    ID          INT NOT NULL PRIMARY KEY,
+    TITLE       VARCHAR(50),
+    DESCRIPTION VARCHAR(250)
+  );
+
+CREATE TABLE PERSON_PROJECT (
+    PERSON_ID   INT NOT NULL,
+    PROJECT_ID  INT NOT NULL,
+    PRIMARY KEY (PERSON_ID, PROJECT_ID)
+  );]]></source>
+                <p>
+                    This intermediary table allows to decompose the m:n association into
+                    two 1:n associations. The intermediary table may also hold additional
+                    information. For example, the role a certain person plays for a
+                    project:
+                </p>
+
+                <source><![CDATA[
+    CREATE TABLE PERSON_PROJECT (
+        PERSON_ID   INT NOT NULL,
+        PROJECT_ID  INT NOT NULL,
+        ROLENAME    VARCHAR(20),
+        PRIMARY KEY (PERSON_ID, PROJECT_ID)
+      );]]></source>
+
+                <p>
+                    The decomposition is mandatory on the ER model level. On the object model
+                    level it is not mandatory, but may be a valid solution. It is
+                    mandatory on the object level if the association is qualified (as in our
+                    example with a rolename). This will result in the introduction of a
+                    association class. A class-diagram reflecting this decomposition
+                    looks like:
+                </p>
+
+                <p>
+                    <img src="images/m2n_manual.gif" alt="m:n association"/>
+                </p>
+                <p>
+                    A
+                    <code>Person</code> object has a Collection
+                    attribute
+                    <code>roles</code> containing
+                    <code>Role</code> entries. A
+                    <code>Project</code>
+                    has a Collection attribute
+                    <code>roles</code>
+                    containing
+                    <code>Role</code> entries. A
+                    <code>Role</code> has reference attributes
+                    to its
+                    <code>Person</code> and to its
+                    <code>Project</code>.
+                    <br/>Handling of 1:n
+                    mapping has been explained above. Thus we will finish this section
+                    with a short look at the repository entries for the classes
+                    <code>org.apache.ojb.broker.Person</code>,
+                    <code>org.apache.ojb.broker.Project</code> and
+                    <code>org.apache.ojb.broker.Role</code>:
+                </p>
+
+                <source><![CDATA[
+<!-- Definitions for org.apache.ojb.broker.Person -->
+   <class-descriptor
+      class="org.apache.ojb.broker.Person"
+      table="PERSON"
+   >
+      <field-descriptor
+         name="id"
+         column="ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+      />
+      <field-descriptor
+         name="firstname"
+         column="FIRSTNAME"
+         jdbc-type="VARCHAR"
+      />
+      <field-descriptor
+         name="lastname"
+         column="LASTNAME"
+         jdbc-type="VARCHAR"
+      />
+      <collection-descriptor
+         name="roles"
+         element-class-ref="org.apache.ojb.broker.Role"
+      >
+         <inverse-foreignkey field-ref="person_id"/>
+      </collection-descriptor>
+      ...
+   </class-descriptor>
+
+<!-- Definitions for org.apache.ojb.broker.Project -->
+   <class-descriptor
+      class="org.apache.ojb.broker.Project"
+      table="PROJECT"
+   >
+      <field-descriptor
+         name="id"
+         column="ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+         autoincrement="true"
+      />
+      <field-descriptor
+         name="title"
+         column="TITLE"
+         jdbc-type="VARCHAR"
+      />
+      <field-descriptor
+         name="description"
+         column="DESCRIPTION"
+         jdbc-type="VARCHAR"
+      />
+      <collection-descriptor
+         name="roles"
+         element-class-ref="org.apache.ojb.broker.Role"
+      >
+         <inverse-foreignkey field-ref="project_id"/>
+      </collection-descriptor>
+      ...
+   </class-descriptor>
+
+<!-- Definitions for org.apache.ojb.broker.Role -->
+   <class-descriptor
+      class="org.apache.ojb.broker.Role"
+      table="PERSON_PROJECT"
+   >
+      <field-descriptor
+         name="person_id"
+         column="PERSON_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+      />
+      <field-descriptor
+         name="project_id"
+         column="PROJECT_ID"
+         jdbc-type="INTEGER"
+         primarykey="true"
+      />
+      <field-descriptor
+         name="roleName"
+         column="ROLENAME"
+         jdbc-type="VARCHAR"
+      />
+      <reference-descriptor
+         name="person"
+         class-ref="org.apache.ojb.broker.Person"
+      >
+         <foreignkey field-ref="person_id"/>
+      </reference-descriptor>
+      <reference-descriptor
+         name="project"
+         class-ref="org.apache.ojb.broker.Project"
+      >
+         <foreignkey field-ref="project_id"/>
+      </reference-descriptor>
+   </class-descriptor>]]></source>
+            </section>
+
+            <section>
+                <title>Support for Non-Decomposed m:n Mappings</title>
+                <p>
+                    If there is no need for an association class at the
+                    object level (we are not interested in role information), OJB can be
+                    configured to do the m:n mapping transparently.
+                    For example, a Person does not
+                    have a collection of
+                    <code>Role</code> objects but only a Collection of
+                    <code>Project</code> objects (held in the
+                    attribute
+                    <code>projects</code>).
+                    Projects also are expected to contain a collection of
+                    <code>Person</code> objects
+                    (hold in attribute
+                    <code>persons</code>).
+                </p>
+                <p>
+                    To tell OJB how to handle this m:n association the
+                    CollectionDescriptors for the Collection attributes
+                    <code>projects</code>
+                    and
+                    <code>roles</code> need additional
+                    information on the intermediary table and the foreign key columns
+                    pointing to the
+                    <code>PERSON</code> table
+                    and the foreign key columns pointing to the
+                    <code>PROJECT</code>
+                    table:
+                </p>
+                <note>
+                    OJB supports a
+                    <a href="site:advanced-technique/manageable-collection">multiplicity of collection implementations</a>,
+                    inter alia <code>org.apache.ojb.broker.util.collections.RemovalAwareCollection</code>
+                    and
+                    <code>org.apache.ojb.broker.util.collections.RemovalAwareList</code>. By default the
+                    removal aware collections were used. This cause problems in m:n relations when
+                    <code>auto-update="true" or "object"</code> and
+                    <code>auto-delete="false" or "none"</code> is set, because objects
+                    deleted in the collection will be deleted on update of main object. Thus it is recommended to
+                    use a NOT removal aware collection class in m:n relations using the
+                    <a href="site:repository/collection-descriptor">collection-class</a> attribute.
+                </note>
+                <p>
+                    Example for setting a collection class in the collection-descriptor:
+                </p>
+                <source><![CDATA[
+collection-class="org.apache.ojb.broker.util.collections.ManageableArrayList"]]></source>
+                <p>
+                    An full example for a non-decomposed m:n relation looks like:
+                </p>
+                <source><![CDATA[
+<class-descriptor
+  class="org.apache.ojb.broker.Person"
+  table="PERSON"
+>
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="firstname"
+     column="FIRSTNAME"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="lastname"
+     column="LASTNAME"
+     jdbc-type="VARCHAR"
+  />
+  ...
+  <collection-descriptor
+     name="projects"
+     collection-class="org.apache.ojb.broker.util.collections.ManageableArrayList"
+     element-class-ref="org.apache.ojb.broker.Project"
+     auto-retrieve="true"
+     auto-update="true"
+     indirection-table="PERSON_PROJECT"
+  >
+     <fk-pointing-to-this-class column="PERSON_ID"/>
+     <fk-pointing-to-element-class column="PROJECT_ID"/>
+  </collection-descriptor>
+</class-descriptor>
+
+<!-- Definitions for org.apache.ojb.broker.Project -->
+<class-descriptor
+  class="org.apache.ojb.broker.Project"
+  table="PROJECT"
+>
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="title"
+     column="TITLE"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="description"
+     column="DESCRIPTION"
+     jdbc-type="VARCHAR"
+  />
+  ...
+  <collection-descriptor
+     name="persons"
+     collection-class="org.apache.ojb.broker.util.collections.ManageableArrayList"
+     element-class-ref="org.apache.ojb.broker.Person"
+     auto-retrieve="true"
+     auto-update="false"
+     indirection-table="PERSON_PROJECT"
+  >
+     <fk-pointing-to-this-class column="PROJECT_ID"/>
+     <fk-pointing-to-element-class column="PERSON_ID"/>
+  </collection-descriptor>
+</class-descriptor>]]></source>
+                <p>
+                    That is all that needs to be configured! See the code in class
+                    <code>org.apache.ojb.broker.MtoNMapping</code>
+                    for JUnit testmethods using the classes
+                    <code>Person</code>,
+                    <code>Project</code> and
+                    <code>Role</code>.
+                </p>
+            </section>
+            <note>
+                When using primitive primary key fields, please pay attention on
+                <a href="site:faq/primitive-null">how OJB manage <code>null</code> for primitive PK/FK</a>
+            </note>
+
+            
+            <section>
+                <title>m:n auto-xxx setting</title>
+                <p>
+                    General info about the
+                    <code>auto-xxx</code> and
+                    <code>proxy</code> attributes can be
+                    found
+                    <a href="#cascading">here</a>
+                </p>
+
+                <p>
+                    <strong>auto-retrieve</strong>
+                    <br/>
+                    See
+                    <a href="#auto-retrieve">here</a>
+                </p>
+
+                <p>
+                    <strong>auto-update</strong>
+                </p>
+                <ul>
+                    <li>
+                        <strong>none</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced objects are NOT updated by default. The referenced objects will not be
+                        <em>inserted</em> or
+                        <em>updated</em>, the referenced objects will not be linked (creation of FK entries in the indirection table)
+                        automatically. The user has to store the main object, the referenced objects and to link the
+                        m:n relation after storing of all objects. establishing the m:n relationship
+                        <em>before</em>
+                        storing main and referenced objects may violate referential integrity.
+                    </li>
+                    <li>
+                        <strong>link</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced objects are NOT updated by default. The referenced objects will not be
+                        <em>inserted</em> or
+                        <em>updated</em>, but the m:n relation will be linked automatically (creation of FK entries in the indirection table).
+                    </li>
+                </ul>
+                <note>
+                    Make sure that the referenced objects exist in database before storing the main object
+                    with auto-update set <em>link</em> to avoid violation of referential integrity.
+                </note>
+                <ul>
+                    <li>
+                        <strong>object</strong> On updating or inserting of the main object with
+                        <code>PersistenceBroker.store(...)</code>,
+                        the referenced objects will be linked and stored automatically.
+                    </li>
+                    <li>
+                        <strong>false</strong>
+                        Is equivalent to
+                        <em>link</em>.
+                    </li>
+                    <li>
+                        <strong>true</strong>
+                        Is equivalent to
+                        <em>object</em>.
+                    </li>
+                </ul>
+
+                <p>
+                    <strong>auto-delete</strong>
+                </p>
+                <ul>
+                    <li>
+                        <strong>none</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> the referenced objects are
+                        NOT touched. The corresponding entries of the main object in the indirection table will not be removed.
+                        This may lead to violation of referential integrity depending on the definition of the indirection table.
+                    </li>
+                    <li>
+                        <strong>link</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> the m:n relation will be
+                        <em>unlinked</em> (all entries of the main object in the indirection table will be removed).
+                    </li>
+                    <li>
+                        <strong>object</strong>
+                        On deleting an object with
+                        <code>PersistenceBroker.delete(...)</code> all referenced objects will be
+                        deleted too.
+                    </li>
+                    <li>
+                        <strong>false</strong>
+                        Is equivalent to
+                        <em>link</em>.
+                    </li>
+                    <li>
+                        <strong>true</strong>
+                        Is equivalent to
+                        <em>object</em>.
+                    </li>
+                </ul>
+
+            </section>
+
+        </section>
+
+
+        <anchor id="cascading"/>
+        <section>
+            <title>Setting Load, Update, and Delete Cascading</title>
+            <p>
+                As shown in the sections on 1:1, 1:n and m:n mappings, OJB manages
+                associations (or object references in Java terminology) by declaring
+                special Reference and Collection Descriptors. These Descriptor may
+                contain some additional information that modifies OJB's behaviour on
+                object materialization, updating and deletion.
+                <br/>
+                The behaviour depends on specific attributes
+            </p>
+            <ul>
+                <li>
+                    <em>auto-retrieve</em> - possible settings are
+                    <em>false</em>,
+                    <em>true</em>. If not specified in the
+                    descriptor the default value is
+                    <em>true</em>
+                </li>
+                <li>
+                    <em>auto-update</em> - possible settings are
+                    <em>none</em>,
+                    <em>link</em>,
+                    <em>object</em> and deprecated
+                    [
+                    <em>false</em>,
+                    <em>true</em>]. If not specified in the descriptor the default value is
+                    <em>false</em>
+                </li>
+                <li>
+                    <em>auto-delete</em> - possible settings are
+                    <em>none</em>,
+                    <em>link</em>,
+                    <em>object</em> and deprecated
+                    [
+                    <em>false</em>,
+                    <em>true</em>]. If not specified in the descriptor the default value is
+                    <em>false</em>
+                </li>
+            </ul>
+            <warning>
+                When using a top-level api (ODMG, OTM, JDO) it is <strong>mandatory to use specific
+                auto-xxx settings</strong>.<br/>
+                <br/>For OTM- and JDO-api the settings are:
+                <br/>- <em>auto-retrieve="true"</em>
+                <br/>- <em>auto-update="false"</em>
+                <br/>- <em>auto-retrieve="false"</em>
+                <br/>This are at the same time the <em>default</em> auto-XXX settings (so don't
+                specify any of this attributes will have the same effect).
+                <br/>
+                <br/>For the ODMG-api the mandatory settings are (since OJB 1.0.2):
+                <br/>- <em>auto-retrieve="true"</em>
+                <br/>- <em>auto-update="none"</em>
+                <br/>- <em>auto-retrieve="none"</em>
+            </warning>
+            <p>
+                The attribute
+                <em>auto-update</em> and
+                <em>auto-delete</em> are described in detail in the corresponding sections
+                for <a href="#one-to-one">1:1</a>, <a href="#one-to-n">1:n</a> and <a href="#m-ton">m:n</a> references.
+                The <em>auto-retrieve</em> setting is described below:
+            </p>
+
+            <anchor id="auto-retrieve"/>
+            <section>
+                <title>auto-retrieve setting</title>
+                <p>
+                    The
+                    <code>auto-retrieve</code> attribute used in
+                    <code>reference-descriptor</code> or
+                    <code>collection-descriptor</code>
+                    elements handles the loading behaviour of references (1:1, 1:n and m:n):
+                </p>
+                <ul>
+                    <li>
+                        <strong>false</strong> If set
+                        <em>false</em> the referenced objects will not be materialized on object materialization.
+                        The user has to materialize the n-side objects (or single object for 1:1) by hand using one of the following
+                        service methods of the
+                        <code>PersistenceBroker</code> class:
+                        <source><![CDATA[
+PersistenceBroker.retrieveReference(Object obj, String attributeName);
+// or
+PersistenceBroker.retrieveAllReferences(Object obj);]]></source>
+                        The first method load only the specified reference, the second one loads all references declared
+                        for the given object.
+                    </li>
+                    </ul>
+                <note>
+                    Be careful when using "opposite" settings, e.g. if you declare a 1:1 reference with
+                    auto-retrieve="false" BUT auto-update="object" (or "true" or "link").
+                    <br/>
+                    Before you can perform an update
+                    on the main object, you have to "retrieve" the 1:1 reference. Otherwise you will end up with an nullified
+                    reference enty in main object, because OJB doesn't find the referenced object on update and
+                    assume the reference was removed.
+                </note>
+                <ul>
+                    <li>
+                        <strong>true</strong> If set
+                        <em>true</em> the referenced objects (single reference or all n-side objects) will be automatic
+                        loaded by OJB when the main object was materialized.
+                    </li>
+                </ul>
+                <p>
+                    If OJB is configured to use proxies, the referenced objects are
+                    not materialized immmediately, but lazy loading proxy objects are used
+                    instead.
+                </p>
+
+                <p>
+                    In the following code sample, a reference-descriptor and a collection-descriptor
+                    are configured to use cascading retrieval (
+                    <code>auto-retrieve="true"</code>),
+                    cascading insert/update (
+                    <code>auto-update="object"</code> or
+                    <code>auto-update="true"</code>)
+                    and cascading delete (
+                    <code>auto-delete="object"</code> or
+                    <code>auto-delete="true"</code>) operations:
+                </p>
+                <source><![CDATA[
+<reference-descriptor
+ name="productGroup"
+ class-ref="org.apache.ojb.broker.ProductGroup"
+ auto-retrieve="true"
+ auto-update="object"
+ auto-delete="object"
+>
+ <foreignkey field-ref="productGroupId"/>
+</reference-descriptor>
+
+<collection-descriptor
+ name="allArticlesInGroup"
+ element-class-ref="org.apache.ojb.broker.Article"
+ auto-retrieve="true"
+ auto-update="object"
+ auto-delete="object"
+ orderby="articleId"
+ sort="DESC"
+>
+ <inverse-foreignkey field-ref="productGroupId"/>
+</collection-descriptor>]]></source>
+
+            </section>
+
+
+            <anchor id="linking"/>
+            <section>
+                <title>Link references</title>
+                <p>If in
+                    <code>reference-descriptor</code> or
+                    <code>collection-descriptor</code> the
+                    <em>auto-update</em> or
+                    <em>auto-delete</em> attributes are set to
+                    <em>none</em>, OJB does not touch the referenced objects on insert,
+                    update or delete operations of the main object. The user has to take care of the correct handling of
+                    referenced objects.
+                    When using referential integrity (who does not ?) it's essential that insert and delete operations are done
+                    in the correct sequence.
+                </p>
+                <p>
+                    One important thing is assignment of the FK values. The assign of the FK values is transcribed with
+                    <strong>
+                        <em>link references</em>
+                    </strong> in OJB. In 1:1 references the main object has a FK to the referenced object, in 1:n
+                    references the referenced objects have FK pointing to the main object and in non-decomposed m:n relations
+                    a indirection table containing FK values from both sides of the relationship is used.
+                </p>
+                <p>
+                    OJB provides some helper methods for linking references manually (assignment of the FK) in
+                    <code>org.apache.ojb.broker.util.BrokerHelper</code> class.
+                </p>
+                <source><![CDATA[
+public void link(Object obj, boolean insert)
+public void unlink(Object obj)
+public boolean link(Object obj, String attributeName, boolean insert)
+public boolean unlink(Object obj, String attributeName)]]></source>
+                <p>
+                    These methods are accessible via
+                    <code>org.apache.ojb.broker.PersistenceBroker</code>:
+                </p>
+                <source><![CDATA[
+BrokerHelper bh = broker.serviceBrokerHelper();]]></source>
+                <note>
+                    The <em>link/unlink</em> methods are only useful if you set auto-update/-delete to
+                    <em>none</em>. In
+                    all other cases OJB handles the link/unlink of references internally. It is also possible to set all FK values by
+                    hand without using the link/unlink service methods.
+                </note>
+                <p>
+                    <strong>Examples</strong>
+                    <br/>
+                    Now we prepared for some example. Say class
+                    <code>Movie</code> has an m:n reference with class
+                    <code>Actor</code> and we want to store an Movie object with a list of Actor objects. The auto-update
+                    setting of collection-descriptor for Movie is
+                    <em>none</em>:
+                </p>
+                <source><![CDATA[
+broker.beginTransaction();
+// store main object first
+broker.store(movie);
+//now we store the right-side objects
+Iterator it = movie.getActors().iterator();
+while(it.hasNext())
+{
+    Object actor = it.next();
+    broker.store(actor);
+}
+// now both side exist and we can link the references
+broker.serviceBrokerHelper().link(movie, "actors", true);
+/*
+alternative call
+broker.serviceBrokerHelper().link(movie, true);
+*/
+broker.commitTransaction();]]></source>
+                <p>
+                    First store the main object and the references, then use
+                    <code>broker.serviceBrokerHelper().link(movie, "actors", true)</code> to link the main object with the
+                    references. In case of a m:n relation linking create all FK entries in the indirection table.
+                </p>
+                <p>
+                    In the next examples we want to manually delete a
+                    <code>Project</code> object with a 1:n relation to class
+                    <code>SubProject</code>. In the example, the Project object has load all SubProject objects and we want to
+                    delete the Project but
+                    <strong>don't</strong> want to delete the referenced SubProjects too (don't ask if this make
+                    sense ;-)). SubProject has an FK to Project, so we first have to
+                    <em>unlink</em> the reference from the
+                    main object to the references to avoid integrity constraint violation. Then we can delete the main object:
+                </p>
+                <source><![CDATA[
+broker.beginTransaction();
+// first unlink the n-side references
+broker.serviceBrokerHelper().unlink(project, "subProjects");
+
+// update the n-side references, store SubProjects with nullified FK
+Iterator it = project.getSubProjects().iterator();
+while(it.hasNext())
+{
+    SubProject subProject = (SubProject) it.next();
+    broker.store(subProject);
+}
+
+// now delete the main object
+broker.delete(project);
+broker.commitTransaction();
+            ]]></source>
+            </section>
+
+        </section>
+
+
+        <anchor id="using-proxy"/>
+        <section>
+            <title>Using Proxy Classes</title>
+            <p>
+                Proxy classes can be used for &quot;lazy loading&quot; aka &quot;lazy
+                materialization&quot;. Using Proxy classes can help you in reducing
+                unneccessary database lookups.
+                <br/>
+                There are two kind of proxy mechanisms available:
+            </p>
+            <ol>
+                <li>
+                    <strong>Dynamic proxies</strong> provided by OJB.
+                    They can simply be activated by setting certain switches in repository.xml.
+                    This is the solution recommemded for
+                    <strong>most</strong> cases.
+                </li>
+                <li>
+                    <strong>User defined proxies</strong>. User defined proxies allow the user to write
+                    proxy implementations.
+                </li>
+            </ol>
+            <p>
+                As it is important to understand the mechanics of the proxy mechanism
+                I highly recommend to read this section before turning to the next sections
+                "using dynamic proxies", "using a single proxy for a whole collection" and
+                "using a proxy for a reference", covering dynamic proxies.
+            </p>
+            <p>
+                As a simple example we take a ProductGroup object
+                <code>pg</code> which contains a collection
+                of fifteen Article objects. Now we examine what happens when the ProductGroup is loaded
+                from the database:
+            </p>
+            <p>
+                Without using proxies all fifteen associated Article objects are
+                immediately loaded from the db, even if you are not interested in
+                them and just want to lookup the description-attribute of the
+                ProductGroup object.
+            </p>
+            <p>
+                If proxies are used, the collection is filled with fifteen proxy
+                objects, that implement the same interface as the &quot;real objects&quot;
+                but contain only an OID and a void reference. The fifteen article objects
+                are not instantiated when the ProductGroup is initially materialized. Only
+                when a method is invoked on such a proxy
+                object will it load its &quot;real subject&quot; and delegate the
+                method call to it. Using this dynamic delegation mechanism
+                instantiation of persistent objects and database lookups can be
+                minimized.
+            </p>
+            <p>
+                To use proxies, the persistent class in question (in our case the
+                Article class) must implement an interface (for example
+                InterfaceArticle). This interface is needed to allow replacement of
+                the proper Article object with a proxy implementing the same
+                interface. Have a look at the code:
+            </p>
+
+            <source><![CDATA[
+    public class Article implements InterfaceArticle
+    {
+        /** maps to db-column "Artikel-Nr"; PrimaryKey*/
+        protected int articleId;
+        /** maps to db-column "Artikelname"*/
+        protected String articleName;
+        ...
+
+        public int getArticleId()
+        {
+            return articleId;
+        }
+
+        public java.lang.String getArticleName()
+        {
+            return articleName;
+        }
+        ...
+    }
+
+    public interface InterfaceArticle
+    {
+        public int getArticleId();
+        public java.lang.String getArticleName();
+        ...
+    }]]></source>
+            <p>
+
+            </p>
+            <source><![CDATA[
+public class ArticleProxy extends VirtualProxy implements InterfaceArticle
+{
+    public ArticleProxy(ojb.broker.Identity uniqueId, PersistenceBroker broker)
+    {
+        super(uniqueId, broker);
+    }
+
+    public int getArticleId()
+    {
+        return realSubject().getArticleId();
+    }
+
+    public java.lang.String getArticleName()
+    {
+        return realSubject().getArticleName();
+    }
+
+    private InterfaceArticle realSubject()
+    {
+        try
+        {
+            return (InterfaceArticle) getRealSubject();
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+}]]></source>
+            <p>
+                The proxy is constructed from the identity of the real subject. All
+                method calls are delegated to the object returned by
+                <code>realSubject()</code>.
+                <br/>This method
+                uses getRealSubject() from the base class VirtualProxy:
+            </p>
+            <source><![CDATA[
+    public Object getRealSubject() throws PersistenceBrokerException
+    {
+        return indirectionHandler.getRealSubject();
+    }]]></source>
+            <p>
+                The proxy delegates the the materialization work to its
+                <code>IndirectionHandler</code>.
+                If the real subject has not yet been materialized, a PersistenceBroker is used to retrieve it by its OID:
+            </p>
+            <source><![CDATA[
+    public synchronized Object getRealSubject()
+                        throws PersistenceBrokerException
+    {
+        if (realSubject == null)
+        {
+            materializeSubject();
+        }
+        return realSubject;
+    }
+
+    private void materializeSubject()
+                        throws PersistenceBrokerException
+    {
+        realSubject = broker.getObjectByIdentity(id);
+    }]]></source>
+            <p>
+                To tell OJB to use proxy objects instead of materializing full
+                Article objects we have to add the following section to the XML
+                repository file:
+            </p>
+            <source><![CDATA[
+    <class-descriptor
+        class="org.apache.ojb.broker.Article"
+        proxy="org.apache.ojb.broker.ArticleProxy"
+        table="Artikel"
+    >
+    ...]]></source>
+            <p>
+                The following class diagram shows the relationships between all above
+                mentioned classes:
+            </p>
+            <p>
+                <img src="images/proxies.gif" alt="proxy image"/>
+            </p>
+
+            <anchor id="dynamic-proxy"/>
+            <section>
+                <title>Using Dynamic Proxies</title>
+                <p>
+                    The implementation of a proxy class is a boring task that repeats
+                    the same delegation scheme for each new class. To liberate the
+                    developer from this unproductive job OJB provides a dynamic proxy
+                    solution based on the JDK 1.3 dynamic proxy concept. (For JDK1.2 we
+                    ship a replacement for the required
+                    <code>java.lang.reflect</code>
+                    classes. Credits for this solution to ObjectMentor.)
+                    The basic idea of the dynamic proxy concept is to catch all method
+                    invocations on the not-yet materialized (loaded from database) object.
+                    When a method is called on the object, Java directs this call to the
+                    invocation handler registered for it (in OJB's case a class implementing
+                    the <code>org.apache.ojb.broker.core.proxy.IndirectionHandler</code>
+                    interface). This handler then materializes the object from the
+                    database and replaces the proxy with the real object.
+                    By default OJB uses the class
+                    <code>org.apache.ojb.broker.core.proxy.IndirectionHandlerDefaultImpl</code>.
+                    If you are interested in the mechanics have a look at this class.
+                </p>
+                <p>
+                    To use a dynamic proxy for lazy materialization of Article objects
+                    we have to declare it in the repository.xml file.
+                </p>
+                <source><![CDATA[
+    <class-descriptor
+      class="org.apache.ojb.broker.Article"
+      proxy="dynamic"
+      table="Artikel"
+    >
+    ...]]></source>
+
+                <p>
+                    Just as with normal proxies, the persistent class in question (in our case
+                    the Article class) must implement an interface (for example
+                    InterfaceArticle) to be able to benefit from dynamic proxies.
+                </p>
+                <note>                	
+                	As of OJB 1.0.4, a facility is now present to allow the generation of
+                	dynamic proxies that <strong>do not</strong> require the persistent class
+                	to implement an interface. Previous versions generated Proxies using the JDK 
+                	proxy pattern. That has been extracted into a new configuration setting named 
+                	'ProxyFactoryClass'.
+                	<br/><br/>
+                	Two implementations of this ProxyClass have been provided: the previous JDK-based version (default),
+                	and a new CGLIB-based implementation. Since the CGLIB version does byte-code 
+                	manipulation to generate the proxy, your class is not required to implement any 
+                	interface. All generated Proxies will automatically be sub-classes of your 
+                	persistent class.
+                	<br/><br/>
+                	See below in the section "Customizing the proxy mechanism" for how to enable the new 
+                	CGLIB Proxy generation.
+                	
+                </note>
+            </section>
+
+            <anchor id="collection-proxy"/>
+            <section>
+                <title>Using a Single Proxy for a Whole Collection</title>
+                <p>
+                    A collection proxy represents a whole collection of objects, where
+                    as a proxy class represents a single object.
+                    <br/>
+                    The advantage of this concept is a reduced number of db-calls compared
+                    to using proxy classes. A collection  proxy only needs a
+                    <strong>single</strong>
+                    db-call to materialize all it's objects. This happens the first time
+                    its content is accessed (ie: by calling iterator();). An additional
+                    db-call is used to calculate the size of the collection if size() is
+                    called
+                    <em>before</em> loading the data. So collection proxy is mainly
+                    used as a deferred execution of a query.
+                </p>
+                <p>
+                    OJB uses three specific proxy classes for collections:
+                </p>
+	            <ol>
+	                <li>
+	                    <strong>List proxies</strong> are specific <code>java.util.List</code>
+                        implementations that are used by OJB to replace lists. The default
+                        set proxy class is
+                        <code>org.apache.ojb.broker.core.proxy.ListProxyDefaultImpl</code>
+
+	                </li>
+	                <li>
+                        <strong>Set proxies</strong> are specific <code>java.util.Set</code>
+                        implementations that are used by OJB to replace sets. The default
+                        set proxy class is
+                        <code>org.apache.ojb.broker.core.proxy.SetProxyDefaultImpl</code>
+	                </li>
+                    <li>
+                        <strong>Collection proxies</strong> are collection classes
+                        implementing the more generic <code>java.util.Collection</code>
+                        interface and are used if the collection is neither a list nor a set.
+                        The default collection proxy class is
+                        <code>org.apache.ojb.broker.core.proxy.CollectionProxyDefaultImpl</code>
+                    </li>
+	            </ol>
+                <p>
+                    Which of these proxy class is actually used, is determined by the
+                    <code>collection-class</code> setting of this collection. If none is
+                    specified in the repository descriptor, or if the specified class does
+                    not implement <code>java.util.List</code> nor <code>java.util.Set</code>,
+                    then the generic collection proxy is used.
+                </p>
+                <p>
+                    The following mapping shows how to use a collection proxy for a relationship:
+                </p>
+
+                <source><![CDATA[
+    <!-- Definitions for
+    org.apache.ojb.broker.ProductGroupWithCollectionProxy -->
+    <class-descriptor
+      class="org.apache.ojb.broker.ProductGroupWithCollectionProxy"
+      table="Kategorien"
+    >
+      <field-descriptor
+         name="groupId"
+         column="Kategorie_Nr"
+         jdbc-type="INTEGER"
+         primarykey="true"
+      />
+      ...
+      <collection-descriptor
+         name="allArticlesInGroup"
+         element-class-ref="org.apache.ojb.broker.Article"
+         proxy="true"
+      >
+         <inverse-foreignkey field-ref="productGroupId"/>
+      </collection-descriptor>
+    </class-descriptor>]]></source>
+                <p>
+                    The classes participating in this relationship do not need to implement a
+                    special interface to be used in a collection proxy.
+                </p>
+                <p>
+                    Although it is possible to mix the collection proxy concept with the proxy class
+                    concept, it is not recommended because it increases the number of database calls.
+                </p>
+            </section>
+
+            <anchor id="reference-proxy"/>
+            <section>
+                <title>Using a Proxy for a Reference</title>
+                <p>
+                    A proxy reference is based on the original proxy class concept. The main
+                    difference is that the ReferenceDescriptor defines when to use a proxy class and
+                    not the ClassDescriptor.
+                    <br/>
+                    In the following mapping the class ProductGroup is
+                    <strong>not</strong> defined to be a
+                    proxy class in its ClassDescriptor. Only for shown relationship a proxy of
+                    ProductGroup should be used:
+                </p>
+
+                <source><![CDATA[
+    <!-- Definitions for org.apache.ojb.broker.ArticleWithReferenceProxy -->
+       <class-descriptor
+          class="org.apache.ojb.broker.ArticleWithReferenceProxy"
+          table="Artikel"
+       >
+          <field-descriptor
+             name="articleId"
+             column="Artikel_Nr"
+             jdbc-type="INTEGER"
+             primarykey="true"
+             autoincrement="true"
+          />
+          ...
+          <reference-descriptor
+             name="productGroup"
+             class-ref="org.apache.ojb.broker.ProductGroup"
+         proxy="true"
+          >
+             <foreignkey field-ref="productGroupId"/>
+          </reference-descriptor>
+       </class-descriptor>]]></source>
+
+                <p>
+                    Because a proxy reference is only about the location of the definition, the
+                    referenced class must implement a special interface (see
+                    <a href="#using-proxy">using proxy classes</a>).
+                </p>
+            </section>
+
+            <anchor id="proxy-customization"/>
+            <section>
+                <title>Customizing the proxy mechanism</title>
+                <p>
+                    Both the dynamic and the collection proxy mechanism can be customized by
+                    supplying a user-defined implementation.
+                </p>
+                <p>
+                    For dynamic proxies, you can select a ProxyFactory, as well as provide your own indirection handler. 
+                    Two default indirection handler implementations have been provided that coorespond 
+                    to the apporpriate ProxyFactory (IndirectionHandlerJDKImpl and IndirectionHandlerCGLIBImpl). 
+                </p>
+                <p>
+                    <strong>Note:</strong> All indirection handlers must implement the appropriate base indirection handler 
+                    class, depending on what ProxyFactory is being used. For example: when using ProxyFactoryJDKImpl, the 
+                    specified indirection handler <strong>must</strong> implement the IndirectionHandlerJDK interface. 
+                </p>
+                <p>
+                    Each of the three collection proxy classes can be replaced by a
+                    user-defined class. The only requirement is that such a class
+                    implements both the corresponding interface (<code>java.util.Collection</code>,
+                    <code>java.util.List</code>, or <code>java.util.Set</code>) as well as
+                    the <code>org.apache.ojb.broker.ManageableCollection</code>
+                    interface.
+                </p>
+                <p>
+                    Proxy implementations are configured in the ojb properties file. These
+                    are the relevant settings:
+                </p>
+                <source><![CDATA[
+    ...
+	#----------------------------------------------------------------------------------------
+	# ProxyFactory and IndirectionHandler
+	#----------------------------------------------------------------------------------------
+	# The ProxyFactoryClass entry defines which ProxyFactory implementation is to be used.
+	# By default, a 1.0 compatiable, JDK-based version is used. However, a the CGLIB
+	# based entry is available.
+	#
+	#	- ProxyFactoryCGLIBImpl: Refernece proxies are generated using bytecode manipulation
+	#			from the CGLIB library. Any class can become a dynamic proxy, and not
+	#           just ones that implement an interface.
+	#   - ProxyFactoryJDKImpl: OJB 1.0 compatiable Proxy implementation. Proxies in this method 
+	#			can only be generated from classes that implement an interface, and
+	#           the generated Proxy will implement all methods of that interface.
+	#
+	# NOTE: The appropriate cooresponding IndirectionHandler must be choosen as well
+	#
+	#ProxyFactoryClass=org.apache.ojb.broker.core.proxy.ProxyFactoryCGLIBImpl
+	ProxyFactoryClass=org.apache.ojb.broker.core.proxy.ProxyFactoryJDKImpl
+	#
+	# The IndirectionHandlerClass entry defines the class to be used by OJB's proxies to
+	# handle method invocations
+	#
+	#IndirectionHandlerClass=org.apache.ojb.broker.core.proxy.IndirectionHandlerCGLIBImpl
+	IndirectionHandlerClass=org.apache.ojb.broker.core.proxy.IndirectionHandlerJDKImpl
+	#
+	#----------------------------------------------------------------------------------------
+	# ListProxy
+	#----------------------------------------------------------------------------------------
+	# The ListProxyClass entry defines the proxy class to be used for collections that
+	# implement the java.util.List interface.
+	#
+	ListProxyClass=org.apache.ojb.broker.core.proxy.ListProxyDefaultImpl
+	#
+	#----------------------------------------------------------------------------------------
+	# SetProxy
+	#----------------------------------------------------------------------------------------
+	# The SetProxyClass entry defines the proxy class to be used for collections that
+	# implement the java.util.Set interface.
+	#
+	SetProxyClass=org.apache.ojb.broker.core.proxy.SetProxyDefaultImpl
+	#
+	#----------------------------------------------------------------------------------------
+	# CollectionProxy
+	#----------------------------------------------------------------------------------------
+	# The CollectionProxyClass entry defines the proxy class to be used for collections that
+	# do not implement java.util.List or java.util.Set.
+	#
+	CollectionProxyClass=org.apache.ojb.broker.core.proxy.CollectionProxyDefaultImpl
+    ...]]></source>
+
+            </section>
+        </section>
+
+        <section>
+            <title>Type and Value Conversions</title>
+            <p>
+                Say your database column contains INTEGER values but you have to
+                use boolean attributes in your Domain objects. You need a type and
+                value mapping described by a
+                <a href="site:jdbc-types">FieldConversion!</a>
+            </p>
+        </section>
+
+    </body>
+</document>

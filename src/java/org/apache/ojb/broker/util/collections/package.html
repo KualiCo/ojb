@@ -1,0 +1,30 @@
+<html>
+<head>
+<title>broker collections package</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF">
+This package contains utility classes that implement the ManageableCollection 
+interface. 
+Implementing this interface allows to use these classes as collection 
+attributes in persistent classes.
+<P>
+The class <code>ManageableVector</code> extends <code>Vector</code>
+and implements <code>ManageableCollections</code>.
+<P>
+The class <code>ManageableArrayList</code> extends <code>ArrayList</code>
+and implements <code>ManageableCollections</code>.
+<P>
+The class <code>ManageableHashSet</code> extends <code>HashSet</code>
+and implements <code>ManageableCollections</code>.
+<P>
+
+Patterns applied:
+Adapter, Callback interface ("don't call us, we call you")
+
+<P>
+Todo:
+Provide more such implementations.
+</body>
+</html>

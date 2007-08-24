@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: index.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Apache ObJectRelationalBridge - OJB</title>
+    </header>
+    <body>
+
+        <section>
+            <title>Summary</title>
+            <p>
+                Apache ObJectRelationalBridge (OJB) is an Object/Relational mapping tool that
+                allows transparent persistence for Java Objects against relational
+                databases.
+            </p>
+
+            <section>
+                <title>flexibility</title>
+                <p>
+                    OJB supports multiple persistence APIs to provide users with their API of choice:
+                </p>
+                <ul>
+                    <li>
+                        A <strong>PersistenceBroker</strong> API which serves as the OJB persistence
+                        kernel. The OTM-, ODMG- and JDO-implementations are built on
+                        top of this kernel.
+                        <br/>
+                        This API can also be used directly by applications that don't need full
+                        fledged object level transactions. (See the
+                        <a href="site:pb-tutorial">Persistence Broker Tutorial</a>
+                        for details.)
+                    </li>
+                    <li>
+                        A full featured
+                        <strong>ODMG 3.0</strong> compliant API. (See the
+                        <a href="site:odmg-tutorial">ODMG Tutorial</a> for an introduction.)
+                    </li>
+                    <li>
+                        A
+                        <strong>JDO</strong> compliant API. We currently provide a plugin to the JDO
+                        Reference Implementation (RI). Combining the JDO RI and our plugin
+                        provides a JDO 1.0 compliant o/r solution.
+                        <br/>
+                        A full JDO implementation is scheduled for OJB 2.0.
+                        (See the <a href="site:jdo-tutorial">JDO tutorial</a>
+                        for an introduction to the JDO programming model.)
+                    </li>
+                    <li>
+                        An Object Transaction Manager (OTM) layer that contains all features that
+                        JDO and ODMG have in common. (See the
+                        <a href="site:otm-tutorial">OTM tutorial</a> for details).
+                    </li>
+                </ul>
+
+                <p>
+                    See the
+                    <a href="site:faq/apis">FAQ</a> for a detailed view of the OJB layering.
+                    Get the latest information on each API's <a href="site:status">status</a>.
+                </p>
+
+            </section>
+
+            <section>
+                <title>scalability</title>
+                <p>
+                    OJB has been designed for a large range of applications, from embedded systems to
+                    rich client application to multi-tier J2EE based architectures.
+                </p>
+                <p>
+                    OJB integrates smoothly into J2EE Application servers. It supports JNDI lookup
+                    of datasources.
+                    It ships with full JTA and JCA integration.
+                    OJB can be used within JSPs, Servlets and SessionBeans.
+                    OJB provides special support for Bean Managed EntityBeans (BMP).
+                </p>
+
+            </section>
+
+            <section>
+                <title>functionality</title>
+                <p>
+                    OJB uses an XML based Object/Relational mapping. The mapping resides in a
+                    dynamic MetaData layer, which can be manipulated at runtime through a simple
+                    Meta-Object-Protocol (MOP) to change the behaviour of the persistence
+                    kernel.
+                </p>
+                <p>
+                    OJB provides several advanced O/R features like
+                    <a href="site:object-cache">Object Caching</a>, lazy materialization
+                    through
+                    <a href="site:basic-technique/using-proxy">virtual proxies</a> and
+                    distributed
+                    <a href="site:lock-manager">lock-management</a> with configurable
+                    Transaction-Isolation levels. Optimistic and pessimistic locking is
+                    supported.
+                </p>
+                <p>
+                    OJB provides a flexible configuration and plugin mechanism that allows to select
+                    from set of predefined components or to implement your own extensions and plugins.
+                </p>
+                <p>
+                    A more complete
+                    <a href="site:features">featurelist can be found here</a>.
+                </p>
+                <p>
+                    Learn more about the OJB design principles
+                    <a href="site:links">in this document</a>.
+                </p>
+
+            </section>
+
+        </section>
+    </body>
+</document>

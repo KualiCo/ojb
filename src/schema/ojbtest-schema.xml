@@ -1,0 +1,1727 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE database SYSTEM "http://db.apache.org/torque/dtd/database_3_1.dtd">
+<!--
+#/* Copyright 2002-2004 The Apache Software Foundation
+# *
+# * Licensed under the Apache License, Version 2.0 (the "License");
+# * you may not use this file except in compliance with the License.
+# * You may obtain a copy of the License at
+# *
+# *     http://www.apache.org/licenses/LICENSE-2.0
+# *
+# * Unless required by applicable law or agreed to in writing, software
+# * distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
+# * limitations under the License.
+# */
+-->
+<!-- @version $Id: ojbtest-schema.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+
+<database name="@DATABASE_DEFAULT@" defaultIdMethod="none"
+  baseClass="">
+
+  <!-- =================================================== -->
+  <!-- B O O K  T A B L E                                  -->
+  <!-- =================================================== -->
+
+
+  <!--
+  <table name="">
+    <column name="" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="" required="true" type=""/>
+    <foreign-key foreignTable="">
+      <reference local="" foreign=""/>
+    </foreign-key>
+  </table>
+  -->
+
+  <table name="Kategorien"
+         javaName="ProductGroup">
+    <column name="Kategorie_Nr" required="true" primaryKey="true" type="INTEGER"
+            javaName="groupId"/>
+    <column name="KategorieName" type="VARCHAR" size="150"
+            javaName="groupName"/>
+    <column name="Beschreibung" type="VARCHAR" size="150"
+            javaName="description"/>
+  </table>
+
+
+  <table name="Artikel"
+         javaName="Article">
+    <column name="Artikel_Nr" required="true" primaryKey="true" type="INTEGER"
+            javaName="articleId"/>
+    <column name="Artikelname" type="VARCHAR" size="150"
+            javaName="articleName"/>
+    <column name="Lieferanten_Nr" type="INTEGER"
+            javaName="supplierId"/>
+    <column name="Kategorie_Nr" type="INTEGER"
+            javaName="productGroupId"/>
+    <column name="Liefereinheit" type="VARCHAR" size="150"
+            javaName="unit"/>
+    <column name="Einzelpreis" type="FLOAT"
+            javaName="price"/>
+    <column name="Lagerbestand" type="INTEGER"
+            javaName="stock"/>
+    <column name="BestellteEinheiten" type="INTEGER"
+            javaName="orderedUnits"/>
+    <column name="MindestBestand" type="INTEGER"
+            javaName="minimumStock"/>
+    <column name="Auslaufartikel" type="INTEGER"
+            javaName="inSelloutArticle"/>
+    <foreign-key foreignTable="Kategorien">
+      <reference local="Kategorie_Nr" foreign="Kategorie_Nr"/>
+    </foreign-key>
+  </table>
+
+  <table name="BOOKS">
+    <column name="Artikel_Nr" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="Artikelname" type="VARCHAR" size="150"/>
+    <column name="Lieferanten_Nr" type="INTEGER"/>
+    <column name="Kategorie_Nr" type="INTEGER"/>
+    <column name="Liefereinheit" type="VARCHAR" size="150"/>
+    <column name="Einzelpreis" type="FLOAT"/>
+    <column name="Lagerbestand" type="INTEGER"/>
+    <column name="BestellteEinheiten" type="INTEGER"/>
+    <column name="MindestBestand" type="INTEGER"/>
+    <column name="Auslaufartikel" type="INTEGER"/>
+    <column name="ISBN" type="CHAR" size="10"/>
+    <column name="AUTHOR" type="VARCHAR" size="150"/>
+    <foreign-key foreignTable="Kategorien">
+      <reference local="Kategorie_Nr" foreign="Kategorie_Nr"/>
+    </foreign-key>
+  </table>
+
+  <table name="CDS">
+    <column name="Artikel_Nr" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="Artikelname" type="VARCHAR" size="150"/>
+    <column name="Lieferanten_Nr" type="INTEGER"/>
+    <column name="Kategorie_Nr" type="INTEGER"/>
+    <column name="Liefereinheit" type="VARCHAR" size="150"/>
+    <column name="Einzelpreis" type="FLOAT"/>
+    <column name="Lagerbestand" type="INTEGER"/>
+    <column name="BestellteEinheiten" type="INTEGER"/>
+    <column name="MindestBestand" type="INTEGER"/>
+    <column name="Auslaufartikel" type="INTEGER"/>
+    <column name="LABEL" type="VARCHAR" size="150"/>
+    <column name="MUSICIANS" type="VARCHAR" size="250"/>
+    <foreign-key foreignTable="Kategorien">
+      <reference local="Kategorie_Nr" foreign="Kategorie_Nr"/>
+    </foreign-key>
+  </table>
+
+  <table name="ORDER_POSITION">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="ORDER_ID" type="INTEGER"/>
+    <column name="ARTICLE_ID" type="INTEGER"/>
+  </table>
+
+  <table name="TREE">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="DATA" type="VARCHAR" size="150"/>
+    <column name="PARENT_ID" type="INTEGER"/>
+  </table>
+
+  <table name="TREEGROUP">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="DATA" type="VARCHAR" size="150"/>
+    <column name="PARENT_ID" type="INTEGER"/>
+    <column name="GROUP_ID" type="INTEGER"/>
+  </table>
+
+  <table name="AB_TABLE">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="CLASS_NAME" type="VARCHAR" size="150"/>
+    <column name="VALUE_" type="INTEGER"/>
+    <column name="A_FIELD" type="VARCHAR" size="150"/>
+    <column name="B_FIELD" type="VARCHAR" size="150"/>
+  </table>
+
+  <!-- Product Table for Tutorial 1, 2 & 4-->
+  <table name="PRODUCT">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="_id"/>
+    <column name="NAME" type="VARCHAR" size="150"/>
+    <column name="PRICE" type="FLOAT"/>
+    <column name="STOCK" type="INTEGER"/>
+  </table>
+
+  <table name="PERSON">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="FIRSTNAME" type="VARCHAR" size="150"/>
+    <column name="LASTNAME" type="VARCHAR" size="150"/>
+  </table>
+
+  <table name="PROJECT">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="TITLE" type="VARCHAR" size="150"/>
+    <column name="DESCRIPTION" type="VARCHAR" size="250"/>
+  </table>
+
+  <table name="PERSON_PROJECT">
+    <column name="PERSON_ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="PROJECT_ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="ROLENAME" type="VARCHAR" size="150"/>
+    <foreign-key foreignTable="PERSON">
+      <reference local="PERSON_ID" foreign="ID"/>
+    </foreign-key>
+    <foreign-key foreignTable="PROJECT">
+      <reference local="PROJECT_ID" foreign="ID"/>
+    </foreign-key>
+  </table>
+
+  <table name="TASK">
+    <column name="TASK_ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="PERSON_ID" required="true" type="INTEGER"/>
+    <column name="PROJECT_ID" required="true" type="INTEGER"/>
+    <column name="TASKNAME" type="VARCHAR" size="20"/>
+  </table>
+
+  <table name="FAMILY_MEMBER">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="FIRSTNAME" type="VARCHAR" size="150"/>
+    <column name="LASTNAME" type="VARCHAR" size="150"/>
+    <column name="MOTHER_ID" type="INTEGER"/>
+    <column name="FATHER_ID" type="INTEGER"/>
+  </table>
+
+  <table name="LOCKED_BY_VERSION">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="VALUE_" type="VARCHAR" size="150"/>
+    <column name="VERSION_" type="INTEGER"/>
+  </table>
+
+  <table name="LOCKED_BY_TIMESTAMP">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="VALUE_" type="VARCHAR" size="150"/>
+    <column name="TIMESTAMP_" type="TIMESTAMP"/>
+  </table>
+
+  <table name="BLOB_TEST">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="BLOB_VALUE_" type="BLOB"/>
+    <column name="CLOB_VALUE_" type="CLOB"/>
+  </table>
+
+  <table name="CHARACTER_TEST">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="CHAR_1" type="CHAR" size="1" />
+    <column name="CHAR_10" type="CHAR" size="10" />
+    <column name="VARCHAR_1" type="VARCHAR" size="1" />
+    <column name="VARCHAR_10" type="VARCHAR" size="10" />
+  </table>
+
+  <table name="MDTEST_MASTER">
+    <column name="MASTERID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="MASTER_TEXT" type="VARCHAR" size="255"/>
+  </table>
+
+  <table name="MDTEST_DETAIL_FKINPK">
+    <column name="MASTERID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="DETAILID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="DETAIL_TEXT" type="VARCHAR" size="255"/>
+    <foreign-key foreignTable="MDTEST_MASTER">
+      <reference local="MASTERID" foreign="MASTERID"/>
+    </foreign-key>
+  </table>
+
+  <table name="MDTEST_DETAIL_FKNOPK">
+    <column name="DETAILID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="MASTERID" required="true" type="INTEGER"/>
+    <column name="DETAIL_TEXT" type="VARCHAR" size="255"/>
+    <foreign-key foreignTable="MDTEST_MASTER">
+      <reference local="MASTERID" foreign="MASTERID"/>
+    </foreign-key>
+  </table>
+
+  <table name="POINT_TABLE">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="X" required="true" type="INTEGER"/>
+    <column name="Y" required="true" type="INTEGER"/>
+  </table>
+
+  <table name="GRAPH_NODE">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="NAME" required="true" type="VARCHAR" size="150"/>
+    <column name="LOCATION" type="INTEGER"/>
+  </table>
+
+  <table name="GRAPH_EDGE">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="SOURCE" required="true" type="INTEGER"/>
+    <column name="SINK" required="true" type="INTEGER"/>
+  </table>
+
+  <table name="TestClassA">
+    <column name="id" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+    <column name="value1" required="false" type="VARCHAR" size="150"/>
+    <column name="value2" required="false" type="VARCHAR" size="150"/>
+    <column name="value3" required="true" type="INTEGER" />
+    <column name="bOid" required="false" type="VARCHAR" size="48"/>
+  </table>
+
+  <table name="TestClassB">
+    <column name="id" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+    <column name="value1" required="false" type="VARCHAR" size="150"/>
+    <column name="aOid" required="false" type="VARCHAR" size="48"/>
+  </table>
+    <table name="RelatedToContract">
+        <column name="pk" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+        <column name="relatedValue1" required="false" type="VARCHAR" size="150"/>
+        <column name="relatedValue2" required="false" type="INTEGER"/>
+        <column name="relatedValue3" required="false" type="TIMESTAMP"/>
+    </table>
+
+    <table name="Contract">
+        <column name="pk" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+        <column name="fk_to_related" required="false" type="VARCHAR" size="48"/>
+        <column name="contract_value1" required="false" type="VARCHAR" size="64"/>
+        <column name="contract_value2" required="false" type="INTEGER"/>
+        <column name="contract_value3" required="false" type="VARCHAR" size="64"/>
+        <column name="contract_value4" required="false" type="TIMESTAMP"/>
+        <foreign-key foreignTable="RelatedToContract">
+          <reference local="fk_to_related" foreign="pk"/>
+        </foreign-key>
+    </table>
+    <table name="Version">
+        <column name="pk" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+        <column name="fk_to_contract" required="true" type="VARCHAR" size="48"/>
+        <column name="version_value1" required="false" type="VARCHAR" size="64"/>
+        <column name="version_value2" required="false" type="INTEGER"/>
+        <column name="version_value3" required="false" type="TIMESTAMP"/>
+        <foreign-key foreignTable="Contract">
+          <reference local="fk_to_contract" foreign="pk"/>
+        </foreign-key>
+    </table>
+    <table name="Effectiveness">
+        <column name="pk" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+        <column name="fk_to_version" required="true" type="VARCHAR" size="48"/>
+        <column name="eff_value1" required="false" type="VARCHAR" size="64"/>
+        <column name="eff_value2" required="false" type="INTEGER"/>
+        <column name="eff_value3" required="false" type="TIMESTAMP"/>
+        <foreign-key foreignTable="Version">
+          <reference local="fk_to_version" foreign="pk"/>
+        </foreign-key>
+    </table>
+
+    <table name="MultiMappedTable">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="value1" required="false" type="VARCHAR" size="64"/>
+        <column name="value2" required="false" type="INTEGER"/>
+        <column name="value3" required="false" type="TIMESTAMP"/>
+        <column name="value4" required="false" type="VARCHAR" size="64"/>
+        <column name="value5" required="false" type="INTEGER"/>
+        <column name="value6" required="false" type="TIMESTAMP"/>
+        <column name="value7" required="false" type="VARCHAR" size="64"/>
+        <column name="ojbConcreteClass" required="true" type="VARCHAR" size="64"/>
+    </table>
+
+    <table name="EXTENT_TEST_A">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="false" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="EXTENT_TEST_B">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="false" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="EXTENT_TEST_C">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="false" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="EXTENT_TEST_D">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="false" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="TABLE_2">
+        <column name="pk" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+     <table name="TABLE_1">
+        <column name="pk" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="fk_to_related" required="false" type="INTEGER"/>
+        <foreign-key foreignTable="TABLE_2">
+          <reference local="fk_to_related" foreign="pk"/>
+        </foreign-key>
+    </table>
+
+    <table name="BIDIR_A">
+       <column name="pk" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+       <column name="fk_to_B" required="false" type="VARCHAR" size="48"/>
+<!--
+		BRJ : can't reference a table that is created later
+       <foreign-key foreignTable="BIDIR_B">
+         <reference local="fk_to_B" foreign="pk"/>
+       </foreign-key>
+-->
+   </table>
+
+   <table name="BIDIR_B">
+       <column name="pk" required="true" primaryKey="true" type="VARCHAR" size="48"/>
+       <column name="fk_to_A" required="false" type="VARCHAR" size="48"/>
+       <foreign-key foreignTable="BIDIR_A">
+         <reference local="fk_to_A" foreign="pk"/>
+       </foreign-key>
+   </table>
+
+  <table name="ZOO">
+    <column name="zooId" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="name" type="VARCHAR" size="60"/>
+  </table>
+
+  <table name="MAMMAL">
+    <column name="animalId" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="name" type="VARCHAR" size="60"/>
+    <column name="age" type="INTEGER"/>
+    <column name="numLegs" type="INTEGER"/>
+    <column name="zooId" type="INTEGER"/>
+    <foreign-key foreignTable="ZOO">
+      <reference local="zooId" foreign="zooId"/>
+    </foreign-key>
+  </table>
+
+  <table name="REPTILE">
+    <column name="animalId" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="name" type="VARCHAR" size="60"/>
+    <column name="age" type="INTEGER"/>
+    <column name="color" type="VARCHAR" size="60"/>
+    <column name="zooId" type="INTEGER"/>
+    <foreign-key foreignTable="ZOO">
+      <reference local="zooId" foreign="zooId"/>
+    </foreign-key>
+  </table>
+
+
+  <table name="FISH">
+    <column name="foodId" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="name" type="VARCHAR" size="60"/>
+    <column name="calories" type="INTEGER"/>
+    <column name="typeOfWater" type="VARCHAR" size="60"/>
+  </table>
+
+  <table name="SALAD">
+    <column name="foodId" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="name" type="VARCHAR" size="60"/>
+    <column name="calories" type="INTEGER"/>
+    <column name="color" type="VARCHAR" size="60"/>
+  </table>
+
+  <table name="GOURMET">
+    <column name="gourmetId" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="name" type="VARCHAR" size="60"/>
+  </table>
+
+  <table name="GOURMET_FOOD">
+    <column name="GOURMET_ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="FOOD_ID" required="true" primaryKey="true" type="INTEGER"/>
+  </table>
+
+  <table name="GUIDTEST">
+    <column name="GUID_" required="true" primaryKey="true" type="VARCHAR" size="60"/>
+    <column name="GUIDVALUE" type="VARCHAR" size="60"/>
+  </table>
+  <table name="CONV_REFERER" javaName="ConversionReferrer">
+    <column name="PK1" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="REF1" type="INTEGER"/>
+    <column name="TEST_ID" type="INTEGER"/>
+  </table>
+
+  <table name="CONV_REFERED" javaName="ConversionReferred">
+    <column name="PK1" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="TEST_ID" type="INTEGER"/>
+  </table>
+
+
+  <table name="SITE">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="NAME" required="true" type="VARCHAR" size="100"/>
+    <column name="SITEYEAR" type="INTEGER"/>
+    <column name="SEMESTER" type="INTEGER"/>
+    <unique name="NAME_UNIQUE">
+        <unique-column name="NAME"/>
+    </unique>
+  </table>
+
+     <table name="ODMG_DLIST">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="true" type="VARCHAR" size="100"/>
+        <column name="RND_NAME" required="true" type="VARCHAR" size="100"/>
+  </table>
+
+    <table name="ROLLBACK_ONE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="false" type="VARCHAR" size="100"/>
+        <column name="DESCRIPTION" required="false" type="VARCHAR" size="100"/>
+    </table>
+    <table name="ROLLBACK_TWO">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" required="false" type="VARCHAR" size="100"/>
+        <column name="DESCRIPTION" required="false" type="VARCHAR" size="100"/>
+    </table>
+
+
+  <!-- ======================================================== -->
+  <!--                                                          -->
+  <!--           Extent Aware Path Expressions Tables           -->
+  <!--                                                          -->
+  <!-- ======================================================== -->
+
+  <!-- Content -->
+  <table name="NEWS">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="HEADLINE" type="VARCHAR" size="50"/>
+  </table>
+
+  <!-- Content -->
+  <table name="PAPER">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="HEADLINE" type="VARCHAR" size="50"/>
+    <column name="ISSUEDATE" type="VARCHAR" size="50"/>
+    <column name="AUTHOR" type="VARCHAR" size="50"/>
+  </table>
+
+  <!-- Qualifier -->
+  <table name="TOPIC">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="NAME" type="VARCHAR" size="50"/>
+    <column name="IMPORTANCE" type="VARCHAR" size="50"/>
+  </table>
+
+  <!-- Qualifier -->
+  <table name="TOPIC_EXT">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="NAME" type="VARCHAR" size="50"/>
+    <column name="IMPORTANCE" type="VARCHAR" size="50"/>
+      <column name="DESCRIPTION" type="VARCHAR" size="50"/>
+  </table>
+
+  <!-- Qualifier -->
+  <table name="CATEGORY">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="NAME" type="VARCHAR" size="50"/>
+    <column name="DESCRIPTION" type="VARCHAR" size="50"/>
+  </table>
+
+  <!-- Qualifier -->
+  <table name="AREA">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="NAME" type="VARCHAR" size="50"/>
+    <column name="DESCRIPTION" type="VARCHAR" size="50"/>
+  </table>
+
+  <!-- Cant have foreign keys -->
+  <table name="CONTENT_QUALIFIER">
+    <column name="CONTENT_ID" required="true" primaryKey="true" type="INTEGER"/>
+    <column name="QUALIFIER_ID" required="true" primaryKey="true" type="INTEGER"/>
+  </table>
+
+
+
+    <!-- =================================================== -->
+    <!-- Sequence mangager test tables                       -->
+    <!-- =================================================== -->
+    <table name="SM_TAB_A" javaName="SMInterfaceExtendA">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_AA" javaName="SMInterfaceExtendAA">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_AB" javaName="SMInterfaceExtendAB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_AAA" javaName="SMInterfaceExtendAAA">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_B" javaName="SMInterfaceExtendB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_BB" javaName="SMInterfaceExtendBB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_SAME_TAB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_AUTO_NAMING">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_MAX_A" javaName="SMMaxA">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_MAX_AA" javaName="SMMaxAA">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_MAX_AB" javaName="SMMaxAB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_MAX_AAA"  javaName="SMMaxAAA">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_MAX_B" javaName="SMMaxB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_TAB_MAX_BB" javaName="SMMaxBB">
+        <column name="SM_ID" required="true" primaryKey="true" type="INTEGER"
+        javaName="id"/>
+        <column name="NAME" type="VARCHAR" size="250" javaName="name"/>
+    </table>
+
+    <table name="SM_KEY">
+        <column name="INT_KEY" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="STRING_KEY" required="true" type="VARCHAR" size="250"/>
+        <column name="LONG_KEY" required="true" type="BIGINT"/>
+        <column name="INTEGER_KEY" required="true" type="INTEGER"/>
+    </table>
+
+    <table name="SM_MT_TEST_A">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+    <table name="SM_MT_TEST_B">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- autoincrement test                                  -->
+    <!-- =================================================== -->
+    <table name="AUTO_INCREMENT">
+        <column name="INT_ID" type="INTEGER"/>
+        <column name="INTEGER_ID" type="INTEGER"/>
+        <column name="STR_ID" type="VARCHAR" size="255"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- EJB examples tables                                 -->
+    <!-- =================================================== -->
+
+    <!--
+    private Integer categoryId;
+    private String categoryName;
+    private String description;
+    -->
+    <table name="EJB_CATEGORY">
+        <column name="CATEGORY_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="CATEGORY_NAME" type="VARCHAR" size="80"/>
+        <column name="DESCRIPTION" type="VARCHAR" size="255"/>
+    </table>
+
+    <!--
+    private Integer articleId;
+    private String name;
+    private BigDecimal price;
+    private String description;
+    private Integer categoryId;
+    -->
+    <table name="EJB_ARTICLE">
+        <column name="ARTICLE_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="80"/>
+        <column name="PRICE" type="DECIMAL" size="15,2"/>
+        <column name="DESCRIPTION" type="VARCHAR" size="255"/>
+        <column name="CATEGORY_ID" required="false" type="INTEGER"/>
+
+    </table>
+
+  <!--
+    private Integer personId;
+    private String firstName;
+    private String lastName;
+    private String grade;
+    -->
+    <table name="EJB_PERSON">
+        <column name="PERSON_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="FIRST_NAME" type="VARCHAR" size="80"/>
+        <column name="LAST_NAME" type="VARCHAR" size="80"/>
+        <column name="GRADE" type="VARCHAR" size="80"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- Field conversion test                               -->
+    <!-- =================================================== -->
+    <!--
+    private long uid;  // primary key
+    private long node_refid;
+    -->
+    <table name="FIELD_CONVERSION_NODE">
+        <column name="NODE_ID" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="NODE_STATE" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="PARENT_UID" type="DECIMAL" size="15,0"/>
+    </table>
+
+    <table name="FIELD_CONVERSION_NODE_NOINC">
+        <column name="NODE_ID" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+    </table>
+
+    <table name="CONVERSION_VO">
+        <column name="PK_WITH_AUTO" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="PK_WITHOUT_AUTO" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NORMAL_WITH_AUTO" required="false" primaryKey="false" type="INTEGER"/>
+        <column name="NORMAL_WITHOUT_AUTO" required="false" primaryKey="false" type="INTEGER"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- NumberAccuarcyTest                                  -->
+    <!-- =================================================== -->
+    <table name="NUMBER_ACCURACY_TEST">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="SCALE_TWO" type="DECIMAL" size="15,6"/>
+        <column name="SCALE_FOUR" type="DECIMAL" size="15,6"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- Perf-test table                                     -->
+    <!-- =================================================== -->
+    <!--
+    private Long articleId;
+    private String articleName;
+    private int minimumStock;
+    private BigDecimal price;
+    private String unit;
+    private int stock;
+    private int supplierId;
+    private int productGroupId;
+    -->
+    <table name="PERF_ARTICLE">
+        <column name="ARTICLE_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="ARTICLE_NAME" type="VARCHAR" size="150"/>
+        <column name="MINIMUM_STOCK" type="INTEGER"/>
+        <column name="PRICE" type="FLOAT"/>
+        <column name="UNIT" type="VARCHAR" size="20"/>
+        <column name="STOCK" type="INTEGER"/>
+        <column name="SUPPLIER_ID" type="INTEGER"/>
+        <column name="PRODUCT_GROUP_ID" type="INTEGER"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- PB - BatchModeTest tables                           -->
+    <!-- =================================================== -->
+    <table name="BATCH_MAIN_OBJ">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="BIGINT"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="BATCH_SUB_OBJ">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="BIGINT"/>
+        <column name="FK_MAIN_ID" type="BIGINT"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+        <foreign-key foreignTable="BATCH_MAIN_OBJ">
+            <reference local="FK_MAIN_ID" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- ObjectCacheTest                                     -->
+    <!-- =================================================== -->
+    <table name="CACHE_TEST">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- LocalCacheTest                                      -->
+    <!-- =================================================== -->
+    <table name="LOCAL_CACHE_TEST">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+        <column name="FK_FATHER" type="INTEGER"/>
+        <column name="FK_GRANDFATHER" type="INTEGER"/>
+        <column name="FK_CHILD" type="INTEGER"/>
+        <column name="FK_GRANDCHILD" type="INTEGER"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- Reference test tables                               -->
+    <!-- =================================================== -->
+    <table name="REF_REPOSITORY">
+        <column name="REP_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="REF_FK" type="INTEGER"/>
+        <column name="REFA_FK" type="INTEGER"/>
+        <column name="REFB_FK" type="INTEGER"/>
+        <column name="ANIMAL_FK" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="REF_REPOSITORY_FK">
+        <column name="REP_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="REF_FK" type="INTEGER" required="true" primaryKey="true"/>
+        <column name="REFA_FK" type="INTEGER" required="true" primaryKey="true"/>
+        <column name="REFB_FK" type="INTEGER" required="true" primaryKey="true"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="REF_REFERENCE">
+        <column name="REF_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+        <column name="OJB_CONCRETE_CLASS" type="VARCHAR" size="100"/>
+        <column name="REF_NAME_A" type="VARCHAR" size="100"/>
+        <column name="REF_NAME_B" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="REF_ANIMAL">
+        <column name="A_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+        <column name="CLASS_NAME" type="VARCHAR" size="100"/>
+        <column name="LENGTH_" type="DOUBLE"/>
+    </table>
+
+    <table name="REF_REGION">
+        <column name="NAME" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <column name="COUNTRY" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <column name="DESCRIPTION" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="REF_WINE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="VARCHAR" size="100"/>
+        <column name="REGION_NAME" type="VARCHAR" size="150" required="true"/>
+        <column name="REGION_COUNTRY" type="VARCHAR" size="150" required="true"/>
+        <column name="VINTAGE" type="VARCHAR" size="150"/>
+        <column name="GRAPE" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="REF_REGION">
+            <reference local="REGION_NAME" foreign="NAME"/>
+            <reference local="REGION_COUNTRY" foreign="COUNTRY"/>
+        </foreign-key>
+    </table>
+
+
+    <table name="REF_OBJ_A">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_COL_REF" type="INTEGER"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="REF_OBJ_B">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_COL_REF" type="INTEGER"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="REF_OBJ_C">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="NAME_C" type="VARCHAR" size="150"/>
+        <column name="FK_COL_REF" type="INTEGER"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- PrimaryKeyForeignKeyTest - PB-api                   -->
+    <!-- =================================================== -->
+    <table name="PKFK_PERSON">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="PKFK_PERSON_DETAIL">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="PROFILE" type="VARCHAR" size="150"/>
+        <column name="FK_GENDER" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="PKFK_GENDER">
+        <column name="TYPE" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+    </table>
+
+
+
+
+    <table name="READTEST_ACCOUNT">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="READTEST_BUYER">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="READTEST_INVOICE">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="INVOICE_NUMBER" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="READTEST_ARTICLE">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="DESCRIPTION" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="READTEST_ADDRESS">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="READTEST_ADDRESS_TYPE">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- PB M2NTest tables                                   -->
+    <!-- =================================================== -->
+    <table name="M2N_ACTOR">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID2" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="M2N_MOVIE">
+        <column name="OBJ_ID_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID2_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID_STR" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <column name="TITLE" type="VARCHAR" size="150"/>
+        <column name="DESCRIPTION" type="VARCHAR" size="250"/>
+    </table>
+
+    <table name="M2N_ROLE">
+        <column name="ACTOR_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="ACTOR_ID2" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID2_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID_STR" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="M2N_ACTOR">
+            <reference local="ACTOR_ID" foreign="OBJ_ID"/>
+            <reference local="ACTOR_ID2" foreign="OBJ_ID2"/>
+        </foreign-key>
+        <foreign-key foreignTable="M2N_MOVIE">
+            <reference local="MOVIE_ID_INT" foreign="OBJ_ID_INT"/>
+            <reference local="MOVIE_ID2_INT" foreign="OBJ_ID2_INT"/>
+            <reference local="MOVIE_ID_STR" foreign="OBJ_ID_STR"/>
+        </foreign-key>
+    </table>
+
+    <table name="M2N_ROLE_2">
+        <column name="ACTOR_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="ACTOR_ID2" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID2_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID_STR" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="M2N_ACTOR">
+            <reference local="ACTOR_ID" foreign="OBJ_ID"/>
+            <reference local="ACTOR_ID2" foreign="OBJ_ID2"/>
+        </foreign-key>
+        <foreign-key foreignTable="M2N_MOVIE">
+            <reference local="MOVIE_ID_INT" foreign="OBJ_ID_INT"/>
+            <reference local="MOVIE_ID2_INT" foreign="OBJ_ID2_INT"/>
+            <reference local="MOVIE_ID_STR" foreign="OBJ_ID_STR"/>
+        </foreign-key>
+    </table>
+
+    <table name="M2N_PRODUCER">
+        <column name="ID_" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="ID_STR" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="M2N_MOVIE_PRODUCER">
+        <!-- The ID_STR column is used by both table M2N_MOVIE and M2N_PRODUCER -->
+        <column name="PRODUCER_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="MOVIE_ID2_INT" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="ID_STR_SHARED" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <!--<foreign-key foreignTable="M2N_PRODUCER">-->
+            <!--<reference local="PRODUCER_ID" foreign="ID_"/>-->
+        <!--</foreign-key>-->
+        <!--<foreign-key foreignTable="M2N_MOVIE">-->
+            <!--<reference local="MOVIE_ID_INT" foreign="OBJ_ID_INT"/>-->
+            <!--<reference local="MOVIE_ID2_INT" foreign="OBJ_ID2_INT"/>-->
+        <!--</foreign-key>-->
+    </table>
+
+    <table name="M2N_OFFICE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="M2N_OFFICE_COUNTY">
+        <column name="OFFICE_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="COUNTY_ID" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="M2N_COUNTY">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="VARCHAR" size="150"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+
+
+    <!-- =================================================== -->
+    <!-- M2NGraph test table                                 -->
+    <!-- =================================================== -->
+    <table name="M2N_NODE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="M2N_KINDSHIP">
+        <column name="PARENT_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="CHILD_ID" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+
+
+    <!-- =================================================== -->
+    <!-- ODMG/PB collection test tables                      -->
+    <!-- =================================================== -->
+    <!--
+        private Integer gatId;
+        private String name;
+        private Collection collectiblesA;
+        private Collection collectiblesB;
+
+        private Integer colId;
+        private String name;
+        private Integer gathererId;
+        private Gatherer gatherer;
+        private String extentName;
+    -->
+    <table name="COL_GATHERER">
+        <column name="GAT_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="COL_COLLECTIBLE_A">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="COL_COLLECTIBLE_BASE">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="COL_COLLECTIBLE_B">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="COL_COLLECTIBLE_C">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+        <column name="EXTENT_NAME" type="VARCHAR" size="150"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="COL_COLLECTIBLE_CC">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+        <column name="EXTENT_NAME" type="VARCHAR" size="150"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="COL_COLLECTIBLE_C2">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+        <column name="EXTENT_NAME" type="VARCHAR" size="150"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="COL_COLLECTIBLE_D">
+        <column name="COL_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="OJB_CONCRETE_CLASS" type="VARCHAR" size="150"/>
+        <column name="GAT_ID" type="INTEGER"/>
+
+        <foreign-key foreignTable="COL_GATHERER">
+            <reference local="GAT_ID" foreign="GAT_ID"/>
+        </foreign-key>
+    </table>
+
+
+    <table name="COL_2_PROJECT">
+        <column name="PRO_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+    <table name="COL_2_SUB_PROJECT">
+        <column name="SUB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_PRO_ID" type="INTEGER"/>
+        <foreign-key foreignTable="COL_2_PROJECT">
+            <reference local="FK_PRO_ID" foreign="PRO_ID"/>
+        </foreign-key>
+    </table>
+    <table name="COL_2_DEVELOPER">
+        <column name="DEV_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_PRO_ID" type="INTEGER"/>
+        <foreign-key foreignTable="COL_2_PROJECT">
+            <reference local="FK_PRO_ID" foreign="PRO_ID"/>
+        </foreign-key>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- PBListenerTest test                                 -->
+    <!-- =================================================== -->
+    <table name="PB_AWARE_OBJECT">
+        <column name="ID_" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+    </table>
+
+    <table name="PB_AWARE_REF">
+        <column name="ID_" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="PB_AWARE_COLL">
+        <column name="ID_" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="FK_PB_AWARE" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- PB 'readonly' attribute test                        -->
+    <!-- =================================================== -->
+    <table name="READONLY_TEST">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="RO_STRING" type="VARCHAR" size="150"/>
+        <column name="RO_LONG" type="DECIMAL" size="15,0"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- PB vertical inheritance test                        -->
+    <!-- =================================================== -->
+    <table name="TABLE_E">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="SOMESUPERVALUE" type="INTEGER" />
+    </table>
+
+    <table name="TABLE_F">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="E_ID" required="true" type="INTEGER"/>
+        <column name="SOMEVALUE" type="INTEGER" />
+	    <foreign-key foreignTable="TABLE_E">
+    	  <reference local="E_ID" foreign="ID"/>
+	    </foreign-key>
+    </table>
+
+    <table name="TABLE_G">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="F_ID" required="true" type="INTEGER"/>
+        <column name="SOMESUBVALUE" type="INTEGER" />
+	    <foreign-key foreignTable="TABLE_F">
+    	  <reference local="F_ID" foreign="ID"/>
+	    </foreign-key>
+    </table>
+
+    <table name="TABLE_F1">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="SOMEVALUE" type="INTEGER" />
+	    <foreign-key foreignTable="TABLE_E">
+    	  <reference local="ID" foreign="ID"/>
+	    </foreign-key>
+    </table>
+
+    <table name="TABLE_G1">
+        <column name="ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="SOMESUBVALUE" type="INTEGER" />
+	    <foreign-key foreignTable="TABLE_F1">
+    	  <reference local="ID" foreign="ID"/>
+	    </foreign-key>
+    </table>
+
+
+    <!-- Used in tests AbstractExtentClassTest -->
+   <table name="ABSTRACT_COL_Z">
+     <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+     <column name="CONTAINER_ID" required="true" type="INTEGER"/>
+     <column name="NAME" type="VARCHAR" size="150"/>
+     <column name="SOMEVALUE" type="INTEGER" />
+   </table>
+   <!-- Used in tests AbstractExtentClassTest -->
+   <table name="ABSTRACT_COL_ZZ">
+     <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+     <column name="CONTAINER_ID" required="true" type="INTEGER"/>
+     <column name="NAME" type="VARCHAR" size="150"/>
+     <column name="ZZ_NAME" type="VARCHAR" size="150"/>
+     <column name="SOMEVALUE" type="INTEGER" />
+   </table>
+   <!-- Used in tests AbstractExtentClassTest -->
+   <table name="XCONTAINER">
+     <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+   </table>
+
+
+    <table name="COL_BOOKSHELFS">
+        <column name="PK" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+    </table>
+
+    <table name="COL_BOOKS">
+        <column name="PK" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+        <column name="BOOKSHELF_FK" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+    <table name="COL_DVDS">
+        <column name="PK" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="100"/>
+        <column name="BOOKSHELF_FK" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+    <table name="COL_CANDIES">
+        <column name="PK" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="INGREDIENTS" type="VARCHAR" size="250"/>
+        <column name="BOOKSHELF_FK" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- PB nested fields test                               -->
+    <!-- =================================================== -->
+    <table name="NESTED_FIELDS_TAB">
+     <column name="OBJ_ID" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+     <column name="NAME" type="VARCHAR" size="150"/>
+     <column name="NESTED_VALUE" type="VARCHAR" size="150"/>
+     <column name="NESTED_DESCRIPTION" type="VARCHAR" size="150"/>
+   </table>
+
+    <table name="NESTED_FIELDS_ENTRY">
+     <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+     <column name="FK_ID" required="true" type="DECIMAL" size="15,0"/>
+     <column name="NAME" type="VARCHAR" size="150"/>
+   </table>
+
+
+    <!-- =================================================== -->
+    <!-- Anonymous fields test tables                        -->
+    <!-- =================================================== -->
+    <table name="TAB_COMPONENT">
+        <column name="PK_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="PARENT_ID" type="INTEGER"/>
+        <column name="CHILD_ID" type="INTEGER"/>
+        <column name="GROUP_ID" type="INTEGER"/>
+    </table>
+
+    <table name="TAB_GROUP">
+        <column name="PK_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- Mapping Classes on Multiple Joined Tables test      -->
+    <!-- =================================================== -->
+    <table name="INHERITANCE_COMPANY">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="INHERITANCE_ADDRESS">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="STREET" type="VARCHAR" size="150"/>
+        <column name="FK_EMPLOYEE_1" type="INTEGER"/>
+        <column name="FK_EMPLOYEE_2" type="DECIMAL" size="15,0"/>
+    </table>
+
+    <table name="INHERITANCE_EMPLOYEE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID_2" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_ADDRESS" type="INTEGER"/>
+        <foreign-key foreignTable="INHERITANCE_ADDRESS">
+    	  <reference local="FK_ADDRESS" foreign="OBJ_ID"/>
+	    </foreign-key>
+    </table>
+
+    <table name="INHERITANCE_EXECUTIVE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID_2" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="SUPER_ID" type="INTEGER"/>
+        <column name="SUPER_ID_2" type="DECIMAL" size="15,0"/>
+        <column name="MANAGER_ID" type="INTEGER"/>
+        <column name="MANAGER_ID_2" type="DECIMAL" size="15,0"/>
+        <column name="DEPARTMENT" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="INHERITANCE_EMPLOYEE">
+    	  <reference local="SUPER_ID" foreign="OBJ_ID"/>
+    	  <reference local="SUPER_ID_2" foreign="OBJ_ID_2"/>
+	    </foreign-key>
+    </table>
+
+    <table name="INHERITANCE_MANAGER">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID_2" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="FK_CONSORTIUM" type="INTEGER"/>
+        <column name="SUPER_ID" type="INTEGER"/>
+        <column name="SUPER_ID_2" type="DECIMAL" size="15,0"/>
+        <foreign-key foreignTable="INHERITANCE_EXECUTIVE">
+    	  <reference local="SUPER_ID" foreign="OBJ_ID"/>
+    	  <reference local="SUPER_ID_2" foreign="OBJ_ID_2"/>
+	    </foreign-key>
+    </table>
+
+    <table name="INHERITANCE_SHAREHOLDER">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="OBJ_ID_2" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="SHARE_" type="INTEGER"/>
+        <column name="SUPER_ID" type="INTEGER"/>
+        <column name="SUPER_ID_2" type="DECIMAL" size="15,0"/>
+        <foreign-key foreignTable="INHERITANCE_MANAGER">
+    	  <reference local="SUPER_ID" foreign="OBJ_ID"/>
+    	  <reference local="SUPER_ID_2" foreign="OBJ_ID_2"/>
+	    </foreign-key>
+    </table>
+
+    <table name="INHERITANCE_EMPLOYEE_ADDRESS">
+        <column name="EMPLOYEE_ID_1" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="EMPLOYEE_ID_2" required="true" primaryKey="true" type="DECIMAL" size="15,0"/>
+        <column name="ADDRESS_ID" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+    <table name="INHERITANCE_CONSORTIUM">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+
+    <table name="INHERITANCE_ENTITY">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <table name="INHERITANCE_ANIMAL">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="WEIGHT" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_PARENT" type="INTEGER"/>
+    </table>
+
+    <table name="INHERITANCE_DOG">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="LEGS" type="INTEGER"/>
+    </table>
+
+     <table name="INHERITANCE_FOOD">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+         <column name="FK_ANIMAL" type="INTEGER"/>
+    </table>
+
+
+    <!-- =================================================== -->
+    <!-- Runtime reference setting test                      -->
+    <!-- =================================================== -->
+    <table name="RUNTIME_SETTING_ONE">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+     <table name="RUNTIME_SETTING_MAIN">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_REF" type="INTEGER"/>
+         <foreign-key foreignTable="RUNTIME_SETTING_ONE">
+    	  <reference local="FK_REF" foreign="OBJ_ID"/>
+	    </foreign-key>
+    </table>
+
+    <table name="RUNTIME_SETTING_MANY">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <column name="FK_MAIN" type="INTEGER"/>
+        <foreign-key foreignTable="RUNTIME_SETTING_MAIN">
+    	  <reference local="FK_MAIN" foreign="OBJ_ID"/>
+	    </foreign-key>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- MultiplesDBTest - PB-api                            -->
+    <!-- =================================================== -->
+    <table name="MULTIPLE_OBJECT">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- Multithreaded lock test - odmg                      -->
+    <!-- =================================================== -->
+    <table name="LOCK_MULTI">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="VERSION" type="INTEGER"/>
+        <column name="REF_ID" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+    </table>
+
+    <table name="LOCK_MULTI_REF">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="VERSION" type="INTEGER"/>
+   </table>
+
+
+    <!-- =================================================== -->
+    <!-- ImageContainerTest - odmg                           -->
+    <!-- =================================================== -->
+    <table name="IC_BOOK">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="TITLE" type="VARCHAR" size="250"/>
+        <column name="P_DATE" type="TIMESTAMP"/>
+        <column name="COVER" type="LONGVARBINARY"/>
+        <column name="PUBLISHER_FK" type="INTEGER"/>
+        <column name="OJB_VERSION" type="INTEGER"/>
+    </table>
+
+    <table name="IC_AUTHOR">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="OJB_VERSION" type="INTEGER"/>
+    </table>
+
+    <table name="IC_PUBLISHER">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="OJB_VERSION" type="INTEGER"/>
+    </table>
+
+    <table name="IC_PUBLICATION">
+        <column name="BOOK_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="AUTHOR_ID" required="true" primaryKey="true" type="INTEGER"/>
+    </table>
+
+    <table name="IC_REVIEW">
+        <column name="OJB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="SUMMARY" type="VARCHAR" size="250"/>
+        <column name="FK_BOOK" type="INTEGER"/>
+        <column name="OJB_VERSION" type="INTEGER"/>
+        <column name="AUTHOR_FK" type="INTEGER"/>
+    </table>
+
+    <!-- =================================================== -->
+    <!-- LockCircularTest - odmg                             -->
+    <!-- =================================================== -->
+    <table name="CT_DETAIL">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="SHOP_FK" type="INTEGER"/>
+    </table>
+
+    <table name="CT_SHOP">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="DETAIL_FK" type="INTEGER"/>
+        <foreign-key foreignTable="CT_DETAIL">
+            <reference local="DETAIL_FK" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CT_DISTRIBUTOR">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+    </table>
+
+    <table name="CT_PRODUCT">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="SHOP_FK" type="INTEGER"/>
+        <column name="SUB_PRODUCT_FK" type="INTEGER"/>
+        <foreign-key foreignTable="CT_PRODUCT">
+            <reference local="SUB_PRODUCT_FK" foreign="OBJ_ID"/>
+        </foreign-key>
+        <foreign-key foreignTable="CT_SHOP">
+            <reference local="SHOP_FK" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CT_SHOP_DISTRIBUTOR">
+        <column name="SHOP_ID" type="INTEGER"/>
+        <column name="DISTRIBUTOR_ID" type="INTEGER"/>
+        <foreign-key foreignTable="CT_SHOP">
+            <reference local="SHOP_ID" foreign="OBJ_ID"/>
+        </foreign-key>
+        <foreign-key foreignTable="CT_DISTRIBUTOR">
+            <reference local="DISTRIBUTOR_ID" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CT_OBJECT_AAAA">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="FK_ID" type="INTEGER"/>
+    </table>
+
+    <table name="CT_OBJECT_AAA">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="FK_ID" type="INTEGER"/>
+        <column name="FK_ID_A" type="INTEGER"/>
+        <foreign-key foreignTable="CT_OBJECT_AAAA">
+            <reference local="FK_ID" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CT_OBJECT_AA">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="FK_ID" type="INTEGER"/>
+        <foreign-key foreignTable="CT_OBJECT_AAA">
+            <reference local="FK_ID" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CT_OBJECT_A">
+        <column name="OBJ_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+        <column name="FK_ID" type="INTEGER"/>
+        <foreign-key foreignTable="CT_OBJECT_AA">
+            <reference local="FK_ID" foreign="OBJ_ID"/>
+        </foreign-key>
+    </table>
+
+
+
+
+    <!-- =================================================== -->
+    <!-- Complex test model tables                           -->
+    <!-- =================================================== -->
+    <table name="CRT_EMPLOYEE">
+        <column name="EMPLOYEE_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+   </table>
+
+    <table name="CRT_MEMBER">
+        <column name="ROLE_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="EMPLOYEE_ID" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="CRT_EMPLOYEE">
+            <reference local="EMPLOYEE_ID" foreign="EMPLOYEE_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CRT_LEADER">
+        <column name="ROLE_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="EMPLOYEE_ID" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="CRT_EMPLOYEE">
+            <reference local="EMPLOYEE_ID" foreign="EMPLOYEE_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CRT_PROJECT">
+        <column name="PROJECT_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="ENGINEER_ID" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="CRT_LEADER">
+            <reference local="ENGINEER_ID" foreign="ROLE_ID"/>
+        </foreign-key>
+    </table>
+
+    <table name="CRT_SUB_PROJECT">
+        <column name="SUB_ID" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="PROJECT_ID" type="INTEGER"/>
+        <column name="TUTOR_ID" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="150"/>
+        <foreign-key foreignTable="CRT_PROJECT">
+            <reference local="PROJECT_ID" foreign="PROJECT_ID"/>
+        </foreign-key>
+        <foreign-key foreignTable="CRT_MEMBER">
+            <reference local="TUTOR_ID" foreign="ROLE_ID"/>
+        </foreign-key>
+    </table>
+
+
+
+    <!-- ************************************************* -->
+    <!--      Classes for OTM dependent objects test       -->
+    <!-- ************************************************* -->
+
+  <table name="OTM_ADDRESS"
+         javaName="OtmAddress">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="COUNTRY" type="VARCHAR" size="60"
+            javaName="country"/>
+    <column name="CITY" type="VARCHAR" size="60"
+            javaName="city"/>
+    <column name="STREET" type="VARCHAR" size="60"
+            javaName="street"/>
+  </table>
+
+  <table name="OTM_PERSON"
+         javaName="OtmPerson">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="FIRSTNAME" type="VARCHAR" size="60"
+            javaName="firstname"/>
+    <column name="LASTNAME" type="VARCHAR" size="60"
+            javaName="lastname"/>
+    <column name="MAIN_ADDRESS_ID" type="INTEGER" required="false"
+            javaName="mainAddressId"/>
+    <foreign-key foreignTable="OTM_ADDRESS">
+      <reference local="MAIN_ADDRESS_ID" foreign="ID"/>
+    </foreign-key>
+  </table>
+
+  <table name="OTM_ADDRESS_DESC"
+         javaName="OtmAddressDesc">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="DESCRIPTION" type="VARCHAR" size="60"
+            javaName="desc"/>
+    <column name="PERSON_ID" type="INTEGER" required="true"
+            javaName="personId" />
+    <column name="ADDRESS_ID" type="INTEGER" required="true"
+            javaName="addressId"/>
+    <foreign-key foreignTable="OTM_ADDRESS">
+      <reference local="ADDRESS_ID" foreign="ID"/>
+    </foreign-key>
+    <foreign-key foreignTable="OTM_PERSON">
+      <reference local="PERSON_ID" foreign="ID"/>
+    </foreign-key>
+  </table>
+
+  <table name="OTM_PERSON2"
+         javaName="OtmPerson2">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="NAME" type="VARCHAR" size="60"
+            javaName="name"/>
+  </table>
+
+  <table name="OTM_PERSON3"
+         javaName="OtmPerson2">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="NAME" type="VARCHAR" size="60"
+            javaName="name"/>
+  </table>
+
+  <table name="OTM_ADDRESS2"
+         javaName="OtmAddress2">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="PERSON_ID" type="INTEGER" required="true"
+            javaName="personId" />
+  </table>
+
+  <table name="OTM_DEBITOR"
+         javaName="OtmDebitor">
+    <column name="ID" required="true" primaryKey="true" type="INTEGER"
+            javaName="id"/>
+    <column name="PERSON_ID" type="INTEGER" required="true"
+            javaName="personId" />
+  </table>
+
+    <!-- ************************************************* -->
+    <!--      Classes for path tests				       -->
+    <!-- ************************************************* -->
+
+  <table name="P_A_TABLE">
+    <column name="ID" required="true" primaryKey="true" type="BIGINT"/>
+    <column name="A_ATTRIB" type="INTEGER" required="false"/>
+  </table>
+
+  <table name="P_B_TABLE">
+    <column name="ID" required="true" primaryKey="true" type="BIGINT"/>
+    <column name="B_ATTRIB" type="INTEGER" required="false"/>
+    <column name="A_ID" type="BIGINT" required="true"/>
+    <foreign-key foreignTable="P_A_TABLE">
+      <reference local="A_ID" foreign="ID"/>
+    </foreign-key>
+  </table>
+
+  <table name="P_C_TABLE">
+    <column name="ID" required="true" primaryKey="true" type="BIGINT"/>
+    <column name="C_ATTRIB" type="INTEGER" required="false"/>
+    <column name="C1_ATTRIB" type="INTEGER" required="false"/>
+    <column name="B_ID" type="BIGINT" required="true"/>
+    <column name="D_ID" type="BIGINT" required="false"/>
+    <foreign-key foreignTable="P_B_TABLE">
+      <reference local="B_ID" foreign="ID"/>
+    </foreign-key>
+  </table>
+
+  <table name="P_D_TABLE">
+    <column name="ID" required="true" primaryKey="true" type="BIGINT"/>
+    <column name="D_ATTRIB" type="INTEGER" required="false"/>
+  </table>
+
+    <table name="EMPTY_TABLE">
+        <column name="ID_" required="true" primaryKey="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR" size="250"/>
+    </table>
+
+</database>

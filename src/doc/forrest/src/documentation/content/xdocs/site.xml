@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation or its licensors,
+  as applicable.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--
+Forrest site.xml
+
+This file contains an outline of the site's information content.  It is used to:
+- Generate the website menus (though these can be overridden - see docs)
+- Provide semantic, location-independent aliases for internal 'site:' URIs, eg
+<link href="site:changes"> links to changes.html (or ../changes.html if in
+  subdir).
+- Provide aliases for external URLs in the external-refs section.  Eg, <link
+  href="ext:cocoon"> links to http://cocoon.apache.org/
+
+See http://forrest.apache.org/docs/linking.html for more info
+-->
+<!-- @version $Id: site.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $ -->
+<site label="OJB" href="" tab="home" xmlns="http://apache.org/forrest/linkmap/1.0">
+
+    <ojb label="OJB">
+        <index label="Home" href="index.html"/>
+        <news label="News" href="news.html"/>
+        <features label="Features" href="features.html"/>
+        <!-- faq label="FAQ's" href="site:faq" / -->
+        <status label="Status" href="status.html"/>
+        <release-notes label="Release Notes" href="ext:release-notes"/>
+        <references label="References" href="references.html"/>
+        <wiki label="Wiki" href="ext:ojb/wiki-page"/>
+        <mail-lists label="Mailing Lists" href="mail-lists.html"/>
+        <mail-archives label="List Archives" href="mail-archives.html"/>
+        <bugs label="Issue Tracking" href="ext:ojb/bugtracker"/>
+        <links label="Links" href="links.html">
+            <design href="#design"/>
+            <more-or href="#more-or"/>
+        </links>
+    </ojb>
+
+    <download label="Download">
+        <binaries label="Binaries" href="ext:ojb/binaries-version"/>
+        <source label="Source" href="ext:ojb/source-version"/>
+    </download>
+
+    <development label="Development">
+        <todo label="OJB CVS" href="ext:ojb/cvs-view"/>
+        <todo label="Apache CVS" href="ext:ojb/cvs-index"/>
+        <license label="License" href="ext:ojb/license-site"/>
+        <!-- todo label="Todo" href="todo.html" / -->
+        <coding label="Coding Standards" href="code-standards.html"/>
+    </development>
+
+    <all label="Index">
+        <linkmap label="Sitemap" href="linkmap.html"/>
+        <!--<whole_site_html label="Site as HTML" href="site.html"/>-->
+        <whole_site_pdf label="Site as PDF" href="site.pdf"/>
+    </all>
+
+
+    <documentation label="Documentation" href="docu/" tab="documentation">
+        <index label="Summary" href="index.html"/>
+        <faq label="FAQ's" href="faq.html">
+            <apis href="#apis"/>
+            <optimistic-locking href="#optimisticLocking"/>
+            <performSQL href="#performSQL"/>
+            <multiple-databases href="#multipleDB"/>
+            <lookup-pb href="#lookupPB"/>
+            <lookup-odmg href="#lookupODMG"/>
+            <api-differences href="#differencesBetweenAPI"/>
+            <primitive-null href="#primitiveNull"/>
+            <password-needed href="#userPasswordNeeded"/>
+        </faq>
+        <javadoc label="JavaDocs" href="ext:javadoc"/>
+        <getting-started label="Getting Started" href="getting-started.html"/>
+
+        <tutorials label="Tutorials" href="tutorials/" tab="tutorials">
+            <summary label="Summary" href="summary.html"/>
+            <mapping-tutorial label="Mapping Tutorial" href="mapping-tutorial.html">
+                <metadata-mapping href="#metadata"/>
+            </mapping-tutorial>
+            <pb-tutorial label="The PB API" href="pb-tutorial.html">
+                <find-by-pk href="#find-by-pk"/>
+                <exception-handling href="#exception-handling"/>
+            </pb-tutorial>
+            <odmg-tutorial label="The ODMG API" href="odmg-tutorial.html"/>
+            <jdo-tutorial label="The JDO API" href="jdo-tutorial.html"/>
+            <otm-tutorial label="The OTM API" href="otm-tutorial.html"/>
+        </tutorials>
+
+        <guides label="Reference Guides" href="guides/" tab="ref-guides">
+            <summary label="Summary" href="summary.html"/>
+
+            <!-- auto-generated html-site of repository.dtd -->
+            <repository-html href="dtdx/repository.dtdx.html"/>
+
+            <pb-guide label="PB API guide" href="pb-guide.html">
+                <lookup-pb href="#lookup-pb"/>
+                <multiple-databases href="#multiple-databases"/>
+                <listener href="#listener"/>
+            </pb-guide>
+            <odmg-guide label="ODMG API guide" href="odmg-guide.html">
+                <no-oql href="#no-oql"/>
+                <lookup-odmg href="#lookup-odmg"/>
+                <metadata href="#metadata"/>
+                <multiple-databases href="#multiple-databases"/>
+                <named-objects href="#named-objects"/>
+                <ordering href="#ordering"/>
+            </odmg-guide>
+            <platform label="Platform settings" href="platforms.html">
+                <internal-tables href="#internal-tables"/>
+                <select-profile href="#select-profile"/>
+            </platform>
+            <ojb-properties label="OJB propertyfile" href="ojb-properties.html"/>
+            <jdbc-types label="JDBC Types" href="jdbc-types.html">
+                <jdbc-mapping href="#jdbc-mapping"/>
+                <field-conversion href="#field-conversion"/>
+            </jdbc-types>
+            <repository label="Repository file" href="repository.html">
+                <introduction href="#introduction"/>
+                <descriptor-repository href="#descriptor-repository"/>
+                <jdbc-connection-descriptor href="#jdbc-connection-descriptor"/>
+                <connection-pool href="#connection-pool"/>
+                <class-descriptor href="#class-descriptor"/>
+                <field-descriptor href="#field-descriptor"/>
+                <custom-attribute href="#custom-attribute"/>
+                <collection-descriptor href="#collection-descriptor"/>
+                <reference-descriptor href="#reference-descriptor"/>
+                <sequence-manager href="#sequence-manager"/>
+                <query-customizer href="#query-customizer"/>
+                <primary-key href="#primary-key"/>
+                <autoincrement href="#autoincrement"/>
+                <extent-class href="#extent-class"/>
+            </repository>
+            <basic-technique label="Basic mapping" href="basic-technique.html">
+                <one-to-one href="#one-to-one"/>
+                <one-to-n href="#one-to-n"/>
+                <m-to-n href="#m-to-n"/>
+                <linking href="#linking"/>
+                <cascading href="#cascading"/>
+                <auto-retrieve href="#auto-retrieve"/>
+                <using-proxy href="#using-proxy"/>
+                <dynamic-proxy href="#dynamic-proxy"/>
+                <collection-proxy href="#collection-proxy"/>
+                <reference-proxy href="#reference-proxy"/>
+                <proxy-customization href="#proxy-customization"/>
+            </basic-technique>
+            <advanced-technique label="Advanced mapping" href="advanced-technique.html">
+                <anonymous-keys href="#anonymous-keys"/>
+                <polymorphism href="#polymorhism"/>
+                <interfaces href="#interfaces"/>
+                <using-rowreader href="#using-rowreader"/>
+                <rowreader-example href="#rowreader-example"/>
+                <nested-objects href="#nested-objects"/>
+                <collection-queries href="#collection-queries"/>
+                <persistent-field href="#persistent-field"/>
+                <manageable-collection href="#manageable-collection"/>
+                <query-customizer href="#query-customizer"/>
+                <types-for-associations href="#types-for-associations"/>
+                <which-collection-type href="#which-collection-type"/>
+                <extents href="#extents"/>
+                <callback href="#callback"/>
+                <table-per-hierarchy href="#table-per-hierarchy"/>
+                <table-per-class href="#table-per-class"/>
+                <table-per-subclass href="#table-per-subclass"/>
+            </advanced-technique>
+            <query label="OJB queries" href="query.html">
+                <query-by-criteria href="#query-by-criteria"/>
+                <joins href="#joins"/>
+                <odmg-oql href="#odmg-oql"/>
+                <jdo-oql href="#jdo-oql"/>
+                <prefetched-relationships href="#prefetched-relationships"/>
+            </query>
+            <metadata label="Metadata handling" href="metadata.html">
+                <without-repository href="#without-repository"/>
+                <connect-at-runtime href="#connect-at-runtime"/>
+                <metadata-at-runtime href="#metadata-at-runtime"/>
+            </metadata>
+            <deployment label="Deployment" href="deployment.html">
+                <additional-jars href="#additional-jars"/>
+                <j2ee-server href="#j2ee-server"/>
+            </deployment>
+            <connection label="Connection handling" href="connection.html">
+                <connection-pooling href="#connection-pooling"/>
+                <obtain-connection href="#obtain-connection"/>
+                <open-close-connection href="#open-close-connection"/>
+            </connection>
+            <object-cache label="Caching" href="objectcache.html">
+                <distributed-cache href="#distributed-cache"/>
+                <turn-off-caching href="#turn-off-caching"/>
+                <oscache href="#oscache"/>
+            </object-cache>
+            <sequence-manager label="Sequence manager" href="sequencemanager.html">
+                <identity-columns href="#identity-columns"/>
+            </sequence-manager>
+            <logging label="Logging" href="logging.html"/>
+            <lock-manager label="Locking" href="lockmanager.html">
+                <distributed-locking href="#distributed-locking"/>
+                <optimistic-locking href="#optimistic-locking"/>
+                <pessimistic-locking href="#pessimistic-locking"/>
+            </lock-manager>
+            <xdoclet-module label="XDoclet module" href="xdoclet-module.html"/>
+            <performance label="Performance" href="performance.html"/>
+        </guides>
+
+        <howto label="Howto's" href="howtos/" tab="howtos">
+            <summary label="Summary" href="summary.html"/>
+            <large-metadata label="Build large Metadata Mappings" href="howto-build-mappings.html"/>
+            <anonymous-keys label="Anonymous Keys" href="howto-use-anonymous-keys.html"/>
+            <db-sequences label="Using database sequences" href="howto-use-db-sequences.html"/>
+            <use-lobs label="Use Oracle LOB's" href="howto-use-lobs.html"/>
+            <clustering label="Work in clustered environment" href="howto-work-with-clustering.html"/>
+            <stored-procedures label="Work with Stored Procedures" href="howto-work-with-stored-procedures.html"/>
+            <use-spring label="Using Spring with OJB" href="howto-use-spring.html"/>
+        </howto>
+
+        <testing label="Testing" href="testing/" tab="testing">
+            <summary label="Summary" href="summary.html"/>
+            <test-suite label="Test Suite" href="testsuite.html"/>
+            <test-write label="Write Tests" href="testwrite.html"/>
+        </testing>
+    </documentation>
+
+    <!-- Usage example: <link href="ext:jakarta/tomcat">XXX</link> -->
+    <external-refs>
+        <api href="api/">
+            <javadoc href="index.html"/>
+            <!-- kernel and pb-api classes -->
+            <metadata-manager href="org/apache/ojb/broker/metadata/MetadataManager.html"/>
+            <sequence-manager href="org/apache/ojb/broker/util/sequence/SequenceManager.html"/>
+            <jdbc-connection-descriptor href="org/apache/ojb/broker/metadata/JdbcConnectionDescriptor.html"/>
+            <class-descriptor href="org/apache/ojb/broker/metadata/ClassDescriptor.html"/>
+            <descriptor-repository href="org/apache/ojb/broker/metadata/DescriptorRepository.html"/>
+            <connection-repository href="org/apache/ojb/broker/metadata/ConnectionRepository.html"/>
+            <row-reader href="org/apache/ojb/broker/accesslayer/RowReader.html"/>
+            <logger href="org/apache/ojb/broker/util/logging/Logger.html"/>
+            <poor-mans-logger href="org/apache/ojb/broker/util/logging/PoorMansLoggerImpl.html"/>
+            <perf-test href="org/apache/ojb/performance/PerfTest.html"/>
+            <perf-handle href="org/apache/ojb/performance/PerfHandle.html"/>
+            <perf-article href="org/apache/ojb/performance/PerfArticle.html"/>
+            <identity href="org/apache/ojb/broker/Identity.html"/>
+            <identity-factory href="org/apache/ojb/broker/IdentityFactory.html"/>
+            <cache-interface href="org/apache/ojb/broker/cache/ObjectCache.html"/>
+            <cache-interface-internal href="org/apache/ojb/broker/cache/ObjectCacheInternal.html"/>
+            <cache-default href="org/apache/ojb/broker/cache/ObjectCacheDefaultImpl.html"/>
+            <cache-two-level href="org/apache/ojb/broker/cache/ObjectCacheTwoLevelImpl.html"/>
+            <cache-per-broker href="org/apache/ojb/broker/cache/ObjectCachePerBrokerImpl.html"/>
+            <persistence-broker href="org/apache/ojb/broker/PersistenceBroker.html"/>
+            <lock-manager href="org/apache/ojb/broker/locking/LockManager.html"/>
+            <isolation-level href="org/apache/ojb/broker/locking/IsolationLevels.html"/>
+            <pb-lifecycle-listener href="org/apache/ojb/broker/PBLifeCycleListener.html"/>
+            <pb-state-listener href="org/apache/ojb/broker/PBStateListener.html"/>
+            <pb-aware href="org/apache/ojb/broker/PersistenceBrokerAware.html"/>
+            <query-factory href="org/apache/ojb/broker/query/QueryFactory.html"/>
+
+            <!-- odmg-api classes -->
+            <odmg-transaction href="org/odmg/Transaction.html"/>
+            <odmg-implementation href="org/odmg/Implementation.html"/>
+            <odmg-oqlquery href="org/odmg/OQLQuery.html"/>
+            <!-- odmg-api extension classes -->
+            <odmg-oqlquery-ext href="org/apache/ojb/odmg/oql/EnhancedOQLQuery.html"/>
+            <odmg-transaction-ext href="org/apache/ojb/odmg/TransactionExt.html"/>
+            <odmg-implementation-ext href="org/apache/ojb/odmg/ImplementationExt.html"/>
+        </api>
+        <ojb>
+            <wiki-page href="http://wiki.apache.org/db-ojb/"/>
+            <bugtracker href="http://issues.apache.org/jira/browse/OJB"/>
+            <binaries-version href="http://www.apache.org/dyn/closer.cgi/db/ojb/"/>
+            <source-version href="http://www.apache.org/dyn/closer.cgi/db/ojb/"/>
+            <cvs-view href="http://cvs.apache.org/viewcvs/db-ojb/"/>
+            <cvs-view-tests href="http://cvs.apache.org/viewcvs/db-ojb/src/test/org/apache/ojb/"/>
+            <cvs-index href="http://cvs.apache.org/viewcvs/"/>
+            <license-site href="http://www.apache.org/LICENSE"/>
+            <mail>
+                <user>
+                    <subscribe href="mailto:ojb-user-subscribe@db.apache.org"/>
+                    <unsubscribe href="mailto:ojb-user-unsubscribe@db.apache.org"/>
+                </user>
+                <dev>
+                    <subscribe href="mailto:ojb-dev-subscribe@db.apache.org"/>
+                    <unsubscribe href="mailto:ojb-dev-unsubscribe@db.apache.org"/>
+                </dev>
+            </mail>
+
+            <archives>
+                <!-- TODO: mkalen: nagoya is going to be replaced but our lists are only
+                    loaded as the ugly "mod_mbox" on mail-archives.apache.org ... -->
+                <apache>
+                    <dev href="http://nagoya.apache.org/eyebrowse/SummarizeList?listName=ojb-dev@db.apache.org"/>
+                    <user href="http://nagoya.apache.org/eyebrowse/SummarizeList?listName=ojb-user@db.apache.org"/>
+                </apache>
+                <gmane>
+                    <dev href="http://news.gmane.org/thread.php?group=gmane.comp.jakarta.ojb.devel"/>
+                    <user href="http://news.gmane.org/thread.php?group=gmane.comp.jakarta.ojb.user"/>
+                </gmane>
+                <mail-archive>
+                    <dev href="http://www.mail-archive.com/ojb-dev%40db.apache.org/"/>
+                    <user href="http://www.mail-archive.com/ojb-user%40db.apache.org/">
+                        <clustering-link href="msg01228.html"/>
+                    </user>
+                </mail-archive>
+                <theaimsgroup>
+                    <dev href="http://marc.theaimsgroup.com/?l=ojb-dev"/>
+                    <user href="http://marc.theaimsgroup.com/?l=ojb-user"/>
+                </theaimsgroup>
+            </archives>
+
+            <release-notes href="release-notes.txt"/>
+            <repository.dtd href="repository.dtd.txt"/>
+            <ojb.properties href="OJB.properties.txt"/>
+            <repository.xml href="repository.xml.txt"/>
+            <repository_database.xml href="repository_database.xml.txt"/>
+            <repository_internal.xml href="repository_internal.xml.txt"/>
+            <repository_junit.xml href="repository_junit.xml.txt"/>
+            <repository_user.xml href="repository_user.xml.txt"/>
+            <PBExamples href="PBExamples.txt"/>
+        </ojb>
+
+        <forrest href="http://xml.apache.org/forrest/"/>
+        <jakarta href="http://jakarta.apache.org/">
+            <tomcat href="tomcat/"/>
+            <commons-logging href="commons/logging/">
+                <configuration href="guide.html"/>
+                <api-log href="api/org/apache/commons/logging/Log.html"/>
+            </commons-logging>
+            <commons-sql href="commons/sandbox/sql/"/>
+            <commons-pool href="commons/pool/"/>
+            <commons-dbcp href="commons/dbcp/"/>
+            <commons-lang href="commons/lang/">
+                <api href="api/org/apache/commons/lang/">
+                    <serialization-utils href="SerializationUtils.html"/>
+                </api>
+            </commons-lang>
+            <jcs href="turbine/jcs/index.html"/>
+            <jetspeed-2 href="http://portals.apache.org/jetspeed-2/"/>
+            <regexp href="regexp/index.html"/>
+        </jakarta>
+        <commons-transaction href="http://jakarta.apache.org/commons/transaction/"/>
+        <log4j href="http://logging.apache.org/log4j/">
+            <configuration href="docs/manual.html"/>
+        </log4j>
+        <ant href="http://ant.apache.org/"/>
+        <antlr href="http://www.antlr.org/"/>
+
+        <sourceforge href="http://sourceforge.net/projects/">
+            <hsqldb href="http://hsqldb.sourceforge.net/"/>
+            <sodaquery href="http://sodaquery.sourceforge.net/"/>
+            <xdoclet href="http://xdoclet.sourceforge.net/">
+                <install href="install.html"/>
+            </xdoclet>
+            <rdbs2j href="http://sourceforge.net/projects/rdbs2j/"/>
+            <druid href="http://druid.sourceforge.net/"/>
+            <axgen href="http://axgen.sourceforge.net/"/>
+            <tammi href="http://tammi.sourceforge.net/"/>
+            <ojbc href="http://ojbc.sourceforge.net/"/>
+            <ojb-net href="http://ojb-net.sourceforge.net/"/>
+        </sourceforge>
+
+        <mysql href="http://dev.mysql.com/">
+            <driver href="downloads/connector/j/"/>
+        </mysql>
+        <eclipse href="http://www.eclipse.org/"/>
+        <idea href="http://www.jetbrains.com/idea/index.html"/>
+        <mozilla href="http://www.mozilla.org/"/>
+        <torque href="http://db.apache.org/torque/">
+            <gen href="generator/"/>
+        </torque>
+        <andromda href="http://andromda.sf.net/"/>
+        <devaki href="http://www.devaki.org/"/>
+        <impart href="http://www.impart.ch/download.htm"/>
+        <oscache href="http://www.opensymphony.com/oscache/">
+            <os-clustering href="clustering.html"/>
+        </oscache>
+        <tangosol-blog href="http://www.freeroller.net/page/jmckerr"/>
+        <javagroups href="http://www.jgroups.org/javagroupsnew/docs/index.html"/>
+        <ambysoft href="http://www.ambysoft.com/mappingObjects.html"/>
+        <openemed href="http://www.openemed.org/"/>
+        <sun href="http://java.sun.com/">
+            <jdo href="products/jdo/">
+                <javadoc href="javadocs/index.html"/>
+            </jdo>
+            <j2ee-sdk href="j2ee/download.html#sdk"/>
+        </sun>
+        <odmg-group href="http://www.odmg.org/"/>
+        <junit href="http://www.junit.org"/>
+        <xml-apache href="http://xml.apache.org/">
+            <xerces href="xerces-j/"/>
+            <xalan href="xalan-j/"/>
+        </xml-apache>
+        <intact href="http://www.ebi.ac.uk/intact/"/>
+        <nees href="http://www.nees.org/"/>
+        <yourkit href="http://www.yourkit.com/" />
+        <p6spy href="http://www.p6spy.com/"/>
+        <spring href="http://www.springframework.org/"/>
+        <linguine-maps href="http://www.softwaresecretweapons.com/jspwiki/Wiki.jsp?page=LinguineMaps"/>
+
+
+        <!-- Article links used within OJB -->
+        <article>
+            <spring-ojb-part-1 href="http://staff.osuosl.org/~mckerrj/?p=3"/>
+            <spring-ojb-part-2 href="http://staff.osuosl.org/~mckerrj/?p=4"/>
+            <spring-ojb-part-3 href="http://staff.osuosl.org/~mckerrj/?p=8"/>
+            <springframework-and-ojb href="http://blogs.codepuccino.com/dude/index.php?p=23"/>
+
+        </article>
+    </external-refs>
+</site>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server>
+	<mbean code="org.jboss.resource.connectionmanager.LocalTxConnectionManager" name="jboss.jca:service=LocalTxCM,name=OJB Resource Adapter">
+		<depends>jboss.jca:service=RARDeployer</depends>
+		<depends optional-attribute-name="ManagedConnectionFactoryName">
+			<mbean code="org.jboss.resource.connectionmanager.RARDeployment" name="jboss.jca:service=LocalTxDS,name=OJB Resource Adapter">
+				<depends optional-attribute-name="OldRarDeployment">jboss.jca:service=RARDeployment,name=OJB Adapter</depends>
+				<attribute name="JndiName">jca/OJB</attribute>
+				<attribute name="ManagedConnectionFactoryProperties">
+					<properties>
+					</properties>
+				</attribute>
+			</mbean>
+		</depends>
+		<depends optional-attribute-name="ManagedConnectionPool">
+			<mbean code="org.jboss.resource.connectionmanager.JBossManagedConnectionPool" name="jboss.jca:service=LocalTxPool,name=OJB Resource Adapter">
+				<attribute name="MinSize">25</attribute>
+				<attribute name="MaxSize">50</attribute>
+				<attribute name="BlockingTimeoutMillis">5000</attribute>
+				<attribute name="IdleTimeoutMinutes">15</attribute>
+				<attribute name="Criteria">ByContainer</attribute>
+			</mbean>
+		</depends>
+		<depends optional-attribute-name="CachedConnectionManager">jboss.jca:service=CachedConnectionManager</depends>
+		<depends optional-attribute-name="JaasSecurityManagerService">jboss.security:service=JaasSecurityManager</depends>
+		<!--make the rar deploy! hack till better deployment-->
+		<depends>jboss.jca:service=RARDeployer</depends>
+		<attribute name="TransactionManager">java:/TransactionManager</attribute>
+	</mbean>
+</server>

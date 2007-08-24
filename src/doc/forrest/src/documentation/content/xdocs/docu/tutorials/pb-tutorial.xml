@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: pb-tutorial.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Persistence Broker Tutorial</title>
+        <authors>
+            <person name="Brian McCallister" email="brian@skife.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section>
+            <title>The PersistenceBroker API</title>
+            <section>
+                <title>Introduction</title>
+                <p>
+                    The <em>PersistenceBroker API</em> provides the lowest level access to OJB's persistence engine.
+                    While it is a low-level API compared to the OTM, ODMG, or JDO API's it is still very
+                    straightforward to use.
+                </p>
+                <p>
+                    The core class in the PersistenceBroker API is the
+                    <code>org.apache.ojb.broker.PersistenceBroker</code> class. This class provides the
+                    point of access for all persistence operations in this API.
+                </p>
+                <p>
+                    More detailed information can be found in the <a href="site:pb-guide">PB-guide</a>
+                    and in the other <a href="site:guides/summary">reference guides</a>.
+                </p>
+                <p>
+                    This tutorial operates on a simple example class:
+                </p>
+                <source><![CDATA[
+package org.apache.ojb.tutorials;
+
+public class Product
+{
+    /* Instance Properties */
+
+    private Double price;
+    private Integer stock;
+    private String name;lean
+
+    /* artificial property used as primary key */
+
+    private Integer id;
+
+    /* Getters and Setters */
+    ...
+}]]></source>
+                <p>
+                    The metadata descriptor for mapping this class is described in the
+                    <a href="site:mapping-tutorial">mapping tutorial</a>
+                </p>
+                <p>
+                    The source code for all tutorials is available in the seperate
+                    <code>tutorials-src.jar</code> which you can download
+                    <a href="ext:ojb/binaries-version">here</a>. If you're eager
+                    to try them out, you can use them with the ojb-blank project which
+                    can be downloaded from the same place. It is described in the
+                    <a href="site:getting-started">Getting started</a> section.
+                </p>
+                <p>
+                Further information about the OJB PB-api implementation can be found in
+                the <a href="site:pb-guide">PB guide</a>.
+            </p>
+            </section>
+
+
+            <section>
+                <title>A First Look - Persisting New Objects</title>
+                <p>
+                    The most basic operation is to persist an object. This is handled very easily
+                    by just
+                    </p>
+                    <ol>
+                        <li>obtaining a <code>PersistenceBroker</code></li>
+                        <li>begin the PB-transaction</li>
+                        <li>storing the object via the <code>PersistenceBroker</code></li>
+                        <li>commit transaction</li>
+                        <li>closing the <code>PersistenceBroker</code></li>
+                    </ol>
+                    <p>
+                        For example, the following function stores
+                    a single object of type
+                    <code>Product</code>.
+                </p>
+                <source><![CDATA[
+public static void storeProduct(Product product)
+{
+    PersistenceBroker broker = null;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+        broker.beginTransaction();
+        broker.store(product);
+        broker.commitTransaction();
+    }
+    catch(PersistenceBrokerException e)
+    {
+        if(broker != null) broker.abortTransaction();
+        // do more exception handling
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+}]]></source>
+                <p>
+                    Two OJB classes are used here, the
+                    <code>PersistenceBrokerFactory</code> and
+                    the
+                    <code>PersistenceBroker</code>. The
+                    <code>PersistenceBrokerFactory</code>
+                    class manages the lifecycles of
+                    <code>PersistenceBroker</code> instances: it creates them,
+                    pools them, and destroys them as needed. The exact behavior is very configurable.
+                </p>
+                <p>
+                    In this case we used the static
+                    <code>PersistenceBrokerFactory.defaultPersistenceBroker()</code> method to obtain an
+                    instance of a
+                    <code>PersistenceBroker</code> to the default data source. This is most
+                    often how it is used if there is only one database for an application. If there
+                    are multiple data sources, a broker may be obtained by name (using a <code>PBKey</code>
+                    instance as argument in <code>PersistenceBrokerFactory.createPersistenceBroker(pbKey)</code>).
+                </p>
+                <p>
+                    It is worth noting that the
+                    <code>broker.close()</code> call is made within a
+                    <code>finally {...}</code> block. This ensures that the broker will be closed,
+                    and returned to the broker pool, even if the function throws an exception.
+                </p>
+                <p>
+                    To use this function, we just create a
+                    <code>Product</code> and pass it
+                    to the function:
+                </p>
+                <source><![CDATA[
+Product product = new Product();
+product.setName("Sprocket");
+product.setPrice(1.99);
+product.setStock(10);
+storeProduct(product);]]></source>
+                <p>
+                    Once a
+                    <code>PersistenceBroker</code> has been obtained, its
+                    <code>PersistenceBroker.store(Object)</code> method is used to make an object
+                    persistent.
+                 </p>
+                <p>
+                    Maybe you have noticed that there has not been an assignment to
+                    <code>product.id</code>, the primary-key attribute. Upon storing <code>product</code>
+                    OJB detects that the attribute is not properly set and assigns a
+                    unique id. This automatic assignment of unique Ids for the attribute
+                    <code>id</code> has been explicitly declared in the
+                    <a href="site:repository">XML repository</a> file, as we discussed in the
+                    <a href="site:mapping-tutorial/metadata-mapping"></a>.
+                </p>
+                 <p>
+                    If several objects need to be stored, this can be done within
+                    a transaction, as follows.
+                </p>
+                <source><![CDATA[
+public static void storeProducts(Product[] products)
+{
+    PersistenceBroker broker = null;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+        broker.beginTransaction();
+        for (int i = 0; i < products.length; i++)
+        {
+            broker.store(products[i]);
+        }
+        broker.commitTransaction();
+    }
+    catch(PersistenceBrokerException e)
+    {
+        if(broker != null) broker.abortTransaction();
+        // do more exception handling
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+}]]></source>
+                <p>
+                    This contrived example stores all of the passed Product instances within
+                    a single transaction via the
+                    <code>PersistenceBroker.beginTransaction()</code>
+                    and
+                    <code>PersistenceBroker.commitTransaction()</code>. These are database
+                    level transactions, not object level transactions.
+                </p>
+            </section>
+
+
+            <anchor id="query-objects"/>
+            <section>
+                <title>Querying Persistent Objects</title>
+                <p>
+                    Once objects have been stored to the database, it is important to be able to get them
+                    back. The PersistenceBroker API provides two mechanisms for
+                    <a href="site:query">building queries</a>, by
+                    using a template object, or by using specific criteria.
+                </p>
+                <source><![CDATA[
+public static Product findByTemplate(Product template)
+{
+    PersistenceBroker broker = null;
+    Product result = null;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+        QueryByCriteria query = new QueryByCriteria(template);
+        result = (Product) broker.getObjectByQuery(query);
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+    return result;
+}]]></source>
+                <p>
+                    This function finds a
+                    <code>Product</code> by building a query against a template
+                    <code>Product</code>. The template should have any properties set which should
+                    be matched by the query. Building on the previous example where a product
+                    was stored, we can now query for that same product:
+                </p>
+                <source><![CDATA[
+Product product = new Product();
+product.setName("Sprocket");
+product.setPrice(new Double(1.99));
+product.setStock(new Integer(10));
+storeProduct(product);
+
+Product template = new Product();
+template.setName("Sprocket");
+Product sameProduct = findByTemplate(template);]]></source>
+                <p>
+                    In the above code snippet,
+                    <code>product</code> and
+                    <code>sameProduct</code>
+                    will reference the same object (assuming there are no additional products in the
+                    database with the name "Sprocket").
+                </p>
+                <p>
+                    The template
+                    <code>Product</code> has only one of its properties set, the
+                    <code>name</code> property. The others are all null. Properties with null values
+                    are not used to match.
+                </p>
+                <p>
+                    An alternate, and more flexible, way to have specified a query via the
+                    PersistenceBroker API is by constructing the criteria on the query
+                    by hand. The following function does this.
+                </p>
+                <source><![CDATA[
+public static Collection getExpensiveLowStockProducts()
+{
+    PersistenceBroker broker = null;
+    Collection results = null;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+
+        Criteria criteria = new Criteria();
+        criteria.addLessOrEqualThan("stock", new Integer(20));
+        criteria.addGreaterOrEqualThan("price", new Double(100000.0));
+
+        QueryByCriteria query = new QueryByCriteria(Product.class, criteria);
+        results = broker.getCollectionByQuery(query);
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+    return results;
+}]]></source>
+                <p>
+                    This function builds a
+                    <code>Criteria</code> object and uses it to set more complex
+                    query parameters - in this case greater-than and less-than contraints. Looking at the
+                    first constraint put on the criteria,
+                    <code>criteria.addLessOrEqualThan("stock", new Integer(10));</code> notice the arguments.
+                    The first is the property name on the object being queried for. The second is an
+                    <code>Integer</code> instance to be used for the comparison.
+                </p>
+                <p>
+                    After the
+                    <code>Criteria</code> has been built, the
+                    <code>QueryByCriteria</code> constructor
+                    used is also different from the previous example. In this case the criteria does not know
+                    the type of the object it is being used against, so the
+                    <code>Class</code> must be specified
+                    to the query.
+                </p>
+                <p>
+                    Finally, notice that this example uses the
+                    <code>PersistenceBroker.getCollectionByQuery(...)</code>
+                    method instead of the
+                    <code>PersistenceBroker.getObjectByQuery(...)</code> method used
+                    previously. This is used because we want all of the results. Either form can be used
+                    with either method of constructing queries. In the case of the
+                    <code>PersistenceBroker.getObjectByQuery(...)</code> style query, the first matching
+                    object is returned, even if there are multiple matching objects.
+                </p>
+            </section>
+
+
+            <section>
+                <title>Updating Persistent Objects</title>
+                <p>
+                    The same mechanism, and method, is used for updating persistent objects as for inserting
+                    persistent objects. The same
+                    <code>PersistenceBroker.store(Object)</code> method
+                    is used to store a modified object as to insert a new one - the difference
+                    between new and modified objects is irrelevent to OJB.
+                </p>
+                <p>
+                    This can cause some confusion for people who are very used to working in the
+                    stricter confines of SQL inserts and updates. Basically, OJB will insert a new
+                    object into the relational store if the primary key, as specified in the
+                    O/R metadata is not in use. If it is in use, it will update the existing
+                    object rather than create a new one.
+                </p>
+                <p>
+                    This allows programmers to treat every object the same way in an object
+                    model, whether it has been newly created and made persistent, or materialized
+                    from the database.
+                </p>
+                <p>
+                    Typically, making changes to a peristent object first requires retrieving a reference
+                    to the object, so the typical update cycle, unless the application caches objects,
+                    is to query for the object to modify, modify the object, and then store the object.
+                    The following function demonstrates this behavior by "selling" a Product.
+                </p>
+                <source><![CDATA[
+public static boolean sellOneProduct(Product template)
+{
+    PersistenceBroker broker = null;
+    boolean isSold = false;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+        QueryByCriteria query = new QueryByCriteria(template);
+        Product result = (Product) broker.getObjectByQuery(query);
+
+        if (result != null)
+        {
+            broker.beginTransaction();
+            result.setStock(new Integer(result.getStock().intValue() - 1));
+            broker.store(result);
+            // alternative, more performant
+            // broker.store(result, ObjectModificationDefaultImpl.UPDATE);
+            broker.commitTransaction();
+            isSold = true;
+        }
+    }
+    catch(PersistenceBrokerException e)
+    {
+        if(broker != null) broker.abortTransaction();
+        // do more exception handling
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+    return isSold;
+}]]></source>
+                <p>
+                    This function uses the same query-by-template and
+                    <code>PersistenceBroker.store()</code>
+                    API's examined previously, but it uses the store method to store changes to the object
+                    it retrieved. It is worth noting that the entire operation took place within a transaction.
+                </p>
+            </section>
+
+
+            <section>
+                <title>Deleting Persistent Objects</title>
+                <p>
+                    Deleting persistent objects from the repository is accomplished via
+                    the
+                    <code>PersistenceBroker.delete()</code> method. This removes the
+                    persistent object from the repository, but does not affect any change
+                    on the object itself. For example:
+                </p>
+                <source><![CDATA[
+public static void deleteProduct(Product product)
+{
+    PersistenceBroker broker = null;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+        broker.beginTransaction();
+        broker.delete(product);
+        broker.commitTransaction();
+    }
+    catch(PersistenceBrokerException e)
+    {
+        if(broker != null) broker.abortTransaction();
+        // do more exception handling
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+}]]></source>
+                <p>
+                    This method simply deletes an object from the database.
+                </p>
+            </section>
+
+            <anchor id="find-by-pk"/>
+            <section>
+                <title>Find object by primary key</title>
+                <p>
+                    In some cases only the primary key values (single field or n-fields for composed primary
+                    keys) of an object are known. In OJB you have several ways to request the whole object.
+                    It is possible to build a query as
+                    <a href="#query-objects">shown above</a>, but the smarter
+                    solution is to use <code>PersistenceBroker#getObjectByIdentity(Identity oid)</code>. An
+                    <a href="ext:identity">Identity</a> object is a unique representation of a persistence
+                    capable object based on the object primary key values and the <em>top-level class</em> (abstract class,
+                    interface or the class itself, depending on the
+                    <a href="site:advanced-technique/extents">extent metadata mapping</a>).
+                </p>
+                <p>
+                    For example, to find an <em>Product</em> with an single primary key of <em>'23'</em>
+                    do
+                </p>
+                <source><![CDATA[
+Identity oid = broker.serviceIdentity().buildIdentity(Product.class, new Integer(23));
+Product product = (Product) broker.getObjectByIdentity(oid);]]></source>
+            </section>
+
+        </section>
+
+        <anchor id="exception-handling"/>
+        <section>
+                <title>Exception Handling</title>
+                <p>
+                    Most
+                    <code>PersistenceBroker</code> operations throw a
+                    <code>org.apache.ojb.broker.PersistenceBrokerException</code>, which is derived from
+                    <code>java.lang.RuntimeException</code> if an error occurs. This means that no try/catch
+                    block is
+                    <strong>required</strong> but does not mean that it should not be used. This tutorial
+                    specifically does not catch exceptions all in order to focus more tightly on the
+                    specifics of the API, however, best usage would be to include a try/catch/finally
+                    block around persistence operations using the PeristenceBroker API.
+                </p>
+                <p>
+                    Additionally, the closing of
+                    <code>PersistenceBroker</code> instances is best
+                    handled in
+                    <code>finally</code> blocks in order to guarantee that it is run,
+                    even if an exception occurs. If the
+                    <code>PersistenceBroker.close()</code> is not
+                    called then the application will leak broker instances. The best way to ensure that
+                    it is always called is to always retrieve and use
+                    <code>PersistenceBroker</code>
+                    instances within a
+                    <code>try {...}</code> block, and always close the broker
+                    in a
+                    <code>finally {...}</code> block attached to the
+                    <code>try {...}</code> block.
+                </p>
+                <p>
+                    A better designed
+                    <code>getExpensiveLowStockProducts()</code> method is presented
+                    here.
+                </p>
+                <source><![CDATA[
+public static Collection betterGetExpensiveLowStockProducts()
+{
+    PersistenceBroker broker = null;
+    Collection results = null;
+    try
+    {
+        broker = PersistenceBrokerFactory.defaultPersistenceBroker();
+
+        Criteria criteria = new Criteria();
+        criteria.addLessOrEqualThan("stock", new Integer(20));
+        criteria.addGreaterOrEqualThan("price", new Double(100000.0));
+
+        QueryByCriteria query = new QueryByCriteria(Product.class, criteria);
+        results = broker.getCollectionByQuery(query);
+    }
+    catch (PersistenceBrokerException e)
+    {
+        // Handle exception
+    }
+    finally
+    {
+        if (broker != null) broker.close();
+    }
+    return results;
+}]]></source>
+                <p>
+                    Notice first that the
+                    <code>PersistenceBroker</code> is retrieved and used
+                    within the confines of a
+                    <code>try {...}</code> block. Assuming nothing goes wrong
+                    the entire operation will execute there, all the way to the
+                    <code>return results;</code>
+                    line. Java guarantees that
+                    <code>finally {...}</code> blocks will be called before a
+                    method returns, so the
+                    <code>broker.close()</code> method is only included once, in the
+                    <code>finally</code> block. As an exception may have occured while attempting to
+                    retrieve the broker, a not-null test is first performed before closing the broker.
+                </p>
+            </section>
+
+    </body>
+</document>

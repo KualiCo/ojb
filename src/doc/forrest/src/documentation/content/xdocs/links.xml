@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: links.xml,v 1.1 2007-08-24 22:17:39 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>OJB - Links and further readings</title>
+        <authors>
+            <person name="Thomas Mahler" email="thma@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <section>
+            <title>Summary</title>
+            <p>
+                This page contains interesting Links and recommended readings that
+                will help to learn more about OJB concepts, related projects,
+                didactic material, research reports, integration in frameworks etc.
+            </p>
+        </section>
+
+
+        <section>
+            <title>OJB - Tutorials and Howto</title>
+            <ul>
+                <li>
+                    <a href="http://cvs.apache.org/viewcvs.cgi/*checkout*/db-ojb/contrib/struts-ojb.zip?rev=HEAD">
+                        The famous Beer4All Struts/OJB tutorial by Chuck Cavaness
+                    </a>
+                </li>
+                <li>
+                    <a href="http://cvs.apache.org/viewcvs.cgi/*checkout*/db-ojb/contrib/cavaness-ajug-slides.pdf?rev=HEAD">
+                        A presentation on OJB held at the Atlanta Java Users Group by Chuck Cavaness
+                    </a>
+                </li>
+                <li>
+                    <a href="http://cvs.apache.org/viewcvs.cgi/*checkout*/db-ojb/contrib/ojb-dataccess.pdf?rev=HEAD">
+                        An extensive tutorial on OJB by John Carnell
+                    </a>
+                </li>
+                <li>
+                    <a href="http://www.robertoghizzioli.it/jcomm/jcomm_tutorial.html">
+                        Roberto Ghizzioli's tutorial on Struts, OJB, and nested tags</a>
+                </li>
+                <li>
+                    <a href="http://www.onjava.com/pub/a/onjava/2003/01/08/ojb.html">
+                        An introductory tutorial on the O'Reilly site.
+                    </a>
+                </li>
+            </ul>
+
+            <anchor id="ojb-and-spring"/>
+            <section>
+                <title>OJB and <a href="ext:spring">Spring</a></title>
+                <ul>
+                    <li>
+                        <a href="ext:article/spring-ojb-part-1">
+                        Spring, OJB, and Struts, getting started</a> (June 23, 2005)
+                    </li>
+                    <li>
+                        <a href="ext:article/spring-ojb-part-2">
+                        Spring, OJB, and Struts. Version 2 with DAO</a> (June 23, 2005)
+                    </li>
+                    <li>
+                        <a href="ext:article/spring-ojb-part-3">
+                        Spring, OJB, and Struts. Version 3: JNDI Datasources and Caching</a> (June 27, 2005)
+                    </li>
+                    <li>
+                        <a href="ext:article/springframework-and-ojb">Springframework and OJB</a> (Nov 21, 2004)
+                    </li>
+                </ul>
+            </section>
+        </section>
+
+
+        <section id="design">
+            <title>Design</title>
+            <p>
+                OJB is based on a variety of conceptual sources.
+                In this section I'll give a summary about the most prominent
+                influences.
+            </p>
+            <ol>
+                <li>
+                    <strong>Craig Larmans Applying UML and Patterns</strong>
+                </li>
+                <li>
+                    <strong>The Siemens Guys "Pattern-Oriented Software Architecture"</strong>
+                </li>
+                <li>
+                    <strong>Scott Amblers classic papers on O/R mapping</strong>
+                </li>
+                <li>
+                    <strong>The "Crossing Chasms" paper from Brown et. al.</strong>
+                </li>
+                <li>
+                    <strong>The GOF Design Patterns</strong>
+                </li>
+            </ol>
+            <p>
+                (sorted by relevance)
+            </p>
+
+            <p>
+                1. The most important input came from
+                <a href="http://www.craiglarman.com/book_applying_2nd/Applying_2nd.htm">
+                    Applying UML and Patterns</a>. It
+                contains a chapter describing the design of a PersistenceBroker based
+                approach persistence layer.
+
+                His presentation contains a lot of other good ideas (e.g. usage of
+                Proxies, caching etc.) I implemented a lot of his things 1:1. This book
+                is a must have for all OJB developers !
+
+            </p>
+            <p>
+                2. Larman does not cover the dynamic metadata concept. He mentiones that
+                such a thing would be possible, but does not go into details.
+                As I had been a fan of MetaLevel architectures for quite a while I
+                wanted to have such a thing in OJB too !!!
+                <br/>
+                <a href="http://www2.parc.com/csl/groups/sda/projects/mops/default.html">
+                    <img src="images/mop-inside.gif" alt="mop-gif"/>
+                </a>I took the concepts from the book
+                <a href="http://hillside.net/patterns/books/Siemens/book.html">
+                    Pattern-Oriented Software Architecture</a>.
+                They have a chapter on the
+                <strong>Reflection</strong> pattern (aka
+                <a href="http://www2.parc.com/csl/groups/sda/projects/mops/default.html">
+                    Open Implementation, Meta-Level Architecture</a>).
+                <br/>
+
+                They even provide an example how to apply this pattern to a persistence
+                layer.
+                <br/>
+
+                There is another Architectural pattern from this book that I am using:
+                The
+                <strong>Microkernel</strong> pattern.
+                <br/>
+                My idea was to have a kernel (the PersistenceBroker) that does all the
+                hard work (O/R mapping, JDBC access, etc.)
+                <br/>
+                High Level object transaction frameworks like a ODMG or JDO
+                implementations are clients to the PersistenceBroker kernel in this concept!
+            </p>
+
+            <p>
+                3. I read
+                <a href="http://www.ambysoft.com/">Scott Amblers</a>
+                papers before starting OJB. Sure!
+                There are several things in OJB that are from his classic
+                <a href="http://www.ambysoft.com/persistenceLayer.html">The design of
+                    a robust persistence layer</a> and from his
+                <a href="http://www.ambysoft.com/mappingObjects.html">
+                    Mapping Objects To Relational Databases</a>.
+                Most prominent: The
+                <strong>PersistenceBroker</strong> concept.
+                <br/>
+                I incorporated the Query API from the OpenSource project
+                <a href="http://www.kimble.easynet.co.uk/cobra/index.htm">COBRA</a> that
+                applies Amblers PersistentCriteria concept.
+                <br/>
+                <strong>Reading Amblers paper on these topics is a must.</strong>
+            </p>
+            <p>
+                But IMO these are the only aspects of Amblers presentation that map
+                directly to OJB. Here are the concepts that differ:
+            </p>
+            <ul>
+                <li>
+                    Amblers concept relies on a persistent base class.
+                </li>
+                <li>
+                    caching is not covered by his design
+                </li>
+                <li>
+                    his concept of OID does not fit for legacy databases with compound PKs.
+                </li>
+                <li>
+                    The OJB proxy concept is quite different (Ambler has proxy
+                    functionality in his PersistentObject base class.)
+                </li>
+                <li>
+                    OJB does not use Insert- and UpdateCriteria
+                </li>
+                <li>
+                    OJB uses a different mapping approach (A full metadata layer)
+                </li>
+            </ul>
+
+
+            <p>
+                4. For several detail questions (like mapping inheritance hierarchies) I
+                consulted
+                <a href="http://members.aol.com/kgb1001001/Chasms.htm">
+                    crossing chasms</a>. This is also a very good source for all O/R
+                implementors.
+            </p>
+
+            <p>
+                5. For all the "small things" I'm using the
+                <a href="http://hillside.net/patterns/books/DPBook/DPBook.html">
+                    common GOF patterns</a> like
+                Factory, Observer, Singleton, Proxy, Adaptor, State, Command, etc.
+            </p>
+
+
+            <p>
+                <a href="http://www.lap.ttu.ee/erki/failid/konspekt/bakalaureusetoo/thesis.pdf">
+                    Here is a thesis describing concepts very similar to OJB.</a>
+                <br/>
+
+                As I read this paper I saw a lot of thing inspired by OJB.
+                It's giving a nice introduction into the PersistenceBroker pattern and
+                related topics.
+            </p>
+
+            <p>
+                <a href="http://www2.parc.com/csl/groups/sda/projects.shtml">The PARC software design area</a>
+                pioneering in Metalevel computation, aspect oriented programming etc.
+            </p>
+        </section>
+
+
+
+        <section id="more-or">
+            <title>Further readings on O/R mapping</title>
+            <ul>
+                <li>
+                    <a href="http://www.objectarchitects.de/ObjectArchitects/orpatterns/">
+                        ObjectArchitects O/R pattern page</a>
+                </li>
+                <li>
+                    <a href="http://www.javaskyline.com/database.html">
+                        JavaSkyLine page on database integration</a>
+                </li>
+                <li>
+                    <a href="http://www.service-architecture.com/object-relational-mapping/articles/">
+                        Barry and Associates page on O/R mapping</a>
+                </li>
+                <li>
+                    <a href="http://c2.com/cgi/wiki?ObjectRelationalMapping">
+                        Portland Pattern Repository page on O/R</a>
+                </li>
+                <li>
+                    <a href="http://www.martinfowler.com/eaaCatalog/">
+                        Martin Fowlers book "Pattern of Enterprise Application Architecture"
+                        covers many O/R patterns that can be found in OJB.
+                        Here you will find an online catalog of these patterns.</a>
+                </li>
+            </ul>
+        </section>
+
+
+        <section>
+            <title>Patterns</title>
+            <ul>
+                <li>
+                    <a href="http://hillside.net/patterns/">The Hillside Pattern page</a>
+                </li>
+                <li>
+                    <a href="http://c2.com/cgi/wiki?CategoryPattern">The Portland Pattern Repository</a>
+                </li>
+            </ul>
+        </section>
+
+
+        <section>
+            <title>Books covering OJB</title>
+            <ul>
+                <li>
+                    <a href="http://www.amazon.com/exec/obidos/ASIN/0596003285/qid=1054656123/sr=2-1/ref=sr_2_1/103-9325116-6675068">
+                        The O'Reilly book on Struts programming by Chuck Cavaness has a
+                        whole chapter about how to build an applications model layers based on OJB.
+                        A must reading for everyone intending to use Struts and OJB.
+                    </a>
+                    All source code from the book can be found here:
+                    <a href="http://examples.oreilly.com/jakarta/">
+                        Struts Programming sources.
+                    </a>
+                </li>
+                <li>
+                    <a href="http://www.amazon.com/exec/obidos/tg/detail/-/1861007817/qid=1054655953/sr=8-1/ref=sr_8_1/103-9325116-6675068?v=glance&amp;s=books&amp;n=507846">
+                        There's also a WROX book on Struts + OJB
+                    </a>
+                    All source code from the book can be found here:
+                    <a href="http://web.wrox.com/download/code/professional/7817.zip">
+                        Professional Struts and OJB sources.
+                    </a>
+                </li>
+                <li>
+                    <a href="http://www.amazon.com/exec/obidos/ASIN/1590591259/qid%3D1082279566/sr%3D11-1/ref%3Dsr%5F11%5F1/103-0814434-1236616">
+                        Enterprise Java Development on a Budget
+                    </a>
+                </li>
+            </ul>
+        </section>
+    </body>
+</document>
+

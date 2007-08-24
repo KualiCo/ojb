@@ -1,0 +1,1174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: odmg-guide.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>ODMG-api Guide</title>
+        <authors>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+
+        <anchor id="introduction"/>
+        <section>
+            <title>Introduction</title>
+            <p>
+                The
+                <em>ODMG API</em> is an implementation of the
+                <a href="ext:odmg-group">ODMG 3.0 Object Persistence API</a>.
+                The ODMG API provides a higher-level API and
+                <a href="site:query/odmg-oql">OQL query</a>
+                language based interface over the
+                <a href="site:pb-guide">PersistenceBroker API</a>.
+            </p>
+            <p>
+                This document is not a
+                <a href="site:odmg-tutorial">ODMG tutorial</a> (newbies please
+                read the tutorial first) rather than a guide
+                showing the specific usage and possible pitfalls in handling the ODMG-api and the proprietary
+                extensions by OJB.
+            </p>
+            <p>
+                If you don't find an answer for a specific question, please have a look at the
+                <a href="site:faq">FAQ</a> and the other
+                <a href="site:guides/summary">reference guides</a>.
+            </p>
+            <p>
+                Additionaly the OJB's ODMG implementation has several extensions described
+                <a href="#extensions">below</a>.
+            </p>
+        </section>
+
+        <anchor id="metadata"/>
+        <section>
+            <title>Specific Metadata Settings</title>
+            <p>
+                To make OJB's
+                <em>ODMG-api</em> implementation proper work, some specific metadata settings
+                needed in the
+                <a href="site:repository">repository mapping files</a>.
+            </p>
+            <p>
+                All defined
+                <a href="site:repository/reference-descriptor">reference-descriptor</a> and
+                <a href="site:repository/collection-descriptor">collection-descriptor</a>
+                need specific
+                <em>auto-xxx</em> settings:
+            </p>
+            <ul>
+                <li>
+                    auto-retrieve="true"
+                </li>
+                <li>
+                    auto_update="none"
+                </li>
+                <li>
+                    auto-delete="none" or auto-delete="object"
+                    (to enable cascading delete, since OJB 1.0.4!)
+                </li>
+            </ul>
+            <note>
+                These settings are mandatory for proper work of the odmg-api!
+            </note>
+            <p>
+                So an example object mapping
+                <a href="site:repository/class-descriptor">class-descriptor</a>
+                look like:
+            </p>
+            <source><![CDATA[
+<class-descriptor
+    class="org.apache.ojb.odmg.shared.Master"
+    table="MDTEST_MASTER"
+    >
+    <field-descriptor
+        name="masterId"
+        column="MASTERID"
+        jdbc-type="INTEGER"
+        primarykey="true"
+        autoincrement="true"
+        />
+    <field-descriptor
+        name="masterText"
+        column="MASTER_TEXT"
+        jdbc-type="VARCHAR"
+        />
+    <collection-descriptor
+        name="collDetailFKinPK"
+        element-class-ref="org.apache.ojb.odmg.shared.DetailFKinPK"
+        proxy="false"
+        auto-retrieve="true"
+        auto-update="none"
+        auto-delete="none"
+        >
+        <inverse-foreignkey field-ref="masterId"/>
+    </collection-descriptor>
+...
+</class-descriptor>]]></source>
+            <p>
+                A lot of mapping samples can be found in mappings for the
+                <a href="site:test-suite">OJB test suite</a>. All mappings for the ODMG unit test
+                are in
+                <code>repository_junit_odmg.xml</code> file, which can be found under the
+                <em>src/test</em>
+                directory.
+            </p>
+        </section>
+
+
+        <anchor id="lookup-odmg"/>
+        <section>
+            <title>How to access ODMG-api</title>
+            <p>
+                Obtain a
+                <code>org.odmg.Implementation</code> instance first, then create a new
+                <code>org.odmg.Database</code> instance and open this instance by setting the used
+                <a href="site:repository/jdbc-connection-descriptor">jcd-alias</a> name:
+            </p>
+            <source><![CDATA[
+Implementation odmg = OJB.getInstance();
+Database database = odmg.newDatabase();
+database.open("jcdAliasName#user#password", Database.OPEN_READ_WRITE);]]></source>
+            <p>
+                The
+                <em>user</em> and
+                <em>password</em> separated by
+                <em>#</em> hash only needed, when
+                the user/passwd is not specified in the connection metadata (jdbc-connection-descriptor).
+            </p>
+            <p>
+                The
+                <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a>
+                may look like:
+            </p>
+            <source><![CDATA[
+<jdbc-connection-descriptor
+   		jcd-alias="jcdAliasName"
+   		...
+   		username="user"
+   		password="password"
+   		...
+     >
+    ...
+</jdbc-connection-descriptor>]]></source>
+            <p>
+                With method call
+                <code>OJB.getInstance()</code> always a
+                <strong>new</strong>
+                <a href="ext:odmg-implementation">org.odmg.Implementation</a> instance will be created and
+                <code>odmg.newDatabase()</code> returns a new
+                <code>Database</code> instance.
+            </p>
+            <p>
+                For best performance it's recommended to share the
+                <a href="ext:odmg-implementation">
+                    <code>Implementation</code>
+                </a> instance across
+                the application. To get the current open database from the
+                <code>Implementation</code> instance,
+                use method
+                <code>Implementation.getDatabase(null)</code>
+            </p>
+            <source><![CDATA[
+Implementation odmg = ....
+// get current used database
+Database database = odmg.getDatabase(null);]]></source>
+            <p>
+                Or share the open
+                <code>Database</code> instance as well.
+            </p>
+            <p>
+                See further in FAQ
+                <a href="site:faq/password-needed">"Needed to put user/password of database connection in repository file?"</a>.
+            </p>
+        </section>
+
+
+        <anchor id="configuration"/>
+        <section>
+            <title>Configuration Properties</title>
+            <p>
+                The OJB
+                <em>ODMG-api</em> implementation has some adjustable properties and pluggable
+                components. All configuration properties can be set in the
+                <a href="ext:ojb.properties">OJB.properties</a> file.
+            </p>
+            <p>
+                Here are all properties used by OJB's
+                <em>ODMG-api</em> implementation:
+            </p>
+            <table>
+                <tr>
+                    <th>Property Name</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>
+                        <anchor id="oql-collection-class"/>
+                        OqlCollectionClass
+                    </td>
+                    <td>
+                        This entry defines the collection type returned
+                        from
+                        <a href="site:query/odmg-oql">OQL queries</a>. By default this
+                        value is set to a List implementation. This will be suffice in most situations.
+                        <p/>
+                        If you want to use the additional features of the
+                        DList interface (DList itself is persistable, support of <em>predicates</em>)
+                        directly on query results, change setting to the DList implementation
+                        (See also property 'DListClass' entry).
+                        <br/>
+                        But this will affect the performance - especially for large result sets. So recommended
+                        way is create <code>DCollection</code> instances only when needed (e.g. by converting a List
+                        result set to a DList).
+                        <br/>
+                        Important note: The collection class to be used MUST implement the
+                        interface
+                        <a href="site:advanced-technique/manageable-collection">
+                        <code>org.apache.ojb.broker.ManageableCollection</code></a>. More info about
+                        <a href="site:advanced-technique/manageable-collection">implementing OJB collection types here</a>.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        ImplementationClass
+                    </td>
+                    <td>
+                        Specifies the used base class for the
+                        <em>ODMG API</em> implementation. In managed environments
+                        a specific class is needed to potentiate JTA integration of OJB's ODMG implementation.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        OJBTxManagerClass
+                    </td>
+                    <td>
+                        Specifies the class for transaction management. In managed environments
+                        a specific class is needed to potentiate JTA integration of OJB's ODMG implementation.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        ImplicitLocking
+                    </td>
+                    <td>
+                        This property defines the
+                        <em>implicit locking</em> behavior. If set to
+                        <em>true</em> OJB implicitely locks objects to ODMG
+                        transactions after performing OQL queries or when do a single lock
+                        on an object using
+                        <code>Transaction#lock(...)</code> method.
+                        <br/>
+                        If implicit locking is used locking objects is recursive, that is
+                        associated objects are also locked.
+                        <p/>
+                        If ImplicitLocking is set to
+                        <em>false</em>, no locks are obtained in OQL
+                        queries and there is also no recursive locking when do single lock on an object.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        LockAssociations
+                    </td>
+                    <td>
+                        This property was only used when
+                        <em>ImplicitLocking</em> is enabled.
+                        It defines the behaviour for the OJB implicit locking feature. If set
+                        to
+                        <em>true</em> acquiring a write-lock on a given object x implies write
+                        locks on all objects associated to x.
+                        <p/>
+                        If set to
+                        <em>false</em>, in any case implicit read-locks are acquired.
+                        Acquiring a read- or write lock on x thus allways results in implicit read-locks
+                        on all associated objects.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Ordering
+                    </td>
+                    <td>
+                        Enable/Disable OJB's persistent object ordering algorithm on commit
+                        of a transaction. If enabled OJB try to calculate a valid order for
+                        all new/modified objects (and referenced objects).
+                        <p/>
+                        If the used databases support 'deferred checks' it's recommended to use this
+                        feature and to disable OJB's object ordering.
+                        <note>
+                            This setting can be changed at runtime using OJB's <a href="#extensions">ODMG extensions</a>.
+                        </note>
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td>-->
+                        <!--NoteUserOrder-->
+                    <!--</td>-->
+                    <!--<td>-->
+                        <!--Allows to influence the order of objects (used when the transaction commits).-->
+                        <!--If <em>true</em> method calls like-->
+                        <!--- org.odmg.Transaction#lock(Object, int)-->
+                        <!--- org.odmg.Database#deletePersistent(Object)-->
+                        <!--- org.odmg.Database#makePersistent(Object)-->
+                        <!--determine the order of objects before commit.-->
+                        <!--<p/>-->
+                        <!--If OJB's <em>ordering</em> is enabled (the <em>Ordering</em> property is enabled)-->
+                        <!--the order of objects may change at commit of the transaction.-->
+                        <!--<note>-->
+                            <!--This setting can be changed at runtime using OJB's <a href="#extensions">ODMG extensions</a>.-->
+                        <!--</note>-->
+                    <!--</td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <em>ImplicitLockingBackward</em>
+                    </td>
+                    <td>
+                        A <strong>@deprecated</strong> property only for backward compatibility with older versions
+                        (before 1.0.4).
+                        <br/>
+                        If set <em>true</em> the behavior of method
+                        ImplementationImpl#setImplicitLocking(...) will be the same as
+                        in OJB in 1.0.3 or earlier (set the implicit locking behavior of the current used transaction)
+                        and disable the new possibility of global 'implicit locking'
+                        setting at runtime with ImplementationExt#setImplicitLocking.
+                        This is only for backward compatibility and will
+                        be removed at a later date.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        DListClass
+                    </td>
+                    <td>
+                        The used
+                        <code>org.odmg.DList</code> implementation class.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        DArrayClass
+                    </td>
+                    <td>
+                         The used
+                        <code>org.odmg.DArray</code> implementation class.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        DMapClass
+                    </td>
+                    <td>
+                         The used
+                        <code>org.odmg.DMap</code> implementation class.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        DBagClass
+                    </td>
+                    <td>
+                         The used
+                        <code>org.odmg.DBag</code> implementation class.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        DSetClass
+                    </td>
+                    <td>
+                         The used
+                        <code>org.odmg.DSet</code> implementation class.
+                    </td>
+                </tr>
+
+            </table>
+
+        </section>
+
+        <anchor id="extensions"/>
+        <section>
+            <title>OJB Extensions of ODMG</title>
+            <p>
+                This section describes the propietary extension of the
+                <em>ODMG-api</em>
+                provided by OJB.
+            </p>
+
+            <anchor id="implementation-ext"/>
+            <section>
+                <title>The ImplementationExt Interface</title>
+                <p>
+                    The OJB extension of the odmg
+                    <a href="ext:odmg-implementation">Implementation</a>
+                    interface is called
+                    <a href="ext:odmg-implementation-ext">ImplementationExt</a>
+                    and provide additional methods missed in the standard class definition.
+                </p>
+                <ul>
+                    <li>
+                        get/setOqlCollectionClass
+                        <br/>
+                        Use this methods to change the used OQL query result class at runtime.
+                        Description can be found in
+                        <a href="#configuration">
+                            <em>Configuration Properties</em>
+                        </a> section
+                        and in javadoc of
+                        <a href="ext:odmg-implementation-ext">ImplementationExt</a>.
+                    </li>
+                    <li>
+                        is/setImpliciteWriteLocks
+                        <br/>
+                        Use this methods to global change the associated locking type at runtime when implicit
+                        locking is used.
+                        Description can be found in
+                        <a href="#configuration">
+                            <em>Configuration Properties</em>
+                        </a> section
+                        and in javadoc of
+                        <a href="ext:odmg-implementation-ext">ImplementationExt</a>.
+                    </li>
+                    <li>
+                        is/setOrdering
+                        <br/>
+                        Use this methods to global enable/disable OJB's object ordering algorithm.
+                        Description can be found in
+                        <a href="#configuration">
+                            <em>Configuration Properties</em>
+                        </a> section
+                        and in javadoc of
+                        <a href="ext:odmg-implementation-ext">ImplementationExt</a>.
+                    </li>
+                    <!--<li>-->
+                        <!--is/setNoteUserOrder-->
+                        <!--<br/>-->
+                        <!--Use this methods to global enable/disable the possibility to influence the object-->
+                        <!--order of modified/new objects at transaction commit.-->
+                        <!--Description can be found in-->
+                        <!--<a href="#configuration">-->
+                            <!--<em>Configuration Properties</em>-->
+                        <!--</a> section-->
+                        <!--and in javadoc of-->
+                        <!--<a href="ext:odmg-implementation-ext">ImplementationExt</a>.-->
+                    <!--</li>-->
+                </ul>
+            </section>
+
+            <anchor id="transaction-ext"/>
+            <section>
+                <title>The TransactionExt Interface</title>
+                <p>
+                    The OJB extension of the odmg
+                    <a href="ext:odmg-transaction">Transaction</a> interface is
+                    called
+                    <a href="ext:odmg-transaction-ext">TransactionExt</a> and provide additional
+                    methods missed in the standard class definition.
+                </p>
+                <ul>
+                    <li>
+                        markDelete
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-transaction-ext">TransactionExt</a>.
+                    </li>
+                    <li>
+                        markDirty
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-transaction-ext">TransactionExt</a>.
+                    </li>
+                    <li>
+                        flush
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-transaction-ext">TransactionExt</a>.
+                    </li>
+                    <li>
+                        is/setImplicitLocking
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-transaction-ext">TransactionExt</a>.
+                    </li>
+                    <li>
+                        is/setOrdering
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-transaction-ext">TransactionExt</a>.
+                    </li>
+                    <!--<li>-->
+                        <!--is/setNoteUserOrder-->
+                        <!--<br/>-->
+                        <!--Description can be found in javadoc of-->
+                        <!--<a href="ext:odmg-transaction-ext">TransactionExt</a>.-->
+                    <!--</li>-->
+                    <li>
+                        setCascadingDelete
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-transaction-ext">TransactionExt</a>.
+                    </li>
+                    <li>
+                        getBroker()
+                        <br/>
+                        Returns the current used broker instance. Usage example is
+                        <a href="#pb-access">here</a>.
+                    </li>
+                </ul>
+            </section>
+
+            <anchor id="oqlquery-ext"/>
+            <section>
+                <title>The EnhancedOQLQuery Interface</title>
+                <p>
+                    The OJB extension of the odmg
+                    <a href="ext:odmg-oqlquery">OQLQuery</a> interface is
+                    called
+                    <a href="ext:odmg-oqlquery-ext">EnhancedOQLQuery</a> and provide additional
+                    methods missed in the standard class definition.
+                </p>
+                <ul>
+                    <li>
+                        create(String queryString, int startAtIndex, int endAtIndex)
+                        <br/>
+                        Description can be found in javadoc of
+                        <a href="ext:odmg-oqlquery-ext">EnhancedOQLQuery</a>.
+                    </li>
+                </ul>
+            </section>
+
+            <anchor id="pb-access"/>
+            <section>
+                <title>Access the PB-api within ODMG</title>
+                <p>
+                    As the
+                    <a href="site:pb-guide">PB-api</a> was used by OJB's
+                    <em>ODMG-api</em>
+                    implementation, thus it is possible to get access of the used
+                    <code>PersistenceBroker</code>
+                    instance using the extended Transaction interface class
+                    <a href="ext:odmg-transaction-ext">TransactionExt</a>:
+                </p>
+                <source><![CDATA[
+Implementation odmg = ...;
+TransactionExt tx = (TransactionExt) odmg.newTransaction();
+tx.begin();
+...
+PersistenceBroker broker = tx.getBroker();
+// do work with broker
+...
+tx.commit();]]></source>
+                <p>
+                    It's mandatory that the used
+                    <em>PersistenceBroker</em> instance
+                    <strong>never</strong> be
+                    closed with a
+                    <code>PersistenceBroker.close()</code> call or be committed with
+                    <code>PersistenceBroker.commitTransaction()</code>, this will be done internally
+                    by the ODMG implementation.
+                </p>
+            </section>
+
+        </section>
+
+        <section>
+            <title>Notes on Using the ODMG API</title>
+            <section>
+                <title>Transactions</title>
+                <p>
+                    The ODMG API uses
+                    <em>object-level transactions</em>, compared to the PersistenceBroker
+                    <em>database-level transactions</em>. An ODMG
+                    <a href="ext:odmg-transaction">
+                        <code>Transaction</code>
+                    </a> instance contains
+                    all of the changes made to the object model within the context of that
+                    transaction, and will not commit them to the database until the ODMG
+                    <code>Transaction</code> is committed. At that point it will use a database
+                    transaction (the underlying PB-api) to ensure atomicity of its changes.
+                </p>
+            </section>
+
+            <section>
+                <title>Locks</title>
+                <p>
+                    The ODMG specification includes several levels of locks and isolation. These are
+                    explained in much more detail in the
+                    <a href="site:lock-manager">Locking</a>
+                    documentation.
+                </p>
+                <p>
+                    In the ODMG API, locks obtained on objects are locked within the context
+                    of a transaction. Any object modified within the context of a transaction will
+                    be stored with the transaction,
+                    other changes made to the same object instance by other threads, ignoring the lock state
+                    of the object, will also be stored - so take care of locking conventions.
+                    <br/>
+                    The ODMG locking conventions (obtain a write lock before do any modifications on an object)
+                    ensure that an object can only be modified within the transaction.
+                </p>
+                <p>
+                    It's possible to configure OJB's ODMG implementation to support implicit locking with
+                    <em>WRITE</em> locks. Then a write lock on an object forces OJB to obtain implicit write locks
+                    on all referenced objects. See
+                    <a href="#configuration">configuration properties</a>.
+                </p>
+            </section>
+
+            <section>
+                <title>Persisting Non-Transactional Objects</title>
+                <p>
+                    Frequently, objects will be modified outside of the context of an
+                    ODMG transaction, such as a data access object in a web application.
+                    In those cases a persistent object can still be modified, but not
+                    directly through the
+                    <em>OMG ODMG specification</em>. OJB provides an extension
+                    to the ODMG specification for instances such as this. Examine this code:
+                </p>
+                <source><![CDATA[
+public static void persistChanges(Product product)
+{
+    Implementation impl = OJB.getInstance();
+    TransactionExt tx = (TransactionExt) impl.newTransaction();
+
+    tx.begin();
+    tx.markDirty(product);
+    tx.commit();
+}]]></source>
+                <p>
+                    In this function the product is modified outside the context of the
+                    transaction, and is then the changes are persisted within a transaction.
+                    The
+                    <code>TransactionExt.markDirty()</code> method indicates to the Transaction
+                    that the passed object has been modified, even if the Transaction itself sees
+                    no changes to the object.
+                </p>
+            </section>
+        </section>
+
+
+        <anchor id="named-objects"/>
+        <section>
+            <title>ODMG Named Objects</title>
+            <p>
+                Using
+                <em>named objects</em> allows to persist all serializable objects under a specified name.
+                The methods to handle
+                <em>named objects</em> are:
+            </p>
+            <source><![CDATA[
+/**
+ * Associate a name with an object and make it persistent.
+ * An object instance may be bound to more than one name.
+ * Binding a previously transient object to a name makes that object persistent.
+ * @param object	The object to be named.
+ * @param name	The name to be given to the object.
+ * @exception org.odmg.ObjectNameNotUniqueException
+ * If an attempt is made to bind a name to an object and that name is already bound
+ * to an object.
+ */
+public void bind(Object object, String name) throws ObjectNameNotUniqueException;
+
+/**
+ * Lookup an object via its name.
+ * @param name	The name of an object.
+ * @return The object with that name.
+ * @exception ObjectNameNotFoundException There is no object with the specified name.
+ * @see	ObjectNameNotFoundException
+ */
+public Object lookup(String name) throws ObjectNameNotFoundException;
+
+/**
+ * Disassociate a name with an object
+ * @param name	The name of an object.
+ * @exception ObjectNameNotFoundException	No object exists in the database with that name.
+ */
+public void unbind(String name) throws ObjectNameNotFoundException;]]></source>
+            <p>
+                To use this feature a internal table and metadata mapping is madatory (by default
+                these settings are enabled in OJB). More information about the needed internal tables
+                see in <a href="site:platform/internal-tables">Platform Guide</a>.
+            </p>
+            <p>
+                If the object to
+                <code>bind</code> is a persistence capable object (the object class is
+                declared in OJB
+                <a href="site:mapping-tutorial">metadata mapping</a>), then the object
+                will be persisted (if needed) dependent on the declared
+                <a href="site:mapping-tutorial">metadata mapping</a>
+                and the
+                <em>named object</em> will be a
+                <strong>link</strong> to the real persisted object.
+                <br/>
+                On
+                <code>unbind</code> of the
+                <em>named object</em> only the link of the persistent object
+                will be removed, the persistent object itself will be untouched.
+            </p>
+            <p>
+                If the object to
+                <code>bind</code> is a serializable non-persistence cacpable object, the object will be
+                serialized and persisted under the specified name.
+                <br/>
+                On
+                <code>unbind</code> the serialized object will be removed.
+            </p>
+
+
+            <anchor id="named-objects-examples"/>
+            <section>
+                <title>Examples</title>
+                <p>
+                    In <a href="site:test-suite">OJB test-suite</a> is a test case
+                    called <code>org.apache.ojb.odmg.NamedRootsTest</code> which shown similar
+                    examples as below, but more detailed.
+                </p>
+
+
+                <anchor id="example_1"/>
+                <p>
+                    <strong>1. Persist a serializable object as named object</strong>
+                </p>
+                <p>
+                    We want to persist a name list of all planets:
+                </p>
+                <source><![CDATA[
+Transaction tx = odmg.newTransaction();
+tx.begin();
+List planets = new ArrayList();
+example.add("Mercury");
+example.add("Venus");
+example.add("Earth");
+...
+database.bind(planets, "planet-list");
+tx.commit();]]></source>
+                <p>
+                    The specified <code>List</code> with all planet names will be serialized
+                    and persisted as VARBINARY object.
+                </p>
+                <p>
+                    To lookup the persisted list of the solar system planets:
+                </p>
+                <source><![CDATA[
+Transaction tx = odmg.newTransaction();
+tx.begin();
+List planets = (List) database.lookup("planet-list");
+tx.commit();]]></source>
+                <p>
+                    To remove the persistent list do:
+                </p>
+                <source><![CDATA[
+Transaction tx = odmg.newTransaction();
+tx.begin();
+database.unbind("planet-list");
+tx.commit();]]></source>
+
+                <anchor id="example_2"/>
+                <p>
+                    <strong>2. Persist a persistence capable object as named object</strong>
+                </p>
+                <p>
+                    We want to create a <em>named object</em> representing a persistence capable
+                    <code>Article</code> object (<code>Article</code> class is declared in OJB
+                    <a href="site:mapping-tutorial">metadata mapping</a>):
+                </p>
+                <source><![CDATA[
+Transaction tx = odmg.newTransaction();
+tx.begin();
+// get existing or a new Article object
+Article article = ....
+database.bind(article, "my-article");
+tx.commit();]]></source>
+                <p>
+                    OJB first checks if the specified <code>Article</code> object is already persisted - if not
+                    it will be persisted. Then based on the
+                    <code>Article</code> object
+                    <a href="ext:api/identity">
+                        <code>Identity</code>
+                    </a> the
+                    <em>named object</em>
+                    will be persisted. So the persistent
+                    <em>named object</em> is a link to the persistent real <code>Article</code> object.
+                </p>
+                <p>
+                    On lookup of the <em>named object</em> the real <code>Article</code> instance will
+                    be returned:
+                </p>
+                <source><![CDATA[
+Transaction tx = odmg.newTransaction();
+tx.begin();
+Article article = (Article) database.lookup("my-article");
+tx.commit();]]></source>
+                <p>
+                    On unbind of the <em>named object</em> only the link to the real <code>Article</code> object
+                    will be removed, the <code>Article</code> itself will not be touched.
+                    <br/>
+                    To remove the <code>named object</code> and the <code>Article</code> instance do:
+                </p>
+                <source><![CDATA[
+tx.begin();
+// this only remove the named object link, the Article object
+// itself will not be touched
+database.unbind("my-article");
+// thus delete the object itself too
+database.deletePersistent(article);
+tx.commit();]]></source>
+
+                <anchor id="example_3"/>
+                <p>
+                    <strong>3. Persist a collection of persistence capable object as named object</strong>
+                </p>
+                <p>
+                    We want to persist a list of the last shown
+                    <code>Article</code> objects.
+                    The
+                    <code>Article</code> class is a persistence capable object (declared in OJB
+                    <a href="site:mapping-tutorial">metadata mapping</a>). Thus we don't want
+                    to persist a serialized List of <code>Article</code> objects (because the
+                    real <code>Article</code> object may change), as shown in
+                    <a href="#example_1">example 1</a>, rather we want to persist a List that
+                    links to the real persistent <code>Article</code> objects.
+                    <br/>
+                    This is possible when the ODMG <a href="#dcollections"><code>DCollections</code></a>
+                    are used:
+                </p>
+                <source><![CDATA[
+// get the list with last shown Article objects
+List lastArticles = ...
+Transaction tx = odmg.newTransaction();
+tx.begin();
+// obtain new DList instance from Implementation class
+DList namedArticles = odmg.newDList();
+// push Articles to DList
+namedArticles.addAll(lastArticles);
+database.bind(namedArticles, "last-shown");
+tx.commit();
+                ]]></source>
+                <p>
+                    In this case OJB first checks for transient
+                    <code>Article</code> objects and make
+                    these new objects persistent, then based on the
+                    <code>Article</code> object
+                    <a href="ext:api/identity">
+                        <code>Identity</code>
+                    </a> the
+                    <em>named object</em>
+                    will be persisted. So the persistent
+                    <em>named object</em> is in this case a list of
+                    links to persistent <code>Article</code> objects.
+                </p>
+                <p>
+                    On <code>database.lookup("last-shown")</code> the <code>DList</code> will
+                    be returned and when access the list entries the <code>Article</code> objects
+                    will be materialized.
+                </p>
+                <p>
+                    To remove the <em>named object</em> some more attention is needed:
+                </p>
+                <source><![CDATA[
+tx.begin();
+DList namedArticles = ...
+// we want to completely remove the named object
+// the persisted DList with all DList entries,
+// but the Article objects itself shouldn't be deleted:
+// 1. mandatory, clear the list to remove all entries
+namedArticles.clear();
+// 2. unbind named object
+database.unbind("last-shown");
+tx.commit();]]></source>
+                <p>
+                    After this the <em>named object</em> will be completely removed, but
+                    all <code>Article</code> object will be untouched.
+                </p>
+
+            </section>
+
+        </section>
+
+
+        <anchor id="dcollections"/>
+        <section>
+            <title>ODMG's DCollections</title>
+            <p>
+                The ODMG api declare some specific extensions of the <code>java.util.Collection</code> interface:
+            </p>
+            <ul>
+                <li>
+                    <code>org.odmg.DList</code>
+                </li>
+                <li>
+                    <code>org.odmg.DSet</code>
+                </li>
+                <li>
+                    <code>org.odmg.DBag</code>
+                </li>
+                <li>
+                    <code>org.odmg.DMap</code>
+                </li>
+                <li>
+                    <code>org.odmg.DArray</code>
+                </li>
+            </ul>
+            <p>
+                The ODMG <a href="ext:odmg-implementation"><code>Implementation</code></a> class
+                provide methods to get new instances of these classes.
+            </p>
+            <p>
+                In OJB all associations between persistence capable classes are declared in the
+                <a href="site:mapping-tutorial">mapping files</a> and <em>1:n and m:n</em> relations
+                can use any collection type class which implement the specific interface
+                <a href="site:advanced-technique/manageable-collection"><code>ManageableCollection</code></a>.
+                <br/>
+                So there is no need to use the ODMG specific collection classes in object relations or when
+                oql-queries are performed (more detailed info see <a href="#oql-collection-class">'oql collection class setting'</a>).
+            </p>
+            <p>
+                One difference to <em>normal</em> collection classes is that <code>DCollection</code> implementation
+                classes are persistence capable classes itself. This means that they can be persisted - e.g. see
+                <a href="#example_3">named objects example</a>. Mandatory is that all containing objects
+                are persistence capable itself.
+            </p>
+            <p>
+                When persisting a <code>DCollection</code> object OJB first lock the collection entries, then the
+                collection itself was locked. On commit the collection entries will be handled in a <em>normal</em>
+                way and for each entry a <em>link object</em> (containing the
+                <a href="ext:identity"><code>Identity</code></a> of the persistence capable object) is persisted.
+            </p>
+            <p>
+                When lookup the persisted <code>DCollection</code> object the <em>link objects</em> are materialized
+                and on access the collection entry will be materialized by the identity.
+            </p>
+        </section>
+
+
+        <anchor id="foreign-keys"/>
+        <section>
+            <title>Foreign Keys Constraints and ODMG-api</title>
+            <p>
+                If cross-referenced database tables are used it's recommended to set <em>foreign key constraints</em>
+                to guarantee database consistency. The consequence of using <em>foreign key constraints</em> is that
+                the order of the persistence capable objects on <em>insert</em> and <em>delete</em> operations
+                will become cruical.
+            </p>
+            <p>
+                Some databases support <em>deferred constraint checks</em>, this can help to avoid foreign key issues.
+            </p>
+            <p>
+                On transaction commit (using standard settings) OJB try to order the objects by itself.
+                If this doesn't suffice it's possible to determine the
+                <a href="#ordering-by-hand">object order "by hand"</a>.
+            </p>
+            <p>
+                If foreign key constraint violations arise when using
+                <a href="site:basic-technique/one-to-one">1:1 references</a> and
+                <a href="#circular-references">circular/bidirectional 1:1 references</a> it's possible to use
+                a workaround introduced in version 1.0.4 to specify the database FK constraint in OJB using a
+                <a href="site:repository/custom-attribute">custom attribute</a> named <em>'constraint'</em>:
+            </p>
+            <source><![CDATA[
+<reference-descriptor name="refAA"
+    class-ref="org.apache.ojb.odmg.CircularTest$ObjectAA"
+    proxy="false"
+    auto-retrieve="true"
+    auto-update="none"
+    auto-delete="none"
+>
+    <foreignkey field-ref="fkId"/>
+    <attribute attribute-name="constraint" attribute-value="true"/>
+</reference-descriptor>]]></source>
+        </section>
+
+        <anchor id="questions"/>
+        <section>
+            <title>Questions and Tips</title>
+
+            <anchor id="ordering-by-hand"/>
+            <section>
+                <title>Disable OJB's object ordering, determine object order "by hand"</title>
+                <p>
+                    By default OJB try to order all persistent objects on transaction commit call to avoid
+                    ordering problems. If this is not needed or helpful it can be disabled in two ways.
+                    <br/>
+                    In most cases
+                    it's needed to disable <em>implicite locking</em> too, because it will lock/register
+                    dependend objects (e.g. 1:n references) automatically.
+                    First in <a href="site:ojb-properties">OJB.properties</a> file:
+                </p>
+                <source><![CDATA[
+# Enable/Disable OJB's persistent object ordering algorithm on commit
+# of a transaction. If enabled OJB try to calculate a valid order for
+# all new/modified objects (and referenced objects).
+# If the used databases support 'deferred checks' it's recommended to use this
+# feature and to disable OJB's object ordering.
+# This setting can be changed at runtime using OJB's ODMG extensions.
+Ordering=false
+                ]]></source>
+                <p>
+                    Second at runtime, using OJB's ODMG extension classes
+                    <a href="#implementation-ext">ImplementationExt</a> (global setting) and
+                    <a href="#transaction-ext">TransactionExt</a> (per tx setting).
+                </p>
+                <source><![CDATA[
+TransactionExt tx = (TransactionExt) odmg.newTransaction();
+tx.begin();
+...
+/*
+we want to manually insert new object, so we disable
+OJB's ordering and implicit object locking
+*/
+tx.setOrdering(false);
+tx.setImplicitLocking(false);
+...
+tx.commit();
+                ]]></source>
+            </section>
+
+            <anchor id="circular-references"/>
+            <section>
+                <title>Circular- and Bidirectional References</title>
+                <p>
+                    The good news, OJB can handle <em>bidirectional-</em> and <em>circular-</em> references.
+                    When using <a href="#foreign-keys">foreign key constraints</a> for referential
+                    integrety in these cases you have to pay attention.
+                </p>
+                <p>
+                    In OJB <a href="site:test-suite">test-suite</a> a unit test called
+                    <code>org.apache.ojb.odmg.CircularTest</code> can be found. The tests show the handling
+                    of circular/bidirectional references and the possibilities how to handle object
+                    insert/update/delete ordering on transaction commit.
+                </p>
+            </section>
+
+            <anchor id="no-oql"/>
+            <section>
+                <title>I don't like OQL, can I use the PersistenceBroker Queries within ODMG</title>
+                <p>
+                    Yes you can! The ODMG implementation relies on PB Queries internally!
+                    Several users (including myself) are doing this.
+                </p>
+                <p>
+                    If you have a look at the simple example below
+                    you will see how OJB Query objects can be used withing ODMG transactions.
+                    <br/>
+                    The most important thing is to lock all objects returned by a
+                    query to the current transaction before starting manipulating
+                    these objects.
+                    <br/>
+                    Further on do not commit or close the obtained PB-instance, this will be done
+                    by the ODMG transaction on
+                    <code>tx.commit() / tx.rollback()</code>.
+                </p>
+                <source><![CDATA[
+TransactionExt tx = (TransactionExt) odmg.newTransaction();
+tx.begin();
+....
+// cast to get intern used PB instance
+PersistenceBroker broker = tx.getBroker();
+...
+// build query
+QueryByCriteria query = ...
+// perform PB-query
+Collection result = broker.getCollectionByQuery(query);
+// use result
+...
+
+tx.commit();
+...]]></source>
+                <p>
+                    Note: Don't close or commit the used broker instance, this will be done by the odmg-api.
+                </p>
+            </section>
+
+
+            <anchor id="multiple-databases"/>
+            <section>
+                <title>How to use multiple Databases</title>
+                <p>
+                    For each database define a
+                    <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a> same way
+                    as described in the
+                    <a href="site:faq/multiple-databases">FAQ</a>.
+                </p>
+                <p>
+                    Now it is possible to
+                </p>
+                <ul>
+                    <li>
+                        <p>
+                            access the databases one after another, by closing the current used
+                            <code>Database</code>
+                            instance and by open a new one.
+                        </p>
+                        <source><![CDATA[
+// get current used database instance
+Database database = ...;
+// close it
+database.close();
+// open a new one
+database = odmg.newDatabase();
+database.open("jcdAliasName#user#password", Database.OPEN_READ_WRITE);
+...]]></source>
+                        <p>
+                        The
+                            <code>Database.close()</code> call close the current used
+                            <code>Database</code> instance,
+                        after this it is possible to open a new database instance.
+                        </p>
+                    </li>
+                    <li>
+                        <p>
+                            use multiple databases in parallel, by creating a separate
+                            <code>Implementation</code>
+                            and
+                            <code>Database</code> instance for each
+                            <a href="site:repository/jdbc-connection-descriptor">jdbc-connection-descriptor</a>
+                            defined in the mapping metadata.
+                        </p>
+                        <source><![CDATA[
+Implementation odmg_1 = OJB.getInstance();
+Database database_1 = odmg.newDatabase(); 
+database.open("db_1#user#password", Database.OPEN_READ_WRITE);
+
+Implementation odmg_2 = OJB.getInstance();
+Database database_2 = odmg.newDatabase();
+database.open("db_2#user#password", Database.OPEN_READ_WRITE);
+                        ]]></source>
+                        <p>
+                            Now it's possible to use both databases in parallel.
+                        </p>
+
+                    </li>
+                </ul>
+                <note>
+                    OJB does not provide distributed transactions by itself. To use distributed transactions,
+                    OJB have to be
+                    <a href="site:deployment/j2ee-server">integrated in an j2ee conform environment</a>
+                    (or made work with an JTA/JTS implementation).
+                </note>
+            </section>
+
+
+        </section>
+
+    </body>
+</document>
+

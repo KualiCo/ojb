@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<!--
+  Copyright 2002-2005 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: summary.xml,v 1.1 2007-08-24 22:17:31 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Reference Guides Summary</title>
+        <authors>
+            <person name="Brian McCallister" email="brianm@apache.org"/>
+            <person name="Armin Waibel" email="arminw@apache.org"/>
+            <person name="Martin Kalén" email="mkalen@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <p>
+            Summary and explanation of the OJB reference guides.
+        </p>
+
+        <ul>
+            <li>
+                <a href="site:pb-guide">PB guide</a>
+                <br/>
+                This document explains specific usage of the <em>PB API</em>.
+            </li>
+            <li>
+                <a href="site:odmg-guide">ODMG guide</a>
+                <br/>
+                This document explains specific usage of the <em>ODMG API</em>.
+            </li>
+            <li>
+                <a href="site:query">OJB Queries</a>
+                <br/>
+                This document explains the usage of the query syntax.
+            </li>
+            <li>
+                <a href="site:basic-technique">Basic O/R Technique</a>
+                <br/>
+                This tutorial explains basic object-relational mapping technique in OJB
+                like 1:1, 1:n and m:n relations, the auto-xxx settings for references and
+                proxy objects/collections.
+            </li>
+            <li>
+                <a href="site:platform">Platforms</a>
+                <br/>
+                What OJB requires from relational databases,
+                and how to let it know which database to use.
+            </li>
+            <li>
+                <a href="site:logging">Logging configuration</a>
+                <br/>
+                Detailed information about configuring the logging within OJB.
+            </li>
+            <li>
+                <a href="site:ojb-properties">OJB.properties configuration</a>
+                <br/>
+                The details on how to modify OJB's behaviour. This includes changing pluggable
+                components.
+            </li>
+            <li>
+                <a href="site:jdbc-types">JDBC Types</a>
+                <br/>
+                This document explains the standard mapping of JDBC types to Java classes.
+            </li>
+            <li>
+                <a href="site:repository">Repository Metadata</a>
+                <br/>
+                The specific details of OJB metadata.
+            </li>
+            <li>
+                <a href="site:advanced-technique">Advanced O/R Technique</a>
+                <br/>
+                This document explains some advanced O/R techniques like Polymorphism and "OJB Extents",
+                Mapping Inheritance Hierarchies, Nested Objects and so on.
+            </li>
+            <li>
+                <a href="site:metadata">Metadata Handling</a>
+                <br/>
+                This document explains how the metadata xml file work and how the metadata
+                information can be modified at runtime.
+            </li>
+            <li>
+                <a href="site:deployment">Deployment</a>
+                <br/>
+                Specifics on what is required to deploy OJB, including deployment to EJB containers.
+            </li>
+            <li>
+                <a href="site:connection">Connection Handling</a>
+                <br/>
+                This document explains how OJB handles the
+                <code>Connection</code> instances and how this can be user-configured.
+            </li>
+            <li>
+                <a href="site:object-cache">Caching</a>
+                <br/>
+                Documentation on the different object caching implementations and strategies
+                included with OJB.
+            </li>
+            <li>
+                <a href="site:sequence-manager">The Sequence Manager</a>
+                <br/>
+                How to use different sequence management strategies with OJB.
+            </li>
+            <li>
+                <a href="site:lock-manager">Locking</a>
+                <br/>
+                The optimistic and pessimistic locking capabilities of OJB.
+            </li>
+            <li>
+                <a href="site:xdoclet-module">OJB XDoclet Module</a>
+                <br/>
+                Documentation for the OJB XDoclet module. The module can build mappings and schema.
+            </li>
+            <li>
+                <a href="site:performance">OJB Performance</a>
+                <br/>
+                A look at how OJB performs and how to use OJB's performance tests.
+            </li>
+        </ul>
+    </body>
+</document>

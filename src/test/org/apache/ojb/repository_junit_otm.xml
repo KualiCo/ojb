@@ -1,0 +1,219 @@
+<!-- Mapping of classes used in junit tests -->
+<!-- @version $Id: repository_junit_otm.xml,v 1.1 2007-08-24 22:17:30 ewestfal Exp $ -->
+<!--
+#/* Copyright 2003-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<!-- ************************************************* -->
+<!--      Classes for OTM dependent objects test       -->
+<!-- ************************************************* -->
+
+   <class-descriptor
+  class="org.apache.ojb.otm.Person"
+  table="OTM_PERSON"
+   >
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="firstname"
+     column="FIRSTNAME"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="lastname"
+     column="LASTNAME"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="mainAddressId"
+     column="MAIN_ADDRESS_ID"
+     jdbc-type="INTEGER"
+  />
+  <reference-descriptor
+     name="mainAddress"
+     class-ref="org.apache.ojb.otm.Address"
+     otm-dependent="true"
+  >
+     <foreignkey field-ref="mainAddressId"/>
+  </reference-descriptor>
+  <collection-descriptor
+     name="otherAddresses"
+     element-class-ref="org.apache.ojb.otm.AddressDesc"
+     collection-class="org.apache.ojb.broker.util.collections.ManageableArrayList"
+     otm-dependent="true"
+  >
+     <inverse-foreignkey field-ref="personId"/>
+  </collection-descriptor>
+   </class-descriptor>
+
+
+
+   <class-descriptor
+  class="org.apache.ojb.otm.Address"
+  table="OTM_ADDRESS"
+   >
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="country"
+     column="COUNTRY"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="city"
+     column="CITY"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="street"
+     column="STREET"
+     jdbc-type="VARCHAR"
+  />
+   </class-descriptor>
+
+
+
+   <class-descriptor
+  class="org.apache.ojb.otm.AddressDesc"
+  table="OTM_ADDRESS_DESC"
+   >
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="desc"
+     column="DESCRIPTION"
+     jdbc-type="VARCHAR"
+  />
+  <field-descriptor
+     name="personId"
+     column="PERSON_ID"
+     jdbc-type="INTEGER"
+  />
+  <field-descriptor
+     name="addressId"
+     column="ADDRESS_ID"
+     jdbc-type="INTEGER"
+  />
+  <reference-descriptor
+     name="person"
+     class-ref="org.apache.ojb.otm.Person"
+  >
+     <foreignkey field-ref="personId"/>
+  </reference-descriptor>
+  <reference-descriptor
+     name="address"
+     class-ref="org.apache.ojb.otm.Address"
+     otm-dependent="true"
+  >
+     <foreignkey field-ref="addressId"/>
+  </reference-descriptor>
+   </class-descriptor>
+
+<class-descriptor class="org.apache.ojb.otm.AbstractPerson">
+    <extent-class class-ref="org.apache.ojb.otm.LegalPerson"/>
+    <extent-class class-ref="org.apache.ojb.otm.NaturalPerson"/>
+</class-descriptor>
+
+<class-descriptor class="org.apache.ojb.otm.Debitor"
+        table="OTM_DEBITOR">
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor name="personId"
+                    column="PERSON_ID"
+                    jdbc-type="INTEGER"/>
+  <reference-descriptor name="abstractPerson"
+                        class-ref="org.apache.ojb.otm.AbstractPerson"
+                        otm-dependent="true">
+    <foreignkey field-ref="personId"/>
+  </reference-descriptor>
+</class-descriptor>
+
+<class-descriptor class="org.apache.ojb.otm.Address2"
+        table="OTM_ADDRESS2">
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor name="personId"
+                    column="PERSON_ID"
+                    jdbc-type="INTEGER"/>
+</class-descriptor>
+
+<class-descriptor class="org.apache.ojb.otm.LegalPerson"
+        table="OTM_PERSON2">
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="name"
+     column="NAME"
+     jdbc-type="VARCHAR"
+  />
+  <collection-descriptor name="addresses"
+                         element-class-ref="org.apache.ojb.otm.Address2"
+                         otm-dependent="true">
+    <inverse-foreignkey field-ref="personId"/>
+  </collection-descriptor>
+</class-descriptor>
+
+<class-descriptor class="org.apache.ojb.otm.NaturalPerson"
+        table="OTM_PERSON3">
+  <field-descriptor
+     name="id"
+     column="ID"
+     jdbc-type="INTEGER"
+     primarykey="true"
+     autoincrement="true"
+  />
+  <field-descriptor
+     name="name"
+     column="NAME"
+     jdbc-type="VARCHAR"
+  />
+  <collection-descriptor name="addresses"
+                         element-class-ref="org.apache.ojb.otm.Address2"
+                         otm-dependent="true">
+    <inverse-foreignkey field-ref="personId"/>
+  </collection-descriptor>
+</class-descriptor>
+
+<!-- Mapping of classes used in junit tests and tutorials ends here -->

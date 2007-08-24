@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- @version $Id: otm-tutorial.xml,v 1.1 2007-08-24 22:17:42 ewestfal Exp $ -->
+<!DOCTYPE document PUBLIC "-//APACHE//DTD Documentation V2.0//EN" "document-v20.dtd">
+
+<document>
+    <header>
+        <title>Object Transaction Manager Tutorial</title>
+        <authors>
+            <person name="Brian McCallister" email="brianm@apache.org"/>
+        </authors>
+    </header>
+
+    <body>
+        <section><title>The OTM API</title>
+                    <section><title>Introduction</title>
+                        <p>
+                            The Object Transaction Manager (OTM) is written as a tool on
+                            which to implement other high-level object persistence APIs. It
+                            is, however, very usable directly. It supports API's similar to the
+                            <a href="site:odmg-tutorial">ODMG</a> and
+                            <a href="site:pb-tutorial">
+                                PersistenceBroker</a> API's in OJB. Several of its idioms are designed
+                            around the fact that it is meant to have additional, client-oriented,
+                            API's built on top of it, however.
+                        </p>
+                        <p>
+                            The
+                            <code>OTMKit</code> is the initial access point to the OTM interfaces.
+                            The kit provides basic configuration information to the OTM components
+                            used in your system. This tutorial will use the
+                            <code>SimpleKit</code>
+                            which will work well under most circumstances for local transaction
+                            implementations.
+                        </p>
+                        <p>
+                            This tutorial operates on a simple example class:
+                        </p>
+                        <source><![CDATA[
+package org.apache.ojb.tutorials;
+
+public class Product
+{
+    /* Instance Properties */
+
+    private Double price;
+    private Integer stock;
+    private String name;
+
+    /* artificial property used as primary key */
+
+    private Integer id;
+
+    /* Getters and Setters */
+    ...
+}]]></source>
+                        <p>
+                            The metadata descriptor for mapping this class is described in the
+                            <a href="site:mapping-tutorial">mapping tutorial</a>.
+                        </p>
+                        <p>
+			                As always the source code for this tutorial can be found in the
+                            <code>tutorials-src.jar</code> available from
+			                <a href="ext:ojb/binaries-version">here</a>, more specifically
+                            in the <code>org/apache/ojb/tutorials/</code> directory.
+                        </p>
+                    </section>
+
+
+                    <section><title>Persisting New Objects</title>
+                        <p>
+                            The starting point for using the OTM directly is to look at
+                            making a transient object persistent. This code will use three
+                            things, an
+                            <code>OTMKit</code>, an
+                            <code>OTMConnection</code>,
+                            and a
+                            <code>Transaction</code>. The connection and transaction
+                            objects are obtained from the kit.
+                        </p>
+                        <p>
+                            Initial access to the OTM client API's is through the
+                            <code>OTMKit</code>
+                            interface. We'll use the
+                            <code>SimpleKit</code>, an implementation of the
+                            <code>OTMkit</code> suitable for most circumstances using local transactions.
+                        </p>
+                        <source><![CDATA[
+public static void storeProduct(Product product) throws LockingException
+{
+    OTMKit kit = SimpleKit.getInstance();
+    OTMConnection conn = null;
+    Transaction tx = null;
+    try
+    {
+        conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+        tx = kit.getTransaction(conn);
+        tx.begin();
+        conn.makePersistent(product);
+        tx.commit();
+    }
+    catch (LockingException e)
+    {
+        if (tx.isInProgress()) tx.rollback();
+        throw e;
+    }
+    finally
+    {
+        conn.close();
+    }
+}
+        ]]></source>
+                        <p>
+                            A kit is obtained and is used to obtain a connection. Connections are against
+                            a specific JCD alias. In this case we use the default, but a named
+                            datasource could also be used, as configured in the metadata repository. A transaction
+                            is obtained from the kit for the specific connection. Because multiple
+                            connections can be bound to the same transaction in the OTM, the transaction
+                            needs to be acquired from the kit instead of the connection itself. The
+                            <code>SimpleKit</code> uses the commonly seen transaction-per-thread idiom, but
+                            other kits do not need to do this.
+                        </p>
+                        <p>
+                            Every persistence operation within the OTM needs to be executed within
+                            the context of a transaction. The JDBC concept of implicit transactions
+                            doesn't exist in the OTM -- transactions must be explicit.
+                        </p>
+                        <p>
+                            Locks, on the other hand, are implicit in the OTM (though explicit locks
+                            are available).
+                            The
+                            <code>conn.makePersistent(..)</code> call obtains a write lock on
+                            <code>product</code> and will commit (insert) the object when the transaction
+                            is committed.
+                        </p>
+                        <p>
+                            The
+                            <code>LockingException</code> will be thrown if the object cannot be
+                            write-locked in this transaction. As it is a transient object to begin
+                            with, this will probably only ever happen if it has been write-locked
+                            in another transaction already -- but this depends on the transaction
+                            semantics configured in the repository metadata.
+                        </p>
+                        <p>
+                            Finally, connections maintain resources so it is important to make
+                            sure they are closed when no longer needed.
+                        </p>
+                    </section>
+
+
+                    <section><title>Deleting Persistent Objects</title>
+                        <p>
+                            Deleting a persistent object from the backing store (making
+                            a persistent object transient) is almost identical to
+                            making it persistent -- the difference is just in the
+                            <code>conn.deletePersistent(product)</code> call instead of the
+                            <code>conn.makePersistent(product)</code> call. The same notes
+                            about transactions and resources apply here.
+                        </p>
+                        <source><![CDATA[
+public static void storeProduct(Product product) throws LockingException
+{
+   OTMKit kit = SimpleKit.getInstance();
+   OTMConnection conn = null;
+   Transaction tx = null;
+   try
+   {
+       conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+       tx = kit.getTransaction(conn);
+       tx.begin();
+       conn.deletePersistent(product);
+       tx.commit();
+   }
+   catch (LockingException e)
+   {
+       if (tx.isInProgress()) tx.rollback();
+       throw e;
+   }
+   finally
+   {
+       conn.close();
+   }
+}
+       ]]></source>
+                    </section>
+
+
+                    <section><title>Querying for Objects</title>
+                        <p>
+                            The OTM implements a transaction system, not a new client API. As such
+                            it supports two styles of query at present -- an PersistenceBroker like
+                            query-by-criteria style querying system, and an ODMG OQL query system.
+                        </p>
+                        <p>
+                            Information on constructing these types of queries is available in the
+                            <a href="site:pb-tutorial">PersistenceBroker</a> and
+                            <a href="site:odmg-tutorial">ODMG</a> tutorials respectively. Using
+                            those queries with the OTM is examined here.
+                        </p>
+                        <p>
+                            A PB style query can be handled as follows:
+                        </p>
+                        <source><![CDATA[
+public Iterator findByCriteria(Query query)
+{
+    OTMKit kit = SimpleKit.getInstance();
+    OTMConnection conn = null;
+    Transaction tx = null;
+    try
+    {
+        conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+        tx = kit.getTransaction(conn);
+        tx.begin();
+        Iterator results = conn.getIteratorByQuery(query);
+        tx.commit();
+        return results;
+    }
+    finally
+    {
+        conn.close();
+    }
+}]]></source>
+                        <p>
+                            Where, by default, a read lock is obtained on the returned objects.
+                            If a different lock is required it may be specified specifically:
+                        </p>
+                        <source><![CDATA[
+public Iterator findByCriteriaWithLock(Query query, int lock)
+{
+    OTMKit kit = SimpleKit.getInstance();
+    OTMConnection conn = null;
+    Transaction tx = null;
+    try
+    {
+        conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+        tx = kit.getTransaction(conn);
+        tx.begin();
+        Iterator results = conn.getIteratorByQuery(query, lock);
+        tx.commit();
+        return results;
+    }
+    finally
+    {
+        conn.close();
+    }
+}]]></source>
+                        <p>
+                            The int
+                            <code>lock</code> argument is one of the integer constants on
+                            <code>org.apache.ojb.otm.lock.LockType</code>:
+                        </p>
+                        <source><![CDATA[
+LockType.NO_LOCK
+LockType.READ_LOCK
+LockType.WRITE_LOCK]]></source>
+                        <p>
+                            OQL queries are also supported, as this somewhat more complex
+                            example demonstrates:
+                        </p>
+                        <source><![CDATA[
+public Iterator findByOQL(String query, Object[] bindings) throws Exception
+{
+    OTMKit kit = SimpleKit.getInstance();
+    OTMConnection conn = null;
+    Transaction tx = null;
+    try
+    {
+        conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+        tx = kit.getTransaction(conn);
+        OQLQuery oql = conn.newOQLQuery();
+        oql.create(query);
+        for (int i = 0; i < bindings.length; ++i)
+        {
+            oql.bind(bindings[i]);
+        }
+        tx.begin();
+        Iterator results = conn.getIteratorByOQLQuery(oql);
+        tx.commit();
+        return results;
+    }
+    catch (QueryInvalidException e)
+    {
+        if (tx.isInProgress()) tx.rollback();
+        throw new Exception("Invalid OQL expression given", e);
+    }
+    catch (QueryParameterCountInvalidException e)
+    {
+        if (tx.isInProgress()) tx.rollback();
+        throw new Exception("Incorrect number of bindings given", e);
+    }
+    catch (QueryParameterTypeInvalidException e)
+    {
+        if (tx.isInProgress()) tx.rollback();
+        throw new Exception("Incorrect type of object given as binding", e);
+    }
+    finally
+    {
+        conn.close();
+    }
+}]]></source>
+                        <p>
+                            This function is, at its core, doing the same thing as the PB style
+                            queries, except that it constructs the OQL query, which supports
+                            binding values in a manner similar to JDBC prepared statements.
+                        </p>
+                        <p>
+                            The OQL style queries also support specifying the lock level the same way:
+                        </p>
+                        <source><![CDATA[
+Iterator results = conn.getIteratorByOQLQuery(query, lock);]]></source>
+                    </section>
+
+
+                    <section><title>More Sophisticated Transaction Handling</title>
+                        <p>
+                            These examples are a bit simplistic as they begin and commit their
+                            transactions all in one go -- they are only good for retrieving data.
+                            More often data will need to be retrieved, used, and committed back.
+                        </p>
+                        <p>
+                            Only changes to persistent objects made within the bounds of a
+                            transaction are persisted. This means that frequently a query will
+                            be executed within the bounds of an already established transaction,
+                            data will be changed on the objects obtained, and the transaction will then
+                            be committed back.
+                        </p>
+                        <p>
+                            A very convenient way to handle transactions in many applications
+                            is to start a transaction and then let any downstream code be executed
+                            within the bounds of the transaction automatically. This is straightforward
+                            to do with the OTM using the
+                            <code>SimpleKit</code>! Take a look at a very slightly modified version
+                            of the query by criteria function:
+                        </p>
+                        <source><![CDATA[
+public Iterator moreRealisticQueryByCriteria(Query query, int lock)
+{
+     OTMKit kit = SimpleKit.getInstance();
+     OTMConnection conn = null;
+     Transaction tx = null;
+     try
+     {
+         conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+         tx = kit.getTransaction(conn);
+         boolean auto = ! tx.isInProgress();
+         if (auto) tx.begin();
+         Iterator results = conn.getIteratorByQuery(query, lock);
+         if (auto) tx.commit();
+         return results;
+     }
+     finally
+     {
+         conn.close();
+     }
+}]]></source>
+                        <p>
+                            In this case the function looks to see if a transaction is already in
+                            progress and sets a boolean flag if it is, <code>auto</code>. It then
+                            handles transactions itself, or allows the already opened transaction
+                            to maintain control.
+                        </p>
+                        <p>
+                            Because connections can be attached to existing transactions the
+                            <code>SimpleKit</code> can attach the new connection to the
+                            already established transaction, allowing this function to work
+                            as expected whether there is a transaction in progress or not!
+                        </p>
+                        <p>
+                            Client code using this function could then open a transaction,
+                            query for products, change them, and commit the changes back. For
+                            example:
+                        </p>
+                        <source><![CDATA[
+public void renameWidgetExample()
+{
+    OTMKit kit = SimpleKit.getInstance();
+    OTMConnection conn = null;
+    Transaction tx = null;
+    try
+    {
+        conn = kit.acquireConnection(PersistenceBrokerFactory.getDefaultKey());
+        tx = kit.getTransaction(conn);
+        tx.begin();
+        Product sample = new Product();
+        sample.setName("Wonder Widget");
+        Query query = QueryFactory.newQueryByExample(sample);
+        Iterator wonderWidgets
+                    = moreRealisticQueryByCriteria(query, LockType.WRITE_LOCK);
+        while (wonderWidgets.hasNext())
+        {
+            Product widget = (Product) wonderWidgets.next();
+            widget.setName("Improved Wonder Widget");
+        }
+        tx.commit();
+    }
+    finally
+    {
+        conn.close();
+    }
+}]]></source>
+                        <p>
+                            This sample renames a whole bunch of products from "Wonder Widget" to
+                            "Improved Wonder Widget" and stores them back. It must makes the changes
+                            within the context of the transaction it obtained for those changes
+                            to be stored back to the database. If the same iterator were obtained
+                            outside of a transaction, and the changes made, the changes would be
+                            made on the objects in memory, but not in the database. You can think of
+                            non-transaction objects as free immutable transfer objects.
+                        </p>
+                        <p>
+                            This example also demonstrates two connections bound to the same
+                            transaction, as the <code>renameWidgetExample(...)</code> function
+                            obtains a connection, and the <code>moreRealisticQueryByCriteria(...)</code>
+                            function obtains an additional connection to the same transaction!
+                        </p>
+                    </section>
+                </section>
+
+
+                <section><title>Notes on the Object Transaction Manager</title>
+
+                    <section><title>Transactions</title>
+                        <p>
+                            The Object Transaction Manager (OTM) is a transaction management layer for
+                            Java objects. It typically maps 1:1 to database transactions behind the scenes,
+                            but this is not actually required for the OTM to work correctly.
+                        </p>
+                        <p>
+                            The OTM supports a wide range of transactional options, delimited in the
+                            <a href="site:lock-manager">LockManager</a> documentation. While the lock
+                            manager is writte to the ODMG API, the same locking rules apply at the
+                            OTM layer.
+                        </p>
+                    </section>
+                </section>
+    </body>
+</document>
