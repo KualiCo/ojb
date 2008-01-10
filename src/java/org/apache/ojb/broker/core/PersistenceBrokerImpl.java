@@ -90,7 +90,7 @@ import org.apache.ojb.broker.util.sequence.SequenceManagerFactory;
  * @author <a href="mailto:mattbaird@yahoo.com">Matthew Baird<a>
  * @author <a href="mailto:jbraeuchi@gmx.ch">Jakob Braeuchi</a>
  *
- * @version $Id: PersistenceBrokerImpl.java,v 1.1 2007-08-24 22:17:35 ewestfal Exp $
+ * @version $Id: PersistenceBrokerImpl.java,v 1.2 2008-01-10 20:01:11 jkeller Exp $
  */
 public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl implements PBState
 {
@@ -536,6 +536,7 @@ public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl impleme
         if (obj != null)
         {
             obj = getProxyFactory().getRealObject(obj);
+            if ( obj == null ) return;
             /**
              * MBAIRD
              * 1. if we are marked for delete already, avoid recursing on this object
