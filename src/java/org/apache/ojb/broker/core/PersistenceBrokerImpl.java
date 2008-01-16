@@ -90,7 +90,7 @@ import org.apache.ojb.broker.util.sequence.SequenceManagerFactory;
  * @author <a href="mailto:mattbaird@yahoo.com">Matthew Baird<a>
  * @author <a href="mailto:jbraeuchi@gmx.ch">Jakob Braeuchi</a>
  *
- * @version $Id: PersistenceBrokerImpl.java,v 1.2 2008-01-10 20:01:11 jkeller Exp $
+ * @version $Id: PersistenceBrokerImpl.java,v 1.3 2008-01-16 19:07:20 jkeller Exp $
  */
 public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl implements PBState
 {
@@ -976,6 +976,7 @@ public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl impleme
             }
             else store(ref);
         }
+        ref = getProxyFactory().getRealObject(ref);
         link(obj, cld, rds, ref, insert);
     }
 
