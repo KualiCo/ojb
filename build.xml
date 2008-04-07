@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 -->
-<!-- @version $Id: build.xml,v 1.1 2007-08-24 22:17:36 ewestfal Exp $ -->
+<!-- @version $Id: build.xml,v 1.2 2008-04-07 14:08:37 ewestfal Exp $ -->
 <!--
      ObJectRelationalBridge ANT build configuration.
      initial author: Thomas Mahler
@@ -1703,5 +1703,12 @@
     <!-- ================================================================== -->
     <!-- End of targets                                                     -->
     <!-- ================================================================== -->
+	
+	<!-- Added by Kuali Rice Team (kuali-rice@googlegroups.com) -->
+	<target name="maven-source">
+		<zip destfile="db-ojb-1.0.4-patch2-sources.jar">
+			<fileset dir="src/java"/>
+		</zip>
+	</target>
 
 </project>
