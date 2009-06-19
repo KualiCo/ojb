@@ -5,7 +5,7 @@ src/java/org/apache/ojb/broker/util/IdentityArrayList.java
 src/java/org/apache/ojb/broker/core/PersistenceBrokerAbstractImpl.java
 src/java/org/apache/ojb/broker/metadata/DescriptorRepository.java
 src/java/org/apache/ojb/broker/core/PersistenceBrokerImpl.java
-
+src/java/org/apache/ojb/broker/accesslayer/JdbcAccessImpl.java
 
 The changes to these file are as follows:
 
@@ -66,5 +66,8 @@ The original code failed to check the "null-ness" of the object after unwrapping
 KFSMI-282 : Fixing OJB bug which blanks out the PK fields of the main object when a 1:1 relationship object is null. 
 The original code checked the "null-ness" of the object *before* unwrapping the CGLIB proxy class.
  
+###########################################################################
+src/java/org/apache/ojb/broker/accesslayer/JdbcAccessImpl.java
+###########################################################################
 
-
+Added better OJB execption logging.

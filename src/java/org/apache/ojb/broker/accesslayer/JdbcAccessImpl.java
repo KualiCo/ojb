@@ -116,7 +116,17 @@ public class JdbcAccessImpl implements JdbcAccess
             // does is make sense to throw an OL exception if the object was changed?
             if (stmt.executeUpdate() == 0 && cld.isLocking()) //BRJ
             {
-                throw new OptimisticLockException("Object has been modified or deleted by someone else", obj);
+                /**
+                 * Kuali Foundation modification -- 6/19/2009
+                 */
+            	String objToString = "";
+            	try {
+            		objToString = obj.toString();
+            	} catch (Exception ex) {}
+                throw new OptimisticLockException("Object has been modified or deleted by someone else: " + objToString, obj);
+                /**
+                 * End of Kuali Foundation modification
+                 */
             }
 
             // Harvest any return values.
@@ -502,7 +512,17 @@ public class JdbcAccessImpl implements JdbcAccess
 
             if ((stmt.executeUpdate() == 0) && cld.isLocking()) //BRJ
             {
-                throw new OptimisticLockException("Object has been modified by someone else", obj);
+                /**
+                 * Kuali Foundation modification -- 6/19/2009
+                 */
+            	String objToString = "";
+            	try {
+            		objToString = obj.toString();
+            	} catch (Exception ex) {}
+                throw new OptimisticLockException("Object has been modified by someone else: " + objToString, obj);
+                /**
+                 * End of Kuali Foundation modification
+                 */
             }
 
             // Harvest any return values.
