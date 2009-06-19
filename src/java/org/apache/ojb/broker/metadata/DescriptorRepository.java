@@ -39,6 +39,7 @@ import org.apache.ojb.broker.util.logging.Logger;
  * @author <a href="mailto:leandro@ibnetwork.com.br">Leandro Rodrigo Saad Cruz<a>
  * @version $Id: DescriptorRepository.java,v 1.1 2007-08-24 22:17:29 ewestfal Exp $
  */
+@SuppressWarnings("unchecked")
 public final class DescriptorRepository extends DescriptorBase
         implements Serializable, XmlCapable, IsolationLevels
 {
@@ -58,7 +59,7 @@ public final class DescriptorRepository extends DescriptorBase
      * This table holds all known Mapping descriptions.
      * Key values are the respective Class objects
      */
-    private final HashMap descriptorTable;
+	private final HashMap descriptorTable;
     /**
      * We need a lot the extent, to which a class belongs
      * (@see DescriptorRepository#getExtentClass). To speed up the costy
@@ -531,17 +532,31 @@ public final class DescriptorRepository extends DescriptorBase
      */
     public String toString()
     {
-        Iterator it = descriptorTable.entrySet().iterator();
-        ToStringBuilder buf = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
-        String className = "class name: ";
-        String tableName = "> table name: ";
-        while (it.hasNext())
-        {
-            Map.Entry me = (Map.Entry) it.next();
-            ClassDescriptor descriptor = (ClassDescriptor) me.getValue();
-            buf.append(className + me.getKey() + " =", tableName + descriptor.getFullTableName());
-        }
-        return buf.toString();
+        /**
+         * Kuali Foundation modification -- 6/19/2009
+         */
+    	synchronized (descriptorTable) {			
+        /**
+         * End of Kuali Foundation modification
+         */
+	        Iterator it = descriptorTable.entrySet().iterator();
+	        ToStringBuilder buf = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
+	        String className = "class name: ";
+	        String tableName = "> table name: ";
+	        while (it.hasNext())
+	        {
+	            Map.Entry me = (Map.Entry) it.next();
+	            ClassDescriptor descriptor = (ClassDescriptor) me.getValue();
+	            buf.append(className + me.getKey() + " =", tableName + descriptor.getFullTableName());
+	        }
+	        return buf.toString();
+        /**
+         * Kuali Foundation modification -- 6/19/2009
+         */
+		}
+        /**
+         * End of Kuali Foundation modification
+         */
     }
 
     /*
@@ -666,7 +681,21 @@ public final class DescriptorRepository extends DescriptorBase
 
             if (result != null)
             {
-                descriptorTable.put(clazz.getName(), result);
+                /**
+                 * Kuali Foundation modification -- 6/19/2009
+                 */
+            	synchronized (descriptorTable) {
+                /**
+                 * End of Kuali Foundation modification
+                 */
+            		descriptorTable.put(clazz.getName(), result);
+                /**
+                 * Kuali Foundation modification -- 6/19/2009
+                 */
+            	}
+                /**
+                 * End of Kuali Foundation modification
+                 */
             }
         }
         return result;
