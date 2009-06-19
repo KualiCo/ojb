@@ -90,6 +90,7 @@
     </target>
 
     <target name="environment-check" depends="detect-jdk">
+    <!--
 		<fail message="Please make JUnit available in the classpath, e.g. by copying the junit.jar from OJB's lib subdirectory into the lib subdirectory of your Ant installation (${env.ANT_HOME}/lib).">
 			<condition>
 				<not>
@@ -97,6 +98,7 @@
 				</not>
 			</condition>
 		</fail>
+	-->
 		<fail message="In order to compile OJB with JDK 1.2 you need to download cglib from http://cglib.sourceforge.net and put the jar into OJB's lib folder.">
 	        <condition>
 	          	<and>
