@@ -578,6 +578,25 @@ public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl impleme
             fireBrokerEvent(BEFORE_DELETE_EVENT);
             BEFORE_DELETE_EVENT.setTarget(null);
 
+            // now perform deletion
+            performDeletion(cld, obj, oid, ignoreReferences);
+ 	  	 
+            // Invoke events on PersistenceBrokerAware instances and listeners
+            AFTER_DELETE_EVENT.setTarget(obj);
+            fireBrokerEvent(AFTER_DELETE_EVENT);
+            AFTER_DELETE_EVENT.setTarget(null);
+ 	  	 	
+            // let the connection manager to execute batch
+            connectionManager.executeBatchIfNecessary();
+        }
+    }
+ 	  	 
+    /**
+     * This method perform the delete of the specified object
+     * based on the {@link org.apache.ojb.broker.metadata.ClassDescriptor}.
+     */
+    private void performDeletion(final ClassDescriptor cld, final Object obj, final Identity oid, final boolean ignoreReferences) throws PersistenceBrokerException
+    {
             // 1. delete dependend collections
             if (!ignoreReferences  && cld.getCollectionDescriptors().size() > 0)
             {
@@ -601,19 +620,10 @@ public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl impleme
             // 4. delete dependend upon objects last to avoid FK violations
             if (cld.getObjectReferenceDescriptors().size() > 0)
             {
-                deleteReferences(obj, cld.getObjectReferenceDescriptors(), ignoreReferences);
+                deleteReferences(cld, obj, oid, ignoreReferences);
             }
             // remove obj from the object cache:
             objectCache.remove(oid);
-
-            // Invoke events on PersistenceBrokerAware instances and listeners
-            AFTER_DELETE_EVENT.setTarget(obj);
-            fireBrokerEvent(AFTER_DELETE_EVENT);
-            AFTER_DELETE_EVENT.setTarget(null);
-
-            // let the connection manager to execute batch
-            connectionManager.executeBatchIfNecessary();
-        }
     }
 
     /**
@@ -699,8 +709,9 @@ public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl impleme
      * these kind of reference (descriptor) will always be performed.
      * @throws PersistenceBrokerException if some goes wrong - please see the error message for details
      */
-    private void deleteReferences(Object obj, List listRds, boolean ignoreReferences) throws PersistenceBrokerException
+    private void deleteReferences(ClassDescriptor cld, Object obj, Identity oid, boolean ignoreReferences) throws PersistenceBrokerException
     {
+    	List listRds = cld.getObjectReferenceDescriptors();
         // get all members of obj that are references and delete them
         Iterator i = listRds.iterator();
         while (i.hasNext())
@@ -712,7 +723,21 @@ public class PersistenceBrokerImpl extends PersistenceBrokerAbstractImpl impleme
                 Object referencedObject = rds.getPersistentField().get(obj);
                 if (referencedObject != null)
                 {
-                    doDelete(referencedObject, ignoreReferences);
+                	if(rds.isSuperReferenceDescriptor())
+                	{
+                		ClassDescriptor base = cld.getSuperClassDescriptor();
+                		/*
+ 	  	                 arminw: If "table-per-subclass" inheritance is used we have to
+ 	  	                 guarantee that all super-class table entries are deleted too.
+ 	  	                 Thus we have to perform the recursive deletion of all super-class
+ 	  	                 table entries.
+                		 */
+                		performDeletion(base, referencedObject, oid, ignoreReferences);
+                	}
+                	else
+                	{
+                		doDelete(referencedObject, ignoreReferences);
+                	}
                 }
             }
         }

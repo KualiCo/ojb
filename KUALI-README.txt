@@ -71,3 +71,16 @@ src/java/org/apache/ojb/broker/accesslayer/JdbcAccessImpl.java
 ###########################################################################
 
 Added better OJB execption logging.
+
+###########################################################################
+08-20-2010
+KULRICE-4281
+db-ojb-1.0.4-patch4.jar
+
+src/java/org/apache/ojb/broker/core/PersistenceBrokerImpl.java
+###########################################################################
+
+Changed to fix issue with deletion from "super" table as per the following
+jira issue in the OJB jira queue:
+
+https://issues.apache.org/jira/browse/OJB-93
