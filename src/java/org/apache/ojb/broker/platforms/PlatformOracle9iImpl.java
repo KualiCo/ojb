@@ -544,6 +544,25 @@ public class PlatformOracle9iImpl extends PlatformOracleImpl
         }
         try
         {
+            // PATCHED: Try to use JDBC 4 unwrap mechanism
+            final Method jdbcUnwrapMethod = ClassHelper.getMethod(toUnwrap, "unwrap", new Class[] { Class.class });
+            if (jdbcUnwrapMethod != null) {
+            	Class jdbcClassToMatch = null;  // we're going to find 
+            	if (java.sql.Connection.class.isAssignableFrom(classToMatch)) {
+            		jdbcClassToMatch = java.sql.Connection.class;
+            	} else if (java.sql.PreparedStatement.class.isAssignableFrom(classToMatch)) {
+            		jdbcClassToMatch = java.sql.PreparedStatement.class;
+            	} else if (java.sql.Statement.class.isAssignableFrom(classToMatch)) {
+            		jdbcClassToMatch = java.sql.Statement.class;
+            	}
+
+            	Object result = null;
+            	if (jdbcClassToMatch != null) {
+            		result = jdbcUnwrapMethod.invoke(toUnwrap, jdbcClassToMatch);
+            		if (result != null) return result;
+            	}
+            } // didn't work, fall back.
+
             String methodName;
             Class[] paramTypes;
             Object[] args;
@@ -575,8 +594,8 @@ public class PlatformOracle9iImpl extends PlatformOracleImpl
                     return genericUnwrap(classToMatch, unwrapped,
                             methodNameCandidates, methodTypeCandidates);
                 }
-
             }
+
         }
         catch (Exception e)
         {

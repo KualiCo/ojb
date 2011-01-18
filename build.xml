@@ -343,7 +343,7 @@
     <target name="prepare-testdb"
             description="prepare testdb using torque or ddlutils"
             depends="prepare-testdb-torque, prepare-testdb-ddlutils"/>
- 
+
     <target name="prepare-testdb-torque"
             description="prepare testdb using torque"
             depends="prepare, prepare-repository"
@@ -390,7 +390,7 @@
         <taskdef name="ojbData"
                  classname="org.apache.ojb.broker.ant.RepositoryDataTask"
                  classpathref="runtime-classpath"/>
-  
+
         <copy todir="${build.test}">
             <fileset dir="${src.dir}/schema" includes="*.xml,*.dtd"/>
             <filterset>
@@ -416,10 +416,10 @@
                       password="${torque.database.password}"/>
             <fileset dir="${build.test}"
                      includes="*schema.xml"/>
-            <writedatatodatabase datafile="${build.test}/ojbtest-data-new.xml"/> 
-        </ojbData> 
-    </target> 
- 
+            <writedatatodatabase datafile="${build.test}/ojbtest-data-new.xml"/>
+        </ojbData>
+    </target>
+
     <!-- ================================================================== -->
     <!-- dump testdb using torque                                        -->
     <!-- ================================================================== -->
@@ -469,7 +469,7 @@
 		<jar jarfile="${dist}/${archive}-junit.jar" basedir="${build.desttest}"
 			manifest="${build.dest}/MANIFEST.MF"
 			includes="LICENSE,NOTICE,README,org/**"/>
-		<jar jarfile="${dist}/${archive}-src.jar" basedir="${build.src}"
+		<jar jarfile="${dist}/${archive}-sources.jar" basedir="${build.src}"
 			manifest="${build.dest}/MANIFEST.MF"
 			includes="LICENSE,NOTICE,README,org/**"/>
         <jar jarfile="${dist}/${archive}-tools.jar" basedir="${build.desttools}"
@@ -1161,7 +1161,7 @@
              basedir="${build.dir}"
              includes="${archive}/**"/>
         <checksum file="${dist}/${archive}-without-dependencies.zip"
-                  forceOverwrite="yes"/> 
+                  forceOverwrite="yes"/>
 
         <tar tarfile="${dist}/${archive}-bin-without-dependencies.tar" basedir="${build.dir}"
              includes="${archive}/**"
@@ -1578,7 +1578,7 @@
   <!-- Runs Checkstyle over OJB                                      -->
   <!-- ================================================================== -->
   <target name="checkstyle"
-          depends="prepare" 
+          depends="prepare"
           description="Checks the sourcecode via Checkstyle">
     <fail message="Due to licensing issues, OJB is not distributed with Checkstyle. If you want to use this task, then please put the checkstyle jar into the lib subdirectory.">
       <condition>
@@ -1592,7 +1592,7 @@
     <taskdef resource="checkstyletask.properties"
              classpathref="compilation-classpath"/>
 
-    <mkdir dir="${build.check}"/> 
+    <mkdir dir="${build.check}"/>
     <checkstyle config="${src.check}/ojb-checks.xml"
                 failOnViolation="false"
                 classpathref="compilation-classpath">
@@ -1705,7 +1705,7 @@
     <!-- ================================================================== -->
     <!-- End of targets                                                     -->
     <!-- ================================================================== -->
-	
+
 	<!-- Added by Kuali Rice Team (kuali-rice@googlegroups.com) -->
 	<target name="maven-source">
 		<zip destfile="db-ojb-1.0.4-patch2-sources.jar">
