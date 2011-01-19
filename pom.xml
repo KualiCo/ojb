@@ -5,7 +5,7 @@
     <artifactId>kuali</artifactId>
     <version>71</version>
   </parent>
-  <groupId>org.kuali.ojb</groupId>
+  <groupId>ojb</groupId>
   <artifactId>db-ojb</artifactId>
   <version>1.0.4-patch5-SNAPSHOT</version>
   <name>ObJectRelationalBridge</name>
@@ -33,14 +33,16 @@
     <url>https://test.kuali.org/svn/kul-obj-1.0.4/trunk</url>
   </scm>
   <properties>
+    <kuali.repository.release.id>kuali.external</kuali.repository.release.id>
+    <kuali.repository.release.name>Kuali External Repository</kuali.repository.release.name>
+    <kuali.repository.release.url>s3://maven.kuali.org/external</kuali.repository.release.url>
+    <kuali.site.download.prefix>external</kuali.site.download.prefix>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
-    <db-ojb.jdk.version>1.5</db-ojb.jdk.version>
-    <kuali.compile.target>${db-ojb.jdk.version}</kuali.compile.target>
-    <kuali.compile.source>${db-ojb.jdk.version}</kuali.compile.source>
-    <kuali.javadoc.report.2>javadoc</kuali.javadoc.report.2>
-    <kuali.javadoc.tool.version>${db-ojb.jdk.version}</kuali.javadoc.tool.version>
-    <maven.test.skip>true</maven.test.skip>
     <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
+    <kuali.compile.target>1.5</kuali.compile.target>
+    <kuali.compile.source>1.5</kuali.compile.source>
+    <kuali.javadoc.report.2>javadoc</kuali.javadoc.report.2>
+    <maven.test.skip>true</maven.test.skip>
   </properties>
   <dependencies>
     <!-- 
@@ -138,8 +140,8 @@
       <version>1.1</version>
     </dependency>
     <dependency>
-      <groupId>servletapi</groupId>
-      <artifactId>servletapi</artifactId>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
       <version>2.2</version>
     </dependency>
     <dependency>
@@ -165,7 +167,7 @@
     <dependency>
       <groupId>xml-apis</groupId>
       <artifactId>xml-apis</artifactId>
-      <version>2.0.2</version>
+      <version>1.0.b2</version>
     </dependency>
   </dependencies>
   <build>
