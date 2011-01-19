@@ -34,10 +34,6 @@
   </scm>
   <properties>
     <kuali.release.goals>clean</kuali.release.goals>
-    <kuali.repository.release.id>kuali.external</kuali.repository.release.id>
-    <kuali.repository.release.name>Kuali External Repository</kuali.repository.release.name>
-    <kuali.repository.release.url>s3://maven.kuali.org/external</kuali.repository.release.url>
-    <kuali.site.download.prefix>external</kuali.site.download.prefix>
     <kuali.site.download.path>org/kuali/ojb</kuali.site.download.path>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
     <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
