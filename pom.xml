@@ -38,6 +38,7 @@
     <kuali.repository.release.name>Kuali External Repository</kuali.repository.release.name>
     <kuali.repository.release.url>s3://maven.kuali.org/external</kuali.repository.release.url>
     <kuali.site.download.prefix>external</kuali.site.download.prefix>
+    <kuali.site.download.path>ojb</kuali.site.download.path>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
     <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
     <kuali.compile.target>1.5</kuali.compile.target>
