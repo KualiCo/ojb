@@ -5,7 +5,7 @@
     <artifactId>kuali</artifactId>
     <version>72</version>
   </parent>
-  <groupId>ojb</groupId>
+  <groupId>org.kuali.ojb</groupId>
   <artifactId>db-ojb</artifactId>
   <version>1.0.4-patch6-SNAPSHOT</version>
   <name>ObJectRelationalBridge</name>
