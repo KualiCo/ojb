@@ -33,6 +33,8 @@
     <url>https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</url>
   </scm>
   <properties>
+    <!-- Remove this property as soon as the devs are comfortable with Maven 3 -->
+    <kuali.site.plugin.version>2.0.1</kuali.site.plugin.version>
     <kuali.release.goals>clean</kuali.release.goals>
     <kuali.site.download.path>org/kuali/ojb</kuali.site.download.path>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
