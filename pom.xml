@@ -5,7 +5,7 @@
     <artifactId>kuali</artifactId>
     <version>72</version>
   </parent>
-  <groupId>org.kuali.ojb</groupId>
+  <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
   <version>1.0.4-patch6-SNAPSHOT</version>
   <name>ObJectRelationalBridge</name>
@@ -36,7 +36,7 @@
     <!-- Remove this property as soon as the devs are comfortable with Maven 3 -->
     <kuali.site.plugin.version>2.0.1</kuali.site.plugin.version>
     <kuali.release.goals>clean</kuali.release.goals>
-    <kuali.site.download.path>org/kuali/ojb</kuali.site.download.path>
+    <kuali.site.download.path>org/kuali/db/ojb</kuali.site.download.path>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
     <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
     <kuali.compile.target>1.5</kuali.compile.target>
