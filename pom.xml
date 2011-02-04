@@ -27,6 +27,14 @@
       </releases>
     </repository>
   </repositories>
+  <url>${kuali.site.public.url}</url>
+  <distributionManagement>
+    <site>
+      <id>${kuali.site.server.id}</id>
+      <name>Maven Site</name>
+      <url>${kuali.site.publish.url}</url>
+    </site>
+  </distributionManagement>
   <scm>
     <connection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</connection>
     <developerConnection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</developerConnection>
