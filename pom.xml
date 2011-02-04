@@ -36,6 +36,7 @@
     <!-- Remove this property as soon as the devs are comfortable with Maven 3 -->
     <kuali.site.plugin.version>2.0.1</kuali.site.plugin.version>
     <kuali.release.goals>clean</kuali.release.goals>
+    <kuali.site.path>db/db-ojb/${project.version}</kuali.site.path>
     <kuali.site.download.path>org/kuali/db/ojb</kuali.site.download.path>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
     <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
