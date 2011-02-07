@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.kuali</groupId>
     <artifactId>kuali</artifactId>
-    <version>72</version>
+    <version>73</version>
   </parent>
   <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
@@ -27,14 +27,6 @@
       </releases>
     </repository>
   </repositories>
-  <url>${kuali.site.public.url}</url>
-  <distributionManagement>
-    <site>
-      <id>${kuali.site.server.id}</id>
-      <name>Maven Site</name>
-      <url>${kuali.site.publish.url}</url>
-    </site>
-  </distributionManagement>
   <scm>
     <connection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</connection>
     <developerConnection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</developerConnection>
@@ -44,8 +36,6 @@
     <!-- Remove this property as soon as the devs are comfortable with Maven 3 -->
     <kuali.site.plugin.version>2.0.1</kuali.site.plugin.version>
     <kuali.release.goals>clean</kuali.release.goals>
-    <kuali.site.path>db/db-ojb/${project.version}</kuali.site.path>
-    <kuali.site.download.path>org/kuali/db/ojb</kuali.site.download.path>
     <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
     <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
     <kuali.compile.target>1.5</kuali.compile.target>
