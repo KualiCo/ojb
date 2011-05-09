@@ -15,18 +15,12 @@ package org.apache.ojb.broker.core.proxy;
  * limitations under the License.
  */
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-
-import org.apache.ojb.broker.Identity;
-import org.apache.ojb.broker.OJBRuntimeException;
-import org.apache.ojb.broker.PBFactoryException;
-import org.apache.ojb.broker.PBKey;
-import org.apache.ojb.broker.PersistenceBrokerException;
-import org.apache.ojb.broker.PersistenceBrokerFactory;
-import org.apache.ojb.broker.PersistenceBrokerInternal;
+import org.apache.ojb.broker.*;
 import org.apache.ojb.broker.core.PersistenceBrokerThreadMapping;
 import org.apache.ojb.broker.util.logging.LoggerFactory;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 /**
  * Abstract implementation for the indirection handler used by ojb's proxies.
@@ -350,6 +344,16 @@ public abstract class AbstractIndirectionHandler implements IndirectionHandler
 			}
 
 			subject = getRealSubject();
+
+            //kuali modification start
+			try {
+                method.setAccessible(true);
+            } catch (SecurityException ex) {
+                LoggerFactory.getLogger(IndirectionHandler.class).warn(
+                        "Error calling setAccessible for method " + method.getName(), ex);
+            }
+            //kuali modification end
+
 			return method.invoke(subject, args);
 			// [olegnitz] I've changed the following strange lines
 			// to the above one. Why was this done in such complicated way?

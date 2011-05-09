@@ -84,3 +84,12 @@ Changed to fix issue with deletion from "super" table as per the following
 jira issue in the OJB jira queue:
 
 https://issues.apache.org/jira/browse/OJB-93
+
+###########################################################################
+05-11-2011
+KULRICE-5135
+
+fixed exception in proxy class when target class has protected setters
+
+src/java/org/apache/ojb/broker/core/proxy/AbstractIndirectionHandler.java
+###########################################################################
