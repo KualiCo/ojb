@@ -261,7 +261,7 @@
     <!-- cleanup, preprocessing, compile and building                       -->
     <!-- of oql parser and documentation                                    -->
     <!-- ================================================================== -->
-    <target name="all" depends="clean,preprocess,oql,main,ojb-blank,sample-jars,webapp-sample,doc"
+    <target name="all" depends="clean,preprocess,oql,main,ojb-blank"
             description="rebuild all sources (incl. preprocessing)"/>
 
     <!-- ================================================================== -->
@@ -269,19 +269,19 @@
     <!-- ================================================================== -->
     <target name="main-opt" depends="prepare, preprocess"
             description="Same as main, but with debugging off and optimizations on.">
-        <javac srcdir="${build.src}" destdir="${build.dest}" excludes="${excludes}"
+        <javac nowarn="true" srcdir="${build.src}" destdir="${build.dest}" excludes="${excludes}"
                debug="off" deprecation="off" optimize="on">
             <classpath refid="compilation-classpath"/>
         </javac>
-        <javac srcdir="${build.srctest}" destdir="${build.desttest}" excludes="${excludes}"
+        <javac nowarn="true" srcdir="${build.srctest}" destdir="${build.desttest}" excludes="${excludes}"
                debug="off" deprecation="off" optimize="on">
             <classpath refid="compilation-classpath"/>
         </javac>
-        <javac srcdir="${build.srctools}" destdir="${build.desttools}" excludes="${excludes}"
+        <javac nowarn="true" srcdir="${build.srctools}" destdir="${build.desttools}" excludes="${excludes}"
                debug="off" deprecation="off" optimize="on">
             <classpath refid="compilation-classpath"/>
         </javac>
-		<javac srcdir="${build.srcjca}" destdir="${build.destjca}" excludes="${excludes}"
+		<javac nowarn="true" srcdir="${build.srcjca}" destdir="${build.destjca}" excludes="${excludes}"
 			   debug="on" deprecation="${deprecation}">
 			<classpath refid="compilation-classpath" />
 		</javac>

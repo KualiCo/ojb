@@ -209,11 +209,11 @@ public class PlatformOracleImpl extends PlatformDefaultImpl
         {
             byte buf[] = (byte[]) value;
             int length = buf.length;
-            if (isUsingOracleThinDriver(ps.getConnection()) && length > THIN_BLOB_MAX_SIZE)
+           /* if (isUsingOracleThinDriver(ps.getConnection()) && length > THIN_BLOB_MAX_SIZE)
             {
                 throw new SQLException(
                         "Oracle thin driver cannot update BLOB values with length>2000. (Consider using Oracle9i as OJB platform.)");
-            }
+            }*/
             ByteArrayInputStream inputStream = new ByteArrayInputStream(buf);
             changePreparedStatementResultSetType(ps);
             ps.setBinaryStream(index, inputStream, length);
@@ -254,11 +254,11 @@ public class PlatformOracleImpl extends PlatformDefaultImpl
                 reader = new InputStreamReader(inputStream);
                 length = buf.length;
             }
-            if (isUsingOracleThinDriver(ps.getConnection()) && length > THIN_CLOB_MAX_SIZE)
+            /*if (isUsingOracleThinDriver(ps.getConnection()) && length > THIN_CLOB_MAX_SIZE)
             {
                 throw new SQLException(
                         "Oracle thin driver cannot insert CLOB values with length>4000. (Consider using Oracle9i as OJB platform.)");
-            }
+            }*/
             ps.setCharacterStream(index, reader, length);
         }
         else if ((sqlType == Types.CHAR || sqlType == Types.VARCHAR)

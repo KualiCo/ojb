@@ -93,3 +93,15 @@ fixed exception in proxy class when target class has protected setters
 
 src/java/org/apache/ojb/broker/core/proxy/AbstractIndirectionHandler.java
 ###########################################################################
+10-25-2011
+
+Applied fix from Cornell University which allows JavaMelody SQL Monitoring 
+to be used with OJB.  (OJB's proxy detection was causing CLOB management to
+default back to Oracle 8.)
+
+M       src/java/org/apache/ojb/broker/platforms/PlatformOracleImpl.java
+M       src/java/org/apache/ojb/broker/util/WrappedConnection.java
+M       src/java/org/apache/ojb/odmg/oql/OQLParser.java
+M       src/java/org/apache/ojb/odmg/oql/OQLLexer.java
+M       build.xml
+###########################################################################

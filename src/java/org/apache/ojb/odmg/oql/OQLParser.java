@@ -18,6 +18,20 @@
 package org.apache.ojb.odmg.oql;
 
 
+import antlr.TokenBuffer;
+import antlr.TokenStreamException;
+import antlr.TokenStreamIOException;
+import antlr.ANTLRException;
+import antlr.LLkParser;
+import antlr.Token;
+import antlr.TokenStream;
+import antlr.RecognitionException;
+import antlr.NoViableAltException;
+import antlr.MismatchedTokenException;
+import antlr.SemanticException;
+import antlr.ParserSharedInputState;
+import antlr.collections.impl.BitSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
@@ -25,20 +39,11 @@ import java.util.Vector;
 import org.apache.ojb.broker.metadata.ClassDescriptor;
 import org.apache.ojb.broker.metadata.MetadataManager;
 import org.apache.ojb.broker.metadata.ObjectReferenceDescriptor;
+import org.apache.ojb.broker.util.ClassHelper;
 import org.apache.ojb.broker.query.Criteria;
 import org.apache.ojb.broker.query.Query;
 import org.apache.ojb.broker.query.QueryByCriteria;
 import org.apache.ojb.broker.query.QueryFactory;
-import org.apache.ojb.broker.util.ClassHelper;
-
-import antlr.NoViableAltException;
-import antlr.ParserSharedInputState;
-import antlr.RecognitionException;
-import antlr.Token;
-import antlr.TokenBuffer;
-import antlr.TokenStream;
-import antlr.TokenStreamException;
-import antlr.collections.impl.BitSet;
 
 public class OQLParser extends antlr.LLkParser       implements OQLLexerTokenTypes
  {

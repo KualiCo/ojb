@@ -19,24 +19,28 @@ package org.apache.ojb.odmg.oql;
 
 
 import java.io.InputStream;
-import java.io.Reader;
-import java.util.Hashtable;
-
-import antlr.ANTLRHashString;
-import antlr.ByteBuffer;
-import antlr.CharBuffer;
-import antlr.CharStreamException;
-import antlr.CharStreamIOException;
-import antlr.InputBuffer;
-import antlr.LexerSharedInputState;
-import antlr.NoViableAltForCharException;
-import antlr.RecognitionException;
-import antlr.Token;
-import antlr.TokenStream;
 import antlr.TokenStreamException;
 import antlr.TokenStreamIOException;
 import antlr.TokenStreamRecognitionException;
+import antlr.CharStreamException;
+import antlr.CharStreamIOException;
+import antlr.ANTLRException;
+import java.io.Reader;
+import java.util.Hashtable;
+import antlr.CharScanner;
+import antlr.InputBuffer;
+import antlr.ByteBuffer;
+import antlr.CharBuffer;
+import antlr.Token;
+import antlr.CommonToken;
+import antlr.RecognitionException;
+import antlr.NoViableAltForCharException;
+import antlr.MismatchedCharException;
+import antlr.TokenStream;
+import antlr.ANTLRHashString;
+import antlr.LexerSharedInputState;
 import antlr.collections.impl.BitSet;
+import antlr.SemanticException;
 
 /**
  * This OQL grammar has been derived from a OQL sample grammar from the ODMG
@@ -55,7 +59,7 @@ import antlr.collections.impl.BitSet;
  * into ojb.broker.query.Query Objects. These query objects can be used
  * to perform database queries by means of the OJB PersistenceBroker.
  * @see org.apache.ojb.odmg.oql.OQLQueryImpl for implementation details.
- * @version $Id: OQLLexer.java,v 1.1 2007-08-24 22:17:36 ewestfal Exp $
+ * @version $Id: oql-ojb.g,v 1.1 2007-08-24 22:17:36 ewestfal Exp $
  */
 public class OQLLexer extends antlr.CharScanner implements OQLLexerTokenTypes, TokenStream
  {
@@ -266,7 +270,7 @@ tryAgain:
 					}
 				else {
 					if (LA(1)==EOF_CHAR) {uponEOF(); _returnToken = makeToken(Token.EOF_TYPE);}
-				else {throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+				else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 				}
 				}
 				if ( _returnToken==null ) continue tryAgain; // found SKIP token
@@ -633,7 +637,7 @@ tryAgain:
 		}
 		default:
 		{
-			throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+			throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());
 		}
 		}
 		}
@@ -678,7 +682,7 @@ tryAgain:
 		}
 		default:
 		{
-			throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+			throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());
 		}
 		}
 		}
@@ -754,7 +758,7 @@ tryAgain:
 		}
 		default:
 		{
-			throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+			throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());
 		}
 		}
 		}
@@ -766,7 +770,7 @@ tryAgain:
 				matchRange('0','9');
 			}
 			else {
-				if ( _cnt34>=1 ) { break _loop34; } else {throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt34>=1 ) { break _loop34; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 			}
 			
 			_cnt34++;
@@ -796,7 +800,7 @@ tryAgain:
 					mTOK_UNSIGNED_INTEGER(false);
 				}
 				else {
-					if ( _cnt37>=1 ) { break _loop37; } else {throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+					if ( _cnt37>=1 ) { break _loop37; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 				}
 				
 				_cnt37++;
@@ -826,7 +830,7 @@ tryAgain:
 					mTOK_UNSIGNED_INTEGER(false);
 				}
 				else {
-					if ( _cnt40>=1 ) { break _loop40; } else {throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+					if ( _cnt40>=1 ) { break _loop40; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 				}
 				
 				_cnt40++;
@@ -877,7 +881,7 @@ tryAgain:
 		}
 		default:
 		{
-			throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+			throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());
 		}
 		}
 		if ( _createToken && _token==null && _ttype!=Token.SKIP ) {
@@ -993,7 +997,7 @@ tryAgain:
 		}
 		default:
 		{
-			throw new NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+			throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());
 		}
 		}
 		}

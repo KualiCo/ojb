@@ -15,14 +15,22 @@ package org.apache.ojb.broker.util;
  * limitations under the License.
  */
 
+import java.sql.Array;
+import java.sql.Blob;
 import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -277,13 +285,94 @@ public class WrappedConnection implements Connection
         _conn.setTransactionIsolation(level);
     }
 
-    public void setTypeMap(Map map) throws SQLException
+    @SuppressWarnings("unchecked")
+	public void setTypeMap(@SuppressWarnings("rawtypes") Map map) throws SQLException
     {
         checkOpen();
         _conn.setTypeMap(map);
     }
 
+    @Override
+	public boolean isWrapperFor(Class<?> arg0) throws SQLException {
+		checkOpen();
+		return _conn.isWrapperFor(arg0);
+	}
 
+	@Override
+	public <T> T unwrap(Class<T> arg0) throws SQLException {
+		checkOpen();
+		return _conn.unwrap(arg0);
+	}
+
+	@Override
+	public Array createArrayOf(String typeName, Object[] elements)
+			throws SQLException {
+		checkOpen();
+		return _conn.createArrayOf(typeName, elements);
+	}
+
+	@Override
+	public Blob createBlob() throws SQLException {
+		checkOpen();
+		return _conn.createBlob();
+	}
+
+	@Override
+	public Clob createClob() throws SQLException {
+		checkOpen();
+		return _conn.createClob();
+	}
+
+	@Override
+	public NClob createNClob() throws SQLException {
+		checkOpen();
+		return _conn.createNClob();
+	}
+
+	@Override
+	public SQLXML createSQLXML() throws SQLException {
+		checkOpen();
+		return _conn.createSQLXML();
+	}
+
+	@Override
+	public Struct createStruct(String typeName, Object[] attributes)
+			throws SQLException {
+		checkOpen();
+		return _conn.createStruct(typeName, attributes);
+	}
+
+	@Override
+	public Properties getClientInfo() throws SQLException {
+		checkOpen();
+		return _conn.getClientInfo();
+	}
+
+	@Override
+	public String getClientInfo(String name) throws SQLException {
+		checkOpen();
+		return _conn.getClientInfo(name);
+	}
+
+	@Override
+	public boolean isValid(int timeout) throws SQLException {
+		checkOpen();
+		return _conn.isValid(timeout);
+	}
+
+	@Override
+	public void setClientInfo(Properties properties)
+			throws SQLClientInfoException {
+		 _conn.setClientInfo(properties);
+		
+	}
+
+	@Override
+	public void setClientInfo(String name, String value)
+			throws SQLClientInfoException {
+		_conn.setClientInfo(name, value);
+		
+	}
 
     // ------------------- JDBC 3.0 -----------------------------------------
     // Will be uncommented by the build process on a JDBC 3.0 system
@@ -366,6 +455,6 @@ public class WrappedConnection implements Connection
         checkOpen();
         return _conn.prepareStatement(sql, columnNames);
       }
-
+	
 //#endif
 }
