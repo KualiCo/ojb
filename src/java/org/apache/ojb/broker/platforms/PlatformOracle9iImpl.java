@@ -31,6 +31,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.sql.Wrapper;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -543,8 +544,19 @@ public class PlatformOracle9iImpl extends PlatformOracleImpl
         {
             return toUnwrap;
         }
+        
         try
         {
+        	
+        	// KUALI Patch - new code added to use new jdbc Wrapper api 
+        	if (toUnwrap instanceof Wrapper) {
+            	Wrapper wrapper = (Wrapper)toUnwrap;
+            	if (wrapper.isWrapperFor(classToMatch)) {
+            		return wrapper.unwrap(classToMatch);
+            	}
+            }
+        	// end Kuali patch
+        	
             String methodName;
             Class[] paramTypes;
             Object[] args;
