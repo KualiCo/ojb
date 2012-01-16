@@ -7,7 +7,7 @@
   </parent>
   <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
-  <version>1.0.4-patch8-SNAPSHOT</version>
+  <version>1.0.4-patch8</version>
   <name>ObJectRelationalBridge</name>
   <description>
     ObJectRelationalBridge (OJB) is an Object/Relational mapping tool that
@@ -29,9 +29,9 @@
     </repository>
   </repositories>
   <scm>
-    <connection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</connection>
-    <developerConnection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</developerConnection>
-    <url>https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</url>
+    <connection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/tags/db-ojb-1.0.4-patch8</connection>
+    <developerConnection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/tags/db-ojb-1.0.4-patch8</developerConnection>
+    <url>https://test.kuali.org/svn/kul-ojb-1.0.4/tags/db-ojb-1.0.4-patch8</url>
   </scm>
   <properties>
     <kuali.release.goals>clean</kuali.release.goals>
