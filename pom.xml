@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.kuali.pom</groupId>
@@ -8,7 +7,7 @@
   </parent>
   <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
-  <version>1.0.4-patch8-SNAPSHOT</version>
+  <version>1.0.4-patch8</version>
   <name>ObJectRelationalBridge</name>
   <description>
     ObJectRelationalBridge (OJB) is an Object/Relational mapping tool that
@@ -30,9 +29,9 @@
     </repository>
   </repositories>
   <scm>
-    <connection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</connection>
-    <developerConnection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</developerConnection>
-    <url>https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</url>
+    <connection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/tags/db-ojb-1.0.4-patch8</connection>
+    <developerConnection>scm:svn:https://test.kuali.org/svn/kul-ojb-1.0.4/tags/db-ojb-1.0.4-patch8</developerConnection>
+    <url>https://test.kuali.org/svn/kul-ojb-1.0.4/tags/db-ojb-1.0.4-patch8</url>
   </scm>
   <properties>
     <kuali.release.goals>clean</kuali.release.goals>
