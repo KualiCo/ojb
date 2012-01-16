@@ -1,9 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.kuali</groupId>
-    <artifactId>kuali</artifactId>
-    <version>73</version>
+    <groupId>org.kuali.pom</groupId>
+    <artifactId>kuali-common</artifactId>
+    <version>1.0.26</version>
   </parent>
   <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
@@ -14,6 +15,7 @@
     allows transparent persistence for Java Objects against relational
     databases.
   </description>
+  <url>http://${kuali.site.hostname}/db/ojb/${project.artifactId}/${project.version}</url>
   <repositories>
     <repository>
       <id>kuali.nexus</id>
@@ -33,11 +35,7 @@
     <url>https://test.kuali.org/svn/kul-ojb-1.0.4/trunk</url>
   </scm>
   <properties>
-    <!-- Remove this property as soon as the devs are comfortable with Maven 3 -->
-    <kuali.site.plugin.version>2.0.1</kuali.site.plugin.version>
     <kuali.release.goals>clean</kuali.release.goals>
-    <kuali.clover.generate.info.phase>none</kuali.clover.generate.info.phase>
-    <kuali.clover.exclude.pattern.1>**/*.java</kuali.clover.exclude.pattern.1>
     <kuali.compile.target>1.5</kuali.compile.target>
     <kuali.compile.source>1.5</kuali.compile.source>
     <kuali.javadoc.report.2>javadoc</kuali.javadoc.report.2>
@@ -46,24 +44,23 @@
   <dependencies>
 
     <!--
-    <dependency>
+      <dependency>
       <groupId>jdo</groupId>
       <artifactId>jdo</artifactId>
       <version>1.0.1</version>
-    </dependency>
-    <dependency>
+      </dependency>
+      <dependency>
       <groupId>jdo</groupId>
       <artifactId>jdori</artifactId>
       <version>1.0.1</version>
-    </dependency>
-    <dependency>
+      </dependency>
+      <dependency>
       <groupId>jcs</groupId>
       <artifactId>jcs</artifactId>
       <version>1.0-dev</version>
       <optional>true</optional>
-    </dependency>
-     -->
-
+      </dependency>
+    -->
 
     <dependency>
       <groupId>ant</groupId>
@@ -107,11 +104,13 @@
       <artifactId>commons-lang</artifactId>
       <version>2.1</version>
     </dependency>
-    <dependency>
+    <!--
+      <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>1.0.4</version>
-    </dependency>
+      </dependency>
+    -->
     <dependency>
       <groupId>commons-pool</groupId>
       <artifactId>commons-pool</artifactId>
