@@ -7,7 +7,7 @@
   </parent>
   <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
-  <version>1.0.4-patch9-SNAPSHOT</version>
+  <version>1.0.4-patch8-SNAPSHOT</version>
   <name>ObJectRelationalBridge</name>
   <description>
     ObJectRelationalBridge (OJB) is an Object/Relational mapping tool that
