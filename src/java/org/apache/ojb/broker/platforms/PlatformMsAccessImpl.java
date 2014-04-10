@@ -73,7 +73,7 @@ public class PlatformMsAccessImpl extends PlatformDefaultImpl
                 super.setObjectForStatement(ps, index, value, sqlType);
             }
         }
-        // patch by Tino Schöllhorn 
+        // patch by Tino Schollhorn 
         // Current ODBC-Implementation for Access (I use ODBC 4.0.xxxx) does not 
         // support the conversion of LONG values. 
         // Error is : "Optional feature not implemented"

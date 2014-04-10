@@ -620,7 +620,7 @@ public class BrokerHelper
             countQuery = new ReportQueryByCriteria(searchClass, columns, countCrit);
         }
 
-        // BRJ: we have to preserve outer-join-settings (by André Markwalder)
+        // BRJ: we have to preserve outer-join-settings (by Andre Markwalder)
         for (Iterator outerJoinPath = aQuery.getOuterJoinPaths().iterator(); outerJoinPath.hasNext();)
         {
             String path = (String) outerJoinPath.next();
