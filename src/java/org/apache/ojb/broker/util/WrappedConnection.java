@@ -31,7 +31,6 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Executor;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -456,37 +455,6 @@ public class WrappedConnection implements Connection
         checkOpen();
         return _conn.prepareStatement(sql, columnNames);
       }
-
-	@Override
-	public void setSchema(String schema) throws SQLException {
-        checkOpen();
-        _conn.setSchema(schema);		
-	}
-
-	@Override
-	public String getSchema() throws SQLException {
-        checkOpen();
-        return _conn.getSchema();
-	}
-
-	@Override
-	public void abort(Executor executor) throws SQLException {
-        checkOpen();
-        _conn.abort(executor);
-	}
-
-	@Override
-	public void setNetworkTimeout(Executor executor, int milliseconds)
-			throws SQLException {
-        checkOpen();
-        _conn.setNetworkTimeout(executor, milliseconds);
-	}
-
-	@Override
-	public int getNetworkTimeout() throws SQLException {
-        checkOpen();
-        return _conn.getNetworkTimeout();
-	}
 	
 //#endif
 }
