@@ -899,27 +899,6 @@ public class RsIterator implements OJBIterator
         return getBroker().serviceConnectionManager().getConnectionDescriptor();
     }
 
-    /**
-     * safety just in case someone leaks.
-     */
-    protected void finalize()
-    {
-        if (m_rsAndStmt != null)
-        {
-            logger.info("Found unclosed resources while finalize (causer class: " + this.getClass().getName() + ")" +
-                    " Do automatic cleanup");
-            releaseDbResources();
-        }
-        try
-        {
-            super.finalize();
-        }
-        catch(Throwable throwable)
-        {
-            throwable.printStackTrace();
-        }
-    }
-
     public String toString()
     {
         return super.toString();
