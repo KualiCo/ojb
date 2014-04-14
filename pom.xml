@@ -7,7 +7,7 @@
   </parent>
   <groupId>org.kuali.db.ojb</groupId>
   <artifactId>db-ojb</artifactId>
-  <version>1.0.4-patch9-SNAPSHOT</version>
+  <version>1.0.4-patch9-rsmart</version>
   <name>ObJectRelationalBridge</name>
   <description>
     ObJectRelationalBridge (OJB) is an Object/Relational mapping tool that
@@ -20,6 +20,17 @@
       <id>kuali.nexus</id>
       <name>Kuali Nexus Repository Manager</name>
       <url>http://nexus.kuali.org/content/groups/public</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>rsmart-dev</id>
+      <name>rsmart-dev</name>
+      <url>https://nexus.rsmart.com/nexus/content/groups/public/</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
@@ -230,4 +241,18 @@
       </plugin>
     </plugins>
   </build>
+
+  <distributionManagement>
+    <snapshotRepository>
+       <id>rsmart.snapshot.repo</id>
+       <name>rsmart snapshot repository</name>
+       <url>s3://rsmart-dev/artifacts/maven/snapshot</url>
+       <layout>default</layout>
+    </snapshotRepository>
+    <repository>
+      <id>rsmart.release.repo</id>
+      <name>rsmart release repository</name>
+      <url>s3://rsmart-dev/artifacts/maven/release</url>
+    </repository>
+  </distributionManagement>
 </project>
